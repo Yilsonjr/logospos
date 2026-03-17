@@ -33,7 +33,8 @@
     <li class="nav-item">
       <!-- Item Principal -->
       <a [routerLink]="item.submenu ? null : item.link" class="nav-link d-flex align-items-center text-truncate"
-        routerLinkActive="active" [routerLinkActiveOptions]="{exact: item.link === '/dashboard'}"
+        [routerLinkActive]="item.submenu ? '' : 'active'" [routerLinkActiveOptions]="{exact: item.link === '/dashboard'}"
+        [class.active]="item.expanded"
         [title]="isCollapsed ? item.label : ''" (click)="handleMenuClick($event, item)"
         style="cursor: pointer; height: 44px;">
 

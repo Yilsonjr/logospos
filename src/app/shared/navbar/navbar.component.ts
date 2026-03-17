@@ -231,13 +231,22 @@ export class NavbarComponent implements OnInit, OnDestroy {
   }
 
   toggleSubmenu(item: any) {
-    item.expanded = !this.isCollapsed && !item.expanded;
+    if (this.isCollapsed) {
+      // Si está colapsado y hacen clic en un elemento con submenú, expandimos el sidebar
+      this.sidebarService.toggleSidebar();
+      item.expanded = true;
+    } else {
+      item.expanded = !item.expanded;
+    }
   }
 
   handleMenuClick(event: Event, item: any) {
     if (item.submenu) {
       event.preventDefault(); // Prevenir navegación si tiene submenu
       this.toggleSubmenu(item);
+    } else {
+      // Si hacen clic en un elemento principal sin submenú mientras está colapsado en movil, no hace falta expandir (navega directo)
+      // Pero si quisieran cerrarlo en móvil, el overlay ya existe.
     }
   }
 

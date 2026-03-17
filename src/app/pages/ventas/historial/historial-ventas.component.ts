@@ -259,6 +259,27 @@ export class HistorialVentasComponent implements OnInit, OnDestroy {
     }
   }
 
+  async preguntarFormatoImpresion(venta: Venta) {
+    const result = await Swal.fire({
+      title: 'Formato de Impresión',
+      text: 'Seleccione el tamaño del recibo:',
+      icon: 'question',
+      showDenyButton: true,
+      showCancelButton: true,
+      confirmButtonText: '<i class="fa-solid fa-receipt"></i> Ticket 80mm',
+      confirmButtonColor: '#3085d6',
+      denyButtonText: '<i class="fa-solid fa-file-invoice"></i> Factura A4',
+      denyButtonColor: '#475569',
+      cancelButtonText: 'Cancelar'
+    });
+
+    if (result.isConfirmed) {
+      this.imprimirFactura(venta, '80mm');
+    } else if (result.isDenied) {
+      this.imprimirFactura(venta, 'A4');
+    }
+  }
+
   async imprimirFactura(venta: Venta, formato: '80mm' | '58mm' | 'A4' = '80mm') {
     if (!venta.id) return;
     try {
