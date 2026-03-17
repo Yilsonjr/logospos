@@ -1,0 +1,26 @@
+/* Global Container */
+:host {
+    display: block;
+    min-height: 100vh;
+    background-color: #f8f9fa;
+}
+
+/* Enhancements */
+.card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* List Group */
+.list-group-item {
+    transition: background-color 0.2s ease;
+}
+
+.list-group-item:hover {
+    background-color: #f1f5f9;
+    /* Slate 100 equiv */
+}
+
+/* Icon Containers */
+.rounded {
+    transition: background-color 0.2s ease;
+}

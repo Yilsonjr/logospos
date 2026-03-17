@@ -1,0 +1,303 @@
+:host {
+    display: block;
+    min-height: 100vh;
+    background-color: #f1f5f9;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    color: #1e293b;
+}
+
+/* === Mini Design System === */
+:host {
+    --primary-gradient: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    --success-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    --glass-bg: rgba(255, 255, 255, 0.9);
+    --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --premium-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.05), 0 8px 10px -6px rgb(0 0 0 / 0.05);
+}
+
+/* === Main Layout Compact === */
+.container-compact {
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 1.5rem;
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* === Unified Header === */
+.mini-header {
+    text-align: center;
+    margin-bottom: 0.5rem;
+}
+
+.mini-icon-box {
+    width: 48px;
+    height: 48px;
+    background: white;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #6366f1;
+    font-size: 1.25rem;
+    box-shadow: var(--card-shadow);
+    /* margin-bottom: 0.5rem; */
+    border: 1px solid #e2e8f0;
+}
+
+.mini-header h4 {
+    font-weight: 800;
+    font-size: 1.25rem;
+    letter-spacing: -0.025em;
+    margin-bottom: 0.25rem;
+}
+
+/* === Premium Compact Card === */
+.compact-card {
+    background: white;
+    border-radius: 1.25rem;
+    box-shadow: var(--premium-shadow);
+    border: 1px solid rgba(226, 232, 240, 0.7);
+    overflow: hidden;
+}
+
+.card-banner {
+    background: var(--primary-gradient);
+    padding: 0.8rem;
+    color: white;
+    position: relative;
+}
+
+.station-pill {
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(8px);
+    padding: 0.25rem 0.75rem;
+    border-radius: 99px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* === Center Amount Focus === */
+.amount-box {
+    background: #f8fafc;
+    border: 2px solid #e2e8f0;
+    border-radius: 1rem;
+    margin: 0.75rem;
+    padding: 0.75rem;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.amount-box:focus-within {
+    border-color: #10b981;
+    background: white;
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.05);
+}
+
+.amount-label {
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.amount-input-group {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.currency-sym {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #94a3b8;
+}
+
+.compact-amount-input {
+    border: none;
+    background: transparent;
+    font-size: 2.25rem;
+    font-weight: 900;
+    color: #1e293b;
+    width: 160px;
+    text-align: center;
+    padding: 0;
+    outline: none;
+}
+
+/* === Details Grid === */
+.details-row {
+    padding: 0 0.5rem 0.5rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.field-box {
+    background: #f1f5f9;
+    padding: 0.75rem;
+    border-radius: 0.75rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.field-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    margin-bottom: 0.25rem;
+}
+
+.field-value {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #334155;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* === Actions === */
+.form-footer {
+    padding: 0 1.5rem 1.5rem;
+}
+
+.compact-textarea {
+    width: 100%;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.75rem;
+    padding: 0.75rem;
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+    transition: all 0.2s ease;
+    min-height: 60px;
+}
+
+.compact-textarea:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+}
+
+.compact-btn {
+    width: 100%;
+    background: var(--primary-gradient);
+    color: white;
+    border: none;
+    padding: 0.875rem;
+    border-radius: 0.75rem;
+    font-weight: 700;
+    font-size: 0.95rem;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+    transition: all 0.2s ease;
+}
+
+.compact-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(79, 70, 229, 0.4);
+}
+
+/* === Already Open Version === */
+.alert-compact {
+    background: #fffbeb;
+    border: 1px solid #fef3c7;
+    border-radius: 1.25rem;
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.alert-icon {
+    width: 40px;
+    height: 40px;
+    background: #f59e0b;
+    color: white;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-5px);
+    }
+}
+
+.btn-warning-compact {
+    background: #f59e0b;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.75rem;
+    font-weight: 700;
+    font-size: 0.9rem;
+    margin-top: 1rem;
+}
+
+/* === Custom Fullscreen Overlay (Avoid Bootstrap JS) === */
+.custom-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.custom-modal-content {
+    width: 90%;
+    max-width: 400px;
+    animation: zoomIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    background: white;
+    border-radius: 2rem;
+    overflow: hidden;
+}
+
+@keyframes zoomIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.modal-confirm-amount {
+    font-size: 2.25rem;
+    font-weight: 900;
+    color: #059669;
+}

@@ -1,0 +1,34 @@
+/* Global Container */
+:host {
+  display: block;
+  min-height: 100vh;
+  background-color: #f8f9fa;
+}
+
+/* Card Hover Effect */
+.hover-shadow:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .15) !important;
+  transition: all .3s ease-in-out;
+}
+
+/* Table Hover */
+.table-hover tbody tr:hover {
+  background-color: rgba(0, 0, 0, .02);
+}
+
+/* Scrollable Table */
+.table-responsive {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+/* Empty State Icon */
+.fa-folder-open {
+  color: #adb5bd;
+}
+
+/* Progress Bar Tweaks */
+.progress-bar {
+  transition: width .6s ease;
+}

@@ -1,0 +1,228 @@
+<div class="container-fluid py-4 min-vh-100 bg-light">
+
+  <!-- Header -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 gap-3">
+    <div>
+      <h2 class="fw-bold text-dark mb-0">Recordatorios de Cobranza</h2>
+      <p class="text-muted mb-0 small">Gestiona notificaciones automáticas y manuales para tus clientes</p>
+    </div>
+    <button (click)="programarRecordatoriosAutomaticos()"
+      class="btn btn-primary d-flex align-items-center gap-2 shadow-sm">
+      <i class="fa-solid fa-wand-magic-sparkles"></i> Programar Automáticos
+    </button>
+  </div>
+
+  <!-- Estadísticas -->
+  <div class="row g-3 mb-4">
+    <!-- Total -->
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <span class="text-uppercase text-muted fw-bold small" style="font-size: 0.75rem;">Total</span>
+            <div class="bg-primary bg-opacity-10 text-primary p-2 rounded">
+              <i class="fa-solid fa-bell fs-5"></i>
+            </div>
+          </div>
+          <h3 class="fw-bold text-dark mb-0">{{recordatorios.length}}</h3>
+          <small class="text-muted">Registrados</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pendientes -->
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <span class="text-uppercase text-muted fw-bold small" style="font-size: 0.75rem;">Pendientes</span>
+            <div class="bg-warning bg-opacity-10 text-warning p-2 rounded">
+              <i class="fa-solid fa-clock fs-5"></i>
+            </div>
+          </div>
+          <h3 class="fw-bold text-dark mb-0">{{recordatoriosPendientes}}</h3>
+          <small class="text-muted">Por enviar</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Enviados -->
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <span class="text-uppercase text-muted fw-bold small" style="font-size: 0.75rem;">Enviados</span>
+            <div class="bg-success bg-opacity-10 text-success p-2 rounded">
+              <i class="fa-solid fa-check-circle fs-5"></i>
+            </div>
+          </div>
+          <h3 class="fw-bold text-dark mb-0">{{recordatoriosEnviados}}</h3>
+          <small class="text-muted">Exitosos</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fallidos -->
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <span class="text-uppercase text-muted fw-bold small" style="font-size: 0.75rem;">Fallidos</span>
+            <div class="bg-danger bg-opacity-10 text-danger p-2 rounded">
+              <i class="fa-solid fa-circle-exclamation fs-5"></i>
+            </div>
+          </div>
+          <h3 class="fw-bold text-dark mb-0">{{recordatoriosFallidos}}</h3>
+          <small class="text-muted">Con errores</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-3">
+      <div class="row g-3 align-items-center">
+        <!-- Filtros de Estado -->
+        <div class="col-md-7">
+          <div class="btn-group btn-group-sm flex-wrap shadow-sm">
+            <button type="button" class="btn" [class.btn-dark]="filtroEstado === 'todos'"
+              [class.btn-outline-dark]="filtroEstado !== 'todos'" (click)="cambiarFiltroEstado('todos')">Todos</button>
+            @for (estado of estadosRecordatorio; track estado.valor) {
+            <button type="button" class="btn"
+              [class.btn-success]="filtroEstado === estado.valor && estado.color === 'green'"
+              [class.btn-outline-success]="filtroEstado !== estado.valor && estado.color === 'green'"
+              [class.btn-warning]="filtroEstado === estado.valor && estado.color === 'yellow'"
+              [class.btn-outline-warning]="filtroEstado !== estado.valor && estado.color === 'yellow'"
+              [class.btn-danger]="filtroEstado === estado.valor && estado.color === 'red'"
+              [class.btn-outline-danger]="filtroEstado !== estado.valor && estado.color === 'red'"
+              [class.btn-secondary]="filtroEstado === estado.valor && estado.color === 'gray'"
+              [class.btn-outline-secondary]="filtroEstado !== estado.valor && estado.color === 'gray'"
+              (click)="cambiarFiltroEstado(estado.valor)">
+              {{estado.etiqueta}}
+            </button>
+            }
+          </div>
+        </div>
+
+        <!-- Búsqueda -->
+        <div class="col-md-5">
+          <div class="input-group">
+            <span class="input-group-text bg-light border-end-0 text-muted">
+              <i class="fa-solid fa-search"></i>
+            </span>
+            <input type="text" [(ngModel)]="busqueda" (input)="onBusquedaChange()"
+              class="form-control border-start-0 ps-0 bg-light" placeholder="Buscar por cliente...">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lista de Recordatorios -->
+  <div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+
+      @if (isLoading) {
+      <div class="p-5 text-center">
+        <div class="spinner-border text-primary mb-3" role="status"></div>
+        <p class="text-muted">Cargando recordatorios...</p>
+      </div>
+      } @else if (recordatoriosFiltrados.length === 0) {
+      <div class="p-5 text-center">
+        <div class="text-muted opacity-50 mb-3">
+          <i class="fa-solid fa-bell-slash fa-3x"></i>
+        </div>
+        <h5 class="fw-bold text-dark">No hay recordatorios</h5>
+        <p class="text-muted small mb-3">No se encontraron recordatorios con los filtros actuales.</p>
+        <button (click)="programarRecordatoriosAutomaticos()" class="btn btn-primary btn-sm">
+          Programar Automáticos
+        </button>
+      </div>
+      } @else {
+      <div class="list-group list-group-flush">
+        @for (recordatorio of recordatoriosFiltrados; track recordatorio.id) {
+        <div class="list-group-item list-group-item-action p-4 border-bottom">
+          <div class="row align-items-start g-3">
+
+            <!-- Icono Canal -->
+            <div class="col-auto">
+              <div class="rounded p-3 d-flex align-items-center justify-content-center"
+                style="width: 50px; height: 50px;" [class.bg-success-subtle]="recordatorio.canal === 'whatsapp'"
+                [class.text-success]="recordatorio.canal === 'whatsapp'"
+                [class.bg-primary-subtle]="recordatorio.canal === 'email'"
+                [class.text-primary]="recordatorio.canal === 'email'"
+                [class.bg-secondary-subtle]="recordatorio.canal === 'sms'"
+                [class.text-secondary]="recordatorio.canal === 'sms'">
+                <i class="fa-brands fa-whatsapp fs-4" *ngIf="recordatorio.canal === 'whatsapp'"></i>
+                <i class="fa-solid fa-envelope fs-4" *ngIf="recordatorio.canal === 'email'"></i>
+                <i class="fa-solid fa-comment-sms fs-4" *ngIf="recordatorio.canal === 'sms'"></i>
+              </div>
+            </div>
+
+            <!-- Info Principal -->
+            <div class="col">
+              <div class="d-flex w-100 justify-content-between align-items-start mb-1">
+                <h5 class="mb-0 fw-bold text-dark">{{recordatorio.cliente_nombre}}</h5>
+                <span [class]="getEstadoBadgeClass(recordatorio.estado)">
+                  {{recordatorio.estado | uppercase}}
+                </span>
+              </div>
+
+              <div class="text-muted small mb-2 d-flex align-items-center gap-2">
+                <span class="text-capitalize"><i class="fa-solid fa-tag me-1"></i> {{recordatorio.tipo}}</span>
+                <span class="text-secondary mx-1">•</span>
+                <span><i class="fa-solid fa-calendar me-1"></i> {{formatearFecha(recordatorio.fecha_programada)}}</span>
+              </div>
+
+              <div class="bg-light p-3 rounded border mb-2 text-dark small">
+                {{recordatorio.mensaje}}
+              </div>
+
+              <div class="d-flex align-items-center gap-3 text-muted small">
+                @if (recordatorio.telefono) {
+                <span><i class="fa-solid fa-phone me-1"></i> {{recordatorio.telefono}}</span>
+                }
+                @if (recordatorio.email) {
+                <span><i class="fa-solid fa-envelope me-1"></i> {{recordatorio.email}}</span>
+                }
+                @if (recordatorio.fecha_enviado) {
+                <span class="text-success"><i class="fa-solid fa-check-double me-1"></i> Enviado:
+                  {{formatearFecha(recordatorio.fecha_enviado)}}</span>
+                }
+              </div>
+            </div>
+
+            <!-- Acciones -->
+            <div class="col-auto d-flex flex-column gap-2 align-self-center">
+              @if (recordatorio.estado === 'pendiente') {
+              <button class="btn btn-sm btn-primary d-flex align-items-center gap-2"
+                (click)="enviarRecordatorio(recordatorio)">
+                <i class="fa-solid fa-paper-plane"></i> Enviar
+              </button>
+              <button class="btn btn-sm btn-outline-danger d-flex align-items-center gap-2"
+                (click)="cancelarRecordatorio(recordatorio)">
+                <i class="fa-solid fa-xmark"></i> Cancelar
+              </button>
+              }
+              @if (recordatorio.canal === 'whatsapp' && recordatorio.telefono) {
+              <button class="btn btn-sm btn-success d-flex align-items-center gap-2"
+                (click)="abrirWhatsApp(recordatorio)">
+                <i class="fa-brands fa-whatsapp"></i> Chat
+              </button>
+              }
+            </div>
+
+          </div>
+        </div>
+        }
+      </div>
+      }
+    </div>
+
+    <div class="card-footer bg-white small text-muted">
+      Mostrando {{recordatoriosFiltrados.length}} recordatorios
+    </div>
+  </div>
+
+</div>

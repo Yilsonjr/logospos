@@ -1,0 +1,227 @@
+<div class="pos-layout" [class.pos-layout--collapsed]="isSidebarCollapsed">
+
+  <!-- ========================================= -->
+  <!-- ZONA IZQUIERDA: PRODUCTOS (Flexible)      -->
+  <!-- ========================================= -->
+  <div class="products-area">
+
+    <!-- 1. Header de Productos y Búsqueda -->
+    <div class="products-header">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="mb-0 fw-bold text-dark d-flex align-items-center">
+          <button class="btn btn-light btn-sm me-3 border shadow-sm" (click)="toggleSidebar()"
+            title="Mostrar/Ocultar Menú">
+            <i class="fa-solid fa-bars"></i>
+          </button>
+          <i class="fa-solid fa-box text-primary me-2"></i>Productos
+        </h4>
+      </div>
+
+      <!-- Barra de Búsqueda -->
+      <div class="position-relative">
+        <div class="input-group input-group-lg shadow-sm">
+          <span class="input-group-text bg-white border-end-0 text-muted"> <i class="fa-solid fa-search"></i> </span>
+          <input #searchInput type="text" class="form-control border-start-0 ps-0 text-dark"
+            placeholder="Buscar productos (F5)..." [(ngModel)]="busquedaProducto" (input)="buscarProducto()"
+            (keydown)="handleSearchKeydown($event)" (focus)="mostrarAutocomplete = true" autocomplete="off">
+        </div>
+
+        <!-- Autocomplete Dropdown -->
+        <div class="position-absolute w-100 mt-1 shadow-lg rounded bg-white border z-3 overflow-hidden"
+          style="max-height: 400px; overflow-y: auto;"
+          *ngIf="mostrarAutocomplete && busquedaProducto && productosFiltrados.length > 0">
+          <ul class="list-group list-group-flush">
+            <li *ngFor="let producto of productosFiltrados.slice(0, 8); let i = index"
+              class="list-group-item list-group-item-action d-flex align-items-center p-3 cursor-pointer"
+              [class.active]="i === selectedAutocompleteIndex" (click)="agregarAlCarrito(producto); limpiarBusqueda()"
+              (mouseenter)="selectedAutocompleteIndex = i">
+              <div class="me-3 fs-4 text-muted">{{ getProductoIcon(producto.categoria) }}</div>
+              <div class="flex-grow-1">
+                <div class="fw-bold">{{ producto.nombre }}</div>
+                <small class="text-muted" *ngIf="producto.sku">SKU: {{ producto.sku }}</small>
+              </div>
+              <div class="text-end">
+                <div class="fw-bold text-primary">{{ formatearMoneda(producto.precio_venta) }}</div>
+                <span class="badge rounded-pill"
+                  [ngClass]="producto.stock > 10 ? 'bg-success-subtle text-success' : (producto.stock > 0 ? 'bg-warning-subtle text-warning' : 'bg-danger-subtle text-danger')">
+                  Stock: {{ producto.stock }}
+                </span>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Grid de Productos (Scrollable) -->
+    <div class="products-grid-container bg-light">
+      <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-3 row-products">
+        <div class="col" *ngFor="let producto of productosFiltrados">
+          <div class="card h-100 product-card border-0 shadow-sm" [class.opacity-50]="producto.stock === 0"
+            (click)="agregarAlCarrito(producto)">
+            <!-- Imagen -->
+            <div class="card-img-top d-flex align-items-center justify-content-center position-relative overflow-hidden"
+              style="height: 110px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+              <img *ngIf="producto.imagen_url" [src]="producto.imagen_url" class="w-100 h-100 object-fit-contain p-2">
+              <span *ngIf="!producto.imagen_url" style="font-size: 3rem;">{{ getProductoIcon(producto.categoria)
+                }}</span>
+              <!-- Badges -->
+              <span class="position-absolute top-0 end-0 m-2 badge rounded-pill bg-warning text-dark shadow-sm"
+                *ngIf="producto.stock < 10 && producto.stock > 0">Bajo Stock</span>
+              <span class="position-absolute top-0 end-0 m-2 badge rounded-pill bg-danger shadow-sm"
+                *ngIf="producto.stock === 0">Agotado</span>
+            </div>
+            <!-- Cuerpo -->
+            <div class="card-body p-2 text-center d-flex flex-column justify-content-between bg-white rounded-bottom">
+              <h6 class="card-title text-dark fw-semibold mb-2 text-truncate" title="{{ producto.nombre }}">
+                {{ producto.nombre }}
+              </h6>
+              <div class="fw-bold text-primary fs-5">{{ formatearMoneda(producto.precio_venta) }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Estado Vacío -->
+      <div *ngIf="!cargando && productosFiltrados.length === 0"
+        class="d-flex flex-column align-items-center justify-content-center h-100 text-muted opacity-50">
+        <i class="fa-solid fa-box-open fa-4x mb-3"></i>
+        <h4 class="fw-light">No se encontraron productos</h4>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ========================================= -->
+  <!-- ZONA DERECHA: CARRITO (Fijo 380px)        -->
+  <!-- ========================================= -->
+  <div class="cart-area">
+
+    <!-- 1. Header Carrito -->
+    <div class="cart-header d-flex justify-content-between align-items-center bg-white">
+      <h5 class="mb-0 fw-bold text-dark"><i class="fa-solid fa-receipt me-2 text-primary"></i>Orden</h5>
+      <button class="btn btn-outline-danger btn-sm" (click)="limpiarCarrito()" [disabled]="carrito.length === 0"
+        title="Limpiar carrito">
+        <i class="fa-solid fa-trash"></i>
+      </button>
+    </div>
+
+    <!-- 2. Cliente Selector -->
+    <div class="p-2 bg-light border-bottom">
+      <label class="form-label small fw-bold text-muted mb-1"><i class="fa-solid fa-user me-1"></i> CLIENTE</label>
+      <select class="form-select form-select-sm border-0 shadow-sm bg-white py-2" [(ngModel)]="clienteSeleccionado"
+        (ngModelChange)="clienteSeleccionado && seleccionarCliente(clienteSeleccionado)">
+        <option [ngValue]="undefined">Cliente General</option>
+        <option *ngFor="let cliente of clientes" [ngValue]="cliente">{{ cliente.nombre }}</option>
+      </select>
+
+    </div>
+
+    <!-- Fiscal Data (Solo si activo) -->
+    <div class="p-2 bg-white border-bottom" *ngIf="configFiscal?.modo_fiscal">
+      <label class="form-label small fw-bold text-muted mb-1"><i class="fa-solid fa-file-invoice-dollar me-1"></i>
+        COMPROBANTE</label>
+      <select class="form-select form-select-sm border-0 shadow-sm bg-light mb-2" [(ngModel)]="tipoComprobante">
+        <option *ngFor="let tipo of tiposComprobante" [value]="tipo.codigo">
+          {{ tipo.descripcion }}
+        </option>
+      </select>
+
+      <div *ngIf="tipoComprobante === 'B01'" class="mt-2 animate__animated animate__fadeIn">
+        <label class="form-label small fw-bold text-muted mb-1">RNC CLIENTE *</label>
+        <input type="text" class="form-control form-control-sm border-primary" [(ngModel)]="rncCliente"
+          placeholder="Ej: 131XXXXXX" [readonly]="clienteSeleccionado?.rnc">
+        <small class="text-primary" *ngIf="clienteSeleccionado?.rnc">
+          <i class="fa-solid fa-check-circle"></i> Usando RNC del Cliente
+        </small>
+      </div>
+    </div>
+
+    <!-- 3. Lista de Items (Scrollable) -->
+    <div class="cart-items-container scrollbar-thin">
+      <ul class="list-group list-group-flush">
+        <li class="list-group-item py-3 px-3 border-bottom-0 border-top bg-transparent" *ngFor="let item of carrito">
+          <div class="d-flex align-items-center w-100">
+            <!-- Imagen -->
+            <div class="me-3 flex-shrink-0 position-relative rounded overflow-hidden border bg-light"
+              style="width: 48px; height: 48px;">
+              <img *ngIf="item.imagen_url" [src]="item.imagen_url" class="w-100 h-100 object-fit-cover">
+              <div *ngIf="!item.imagen_url"
+                class="w-100 h-100 d-flex align-items-center justify-content-center fs-5 text-muted">
+                {{ getProductoIcon(item.categoria || '') }}
+              </div>
+            </div>
+            <!-- Info -->
+            <div class="flex-grow-1 me-2 overflow-hidden">
+              <div class="fw-bold text-dark text-truncate">{{ item.producto_nombre }}</div>
+              <div class="small text-muted">{{ formatearMoneda(item.precio_unitario) }}</div>
+            </div>
+            <!-- Controles -->
+            <div class="d-flex flex-column align-items-end">
+              <div class="d-flex align-items-center bg-light rounded border mb-1">
+                <button class="btn btn-sm px-2 py-0 text-muted hover-danger"
+                  (click)="actualizarCantidad(item, item.cantidad - 1)">
+                  <i class="fa-solid fa-minus" style="font-size: 0.7rem;"></i>
+                </button>
+                <span class="px-2 fw-bold text-dark" style="min-width: 1.5rem; text-align: center;">{{ item.cantidad
+                  }}</span>
+                <button class="btn btn-sm px-2 py-0 text-muted hover-success"
+                  (click)="actualizarCantidad(item, item.cantidad + 1)">
+                  <i class="fa-solid fa-plus" style="font-size: 0.7rem;"></i>
+                </button>
+              </div>
+              <div class="fw-bold text-primary">{{ formatearMoneda(item.subtotal) }}</div>
+            </div>
+          </div>
+          <!-- Eliminar -->
+          <div class="text-end mt-1">
+            <a href="javascript:void(0)" class="text-danger small text-decoration-none opacity-75 hover-opacity-100"
+              (click)="eliminarDelCarrito(item)">
+              <i class="fa-solid fa-times me-1"></i>Remover
+            </a>
+          </div>
+        </li>
+      </ul>
+
+      <!-- Carrito Vacío -->
+      <div *ngIf="carrito.length === 0"
+        class="d-flex flex-column align-items-center justify-content-center h-100 text-muted opacity-50 p-2">
+        <i class="fa-solid fa-cart-shopping fa-2x mb-1"></i>
+        <p class="text-center mb-0">El carrito está vacío</p>
+        <div class="d-flex gap-2 mt-1">
+          <span class="badge bg-light text-dark border"><kbd>F5</kbd> Buscar</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. Footer Totales -->
+    <div class="cart-footer mt-auto z-3">
+      <div class="d-flex justify-content-between mb-1 small text-muted">
+        <span>Subtotal:</span>
+        <span>{{ formatearMoneda(subtotal) }}</span>
+      </div>
+      <div class="d-flex justify-content-between mb-2">
+        <span class="fs-5 fw-bold text-dark">Total:</span>
+        <span class="fs-5 fw-bold text-success">{{ formatearMoneda(total) }}</span>
+      </div>
+      <button class="btn btn-primary w-100 py-3 fs-5 fw-bold shadow-sm" (click)="mostrarPago = true"
+        [disabled]="carrito.length === 0">
+        <i class="fa-regular fa-credit-card me-2"></i> COBRAR
+      </button>
+    </div>
+  </div>
+
+</div>
+
+
+<!-- ========================================= -->
+<!-- MODAL DE PAGO (Bootstrap Overlay)         -->
+<!-- ========================================= -->
+<!-- ========================================= -->
+<!-- MODAL DE PAGO (Custom Overlay)            -->
+<!-- ========================================= -->
+<app-modal-pago *ngIf="mostrarPago" [total]="total" [clienteSeleccionado]="clienteSeleccionado"
+  [configFiscal]="configFiscal" [tipoComprobante]="tipoComprobante" [rncCliente]="rncCliente"
+  (tipoComprobanteChange)="tipoComprobante = $event" (rncClienteChange)="rncCliente = $event"
+  (confirmarPago)="onPagoConfirmado($event)" (cancelar)="mostrarPago = false">
+</app-modal-pago>

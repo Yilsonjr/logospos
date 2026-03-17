@@ -1,0 +1,162 @@
+/* Bootstrap Custom Styles for Usuarios */
+
+:host {
+  display: block;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* Premium Gradients */
+.bg-gradient-primary {
+  background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+}
+
+.bg-opacity-25 {
+  background-color: rgba(255, 255, 255, 0.25) !important;
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Modal Enhancements - Fixed Overlay with Content Centering */
+.modal.d-block {
+  background-color: rgba(0, 0, 0, 0.5);
+  display: block;
+  overflow-x: hidden;
+  overflow-y: auto;
+
+  /* Full screen overlay */
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10000;
+
+  /* Center dialog relative to content area, not viewport */
+  padding-left: 0;
+  transition: padding-left 0.3s ease;
+}
+
+/* Desktop: Adjust padding based on sidebar state */
+@media (min-width: 768px) {
+
+  /* Default state (Sidebar Open - inferred context or default) */
+  :host-context(.main-content) .modal.d-block {
+    padding-left: 260px;
+  }
+
+  /* Collapsed state */
+  :host-context(.main-content--sidebar-collapsed) .modal.d-block {
+    padding-left: 70px !important;
+  }
+
+  /* No sidebar state */
+  :host-context(.main-content--no-sidebar) .modal.d-block {
+    padding-left: 0 !important;
+  }
+}
+
+/* Modal Dialog adjustments */
+.modal-dialog {
+  z-index: 10001;
+  /* Ensure margins facilitate centering */
+  margin: 1.75rem auto;
+}
+
+.modal-content {
+  border-radius: 1rem;
+}
+
+.btn-close-white {
+  filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+.shadow-inner {
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Avatar Placeholder */
+.avatar-placeholder {
+  font-size: 3.5rem;
+  font-weight: 700;
+  background-color: #f8f9fa;
+  transition: all 0.3s ease;
+}
+
+.btn-camera {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+}
+
+.btn-camera:hover {
+  transform: scale(1.1);
+}
+
+/* Subtle Input Backgrounds */
+.bg-light-input {
+  background-color: #f8f9fa !important;
+  border-color: #e9ecef;
+}
+
+.bg-light-input:focus {
+  background-color: #fff !important;
+  border-color: #86b7fe;
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+}
+
+/* Floating Labels Tweaks */
+.form-floating>.form-control:focus~label,
+.form-floating>.form-control:not(:placeholder-shown)~label,
+.form-floating>.form-select~label {
+  color: #0d6efd;
+  font-weight: 600;
+  transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
+}
+
+.form-floating>label {
+  padding-left: 1rem;
+}
+
+.form-floating>.form-control {
+  padding-left: 1rem;
+}
+
+/* Card Hover Effects */
+.card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Avatar Circle in Table */
+.avatar-circle {
+  font-size: 1.1rem;
+  letter-spacing: -0.5px;
+}
+
+/* Table Styles */
+.table> :not(caption)>*>* {
+  padding: 1rem 1.5rem;
+  border-bottom-color: #f1f5f9;
+}
+
+.table-hover tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+/* Checkbox Cursor */
+.cursor-pointer {
+  cursor: pointer;
+}

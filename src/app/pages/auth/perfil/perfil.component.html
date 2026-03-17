@@ -1,0 +1,248 @@
+<div class="container-fluid py-4 bg-light min-vh-100">
+  <div class="max-w-4xl mx-auto" style="max-width: 900px;">
+
+    <!-- Header -->
+    <div class="mb-4">
+      <h2 class="fw-bold text-dark mb-1">Mi Perfil</h2>
+      <p class="text-muted">Gestiona tu información personal y configuración de cuenta</p>
+    </div>
+
+    <div class="row g-4">
+      <!-- Información Personal (Izquierda) -->
+      <div class="col-lg-8">
+
+        <div class="card border-0 shadow-sm rounded-4 mb-4">
+          <div class="card-body p-4 p-md-5">
+            <h5 class="fw-bold text-dark mb-4 border-start border-4 border-primary ps-2">Información Personal</h5>
+
+            <div *ngIf="usuario">
+              <!-- Avatar y Nombre -->
+              <div class="d-flex align-items-center flex-column flex-sm-row gap-4 mb-5 pb-4 border-bottom">
+                <div class="flex-shrink-0">
+                  <div class="rounded-circle d-flex align-items-center justify-content-center text-white shadow"
+                    [style.background-color]="obtenerColorRol()"
+                    style="width: 100px; height: 100px; font-size: 2.5rem; font-weight: 700;">
+                    {{ obtenerIniciales(usuario.nombre, usuario.apellido) }}
+                  </div>
+                </div>
+                <div class="text-center text-sm-start">
+                  <h3 class="fw-bold text-dark mb-1">
+                    {{ usuario.nombre }} {{ usuario.apellido }}
+                  </h3>
+                  <p class="text-muted mb-2 mb-sm-0">
+                    <i class="fa-solid fa-at text-secondary me-1"></i>{{ usuario.username }}
+                  </p>
+                  <span class="badge rounded-pill px-3 py-2 shadow-sm mt-2"
+                    [style.background-color]="obtenerColorRol() + '20'" [style.color]="obtenerColorRol()"
+                    style="border: 1px solid currentColor;">
+                    <i class="fa-solid fa-user-tag me-1"></i> {{ usuario.rol?.nombre || 'Sin Rol' }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Información de Contacto (Grid) -->
+              <div class="row g-4">
+                <div class="col-sm-6">
+                  <label class="form-label text-muted small fw-bold text-uppercase"
+                    style="letter-spacing: 0.05em;">Email</label>
+                  <div class="bg-light border rounded-3 p-3 text-dark fw-medium d-flex align-items-center">
+                    <i class="fa-regular fa-envelope text-primary opacity-75 me-2"></i>
+                    {{ usuario.email }}
+                  </div>
+                </div>
+
+                <div class="col-sm-6">
+                  <label class="form-label text-muted small fw-bold text-uppercase"
+                    style="letter-spacing: 0.05em;">Usuario</label>
+                  <div class="bg-light border rounded-3 p-3 text-dark fw-medium d-flex align-items-center">
+                    <i class="fa-regular fa-id-badge text-primary opacity-75 me-2"></i>
+                    {{ usuario.username }}
+                  </div>
+                </div>
+
+                <div class="col-sm-6">
+                  <label class="form-label text-muted small fw-bold text-uppercase"
+                    style="letter-spacing: 0.05em;">Teléfono</label>
+                  <div class="bg-light border rounded-3 p-3 text-dark fw-medium d-flex align-items-center">
+                    <i class="fa-solid fa-phone text-primary opacity-75 me-2"></i>
+                    {{ usuario.telefono || 'No especificado' }}
+                  </div>
+                </div>
+
+                <div class="col-sm-6">
+                  <label class="form-label text-muted small fw-bold text-uppercase"
+                    style="letter-spacing: 0.05em;">Último Acceso</label>
+                  <div class="bg-light border rounded-3 p-3 text-dark fw-medium d-flex align-items-center">
+                    <i class="fa-regular fa-clock text-primary opacity-75 me-2"></i>
+                    {{ formatearFecha(usuario.ultimo_acceso || '') }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cambio de Contraseña -->
+        <div class="card border-0 shadow-sm rounded-4">
+          <div class="card-body p-4 p-md-5">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+              <h5 class="fw-bold text-dark mb-0 border-start border-4 border-warning ps-2">Seguridad</h5>
+              <button (click)="toggleCambioContrasena()" class="btn btn-sm"
+                [ngClass]="mostrarCambioContrasena ? 'btn-outline-secondary' : 'btn-outline-primary'">
+                <i class="fa-solid" [ngClass]="mostrarCambioContrasena ? 'fa-xmark' : 'fa-key'"></i>
+                {{ mostrarCambioContrasena ? 'Cancelar' : 'Cambiar Contraseña' }}
+              </button>
+            </div>
+
+            <div *ngIf="!mostrarCambioContrasena" class="text-muted bg-light p-4 rounded-3 border">
+              <div class="d-flex align-items-center gap-3">
+                <div class="fs-1 text-warning opacity-75">
+                  <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <div>
+                  <h6 class="fw-bold text-dark mb-1">Protege tu cuenta</h6>
+                  <p class="small mb-0">Se recomienda cambiar la contraseña regularmente. Usa una combinación de letras,
+                    números y símbolos para mayor seguridad.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Formulario de Cambio de Contraseña -->
+            <form *ngIf="mostrarCambioContrasena" (ngSubmit)="cambiarContrasena()" #passwordForm="ngForm"
+              class="bg-light p-4 rounded-3 border">
+              <div class="row g-3">
+                <div class="col-12">
+                  <label class="form-label fw-medium text-dark">Contraseña Actual <span
+                      class="text-danger">*</span></label>
+                  <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0"><i
+                        class="fa-solid fa-lock text-muted"></i></span>
+                    <input type="password" [(ngModel)]="cambioContrasena.actual" name="actual" required
+                      class="form-control border-start-0 ps-0" placeholder="Ingresa tu contraseña actual">
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label fw-medium text-dark">Nueva Contraseña <span
+                      class="text-danger">*</span></label>
+                  <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0"><i
+                        class="fa-solid fa-key text-muted"></i></span>
+                    <input type="password" [(ngModel)]="cambioContrasena.nueva" name="nueva" required minlength="6"
+                      class="form-control border-start-0 ps-0" placeholder="Min. 6 caracteres">
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label fw-medium text-dark">Confirmar Nueva <span
+                      class="text-danger">*</span></label>
+                  <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0"><i
+                        class="fa-solid fa-check-double text-muted"></i></span>
+                    <input type="password" [(ngModel)]="cambioContrasena.confirmar" name="confirmar" required
+                      class="form-control border-start-0 ps-0" placeholder="Repite la contraseña">
+                  </div>
+                </div>
+
+                <div class="col-12 mt-4 d-flex justify-content-end gap-2">
+                  <button type="button" (click)="toggleCambioContrasena()"
+                    class="btn btn-light border px-4">Cancelar</button>
+                  <button type="submit" [disabled]="isLoading || !passwordForm.form.valid"
+                    class="btn btn-warning fw-bold px-4 shadow-sm text-dark">
+                    <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-2"></span>
+                    {{ isLoading ? 'Actualizando...' : 'Guardar Nueva Contraseña' }}
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Sidebar Derecha (Sesiones y Rol) -->
+      <div class="col-lg-4">
+
+        <!-- Información del Rol -->
+        <div *ngIf="usuario?.rol" class="card border-0 shadow-sm rounded-4 mb-4"
+          style="background: linear-gradient(145deg, #ffffff, #f8f9fa);">
+          <div class="card-body p-4 text-center">
+            <h6 class="fw-bold text-dark text-uppercase mb-4" style="letter-spacing: 0.1em;">Mi Rol en el Sistema</h6>
+
+            <div class="mb-3">
+              <span class="badge rounded-pill px-4 py-2 fs-6 shadow-sm" [style.background-color]="obtenerColorRol()">
+                <i class="fa-solid fa-star me-2"></i>{{ usuario?.rol?.nombre || 'Sin rol' }}
+              </span>
+            </div>
+
+            <p class="small text-muted mb-4 opacity-75">
+              {{ usuario?.rol?.descripcion || 'Sin descripción' }}
+            </p>
+
+            <div class="p-3 rounded-4 bg-light border border-dashed">
+              <div class="display-5 fw-bold text-dark mb-0">{{ usuario?.rol?.permisos?.length || 0 }}</div>
+              <div class="small fw-bold text-uppercase text-muted" style="letter-spacing: 0.05em;">Permisos Activos
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sesiones Activas -->
+        <div class="card border-0 shadow-sm rounded-4">
+          <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+              <h6 class="fw-bold text-dark mb-0 border-start border-4 border-info ps-2">Sesiones Activas</h6>
+              <button (click)="cargarSesionesActivas()" class="btn btn-sm btn-light p-2 rounded-circle border text-info"
+                title="Actualizar">
+                <i class="fa-solid fa-rotate-right"></i>
+              </button>
+            </div>
+
+            <div class="d-flex flex-column gap-3 mb-4">
+              <div *ngFor="let sesion of sesionesActivas"
+                class="bg-light border rounded-4 p-3 position-relative overflow-hidden">
+                <div class="position-absolute top-0 start-0 w-100 h-100 bg-success opacity-10" *ngIf="sesion.activa"
+                  style="pointer-events: none;"></div>
+                <div class="d-flex justify-content-between align-items-start mb-2 position-relative z-1">
+                  <div class="d-flex align-items-center gap-2">
+                    <i class="fa-solid fa-circle text-success" style="font-size: 0.5rem;" *ngIf="sesion.activa"></i>
+                    <span class="fw-bold text-dark small">{{ obtenerDispositivo(sesion.user_agent || '') }}</span>
+                  </div>
+                  <button (click)="cerrarSesion(sesion)" class="btn btn-sm text-danger p-0 border-0 bg-transparent"
+                    title="Cerrar Sesión">
+                    <i class="fa-solid fa-power-off"></i>
+                  </button>
+                </div>
+
+                <div class="text-muted" style="font-size: 0.75rem;">
+                  <div class="d-flex align-items-center gap-2 mb-1">
+                    <i class="fa-brands fa-chrome opacity-50"></i> {{ obtenerNavegador(sesion.user_agent || '') }}
+                  </div>
+                  <div class="d-flex align-items-center gap-2 mb-1">
+                    <i class="fa-solid fa-network-wired opacity-50"></i> IP: {{ sesion.ip_address || 'Desconocida' }}
+                  </div>
+                  <div class="d-flex align-items-center gap-2">
+                    <i class="fa-solid fa-clock opacity-50"></i> Inició: {{ formatearFecha(sesion.fecha_inicio) }}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <button *ngIf="sesionesActivas.length > 1" (click)="cerrarTodasLasSesiones()"
+              class="btn btn-outline-danger w-full w-100 rounded-pill fw-bold text-sm border-2">
+              <i class="fa-solid fa-broom me-2"></i>Cerrar Demás Sesiones
+            </button>
+
+            <!-- Estado Vacio -->
+            <div *ngIf="sesionesActivas.length === 0" class="text-center py-5 opacity-50">
+              <i class="fa-solid fa-ghost fs-1 text-muted mb-3 d-block"></i>
+              <p class="small text-muted mb-0">No hay sesiones activas descubiertas.</p>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>

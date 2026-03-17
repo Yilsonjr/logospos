@@ -1,0 +1,167 @@
+<!-- Modal Backdrop -->
+<div class="mc-backdrop" (click)="cerrar()"></div>
+
+<!-- Modal Panel -->
+<div class="mc-panel">
+
+    <!-- Header -->
+    <div class="mc-header">
+        <div class="mc-header-left">
+            <div class="mc-icon">
+                <i class="fa-solid fa-truck-fast"></i>
+            </div>
+            <div>
+                <h2 class="mc-title">Conduce de Salida</h2>
+                <p class="mc-subtitle">Venta {{ venta.numero_venta }}</p>
+            </div>
+        </div>
+        <button class="mc-close" (click)="cerrar()">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+    </div>
+
+    <!-- Cargando -->
+    <div class="mc-loading" *ngIf="isLoading">
+        <div class="mc-spinner"></div>
+        <span>Cargando información...</span>
+    </div>
+
+    <div class="mc-body" *ngIf="!isLoading">
+
+        <!-- Si ya existe el conduce → mostrar datos + estado -->
+        <div class="conduce-generado" *ngIf="conduceGenerado">
+            <div class="cg-badge">
+                <i class="fa-solid fa-circle-check"></i>
+                Conduce {{ conduceGenerado.numero_conduce }} generado
+            </div>
+
+            <!-- Estado actual + cambio rápido -->
+            <div class="estado-row">
+                <span class="estado-label">Estado actual:</span>
+                <span class="estado-chip" [style.background]="estadoActual?.color + '20'"
+                    [style.color]="estadoActual?.color" [style.border-color]="estadoActual?.color">
+                    <i class="fa-solid" [class]="'fa-' + estadoActual?.icon"></i>
+                    {{ estadoActual?.etiqueta }}
+                </span>
+                <select class="estado-select" (change)="cambiarEstado($any($event.target).value)"
+                    [value]="conduceGenerado.estado">
+                    <option *ngFor="let e of estadosConduce" [value]="e.valor">{{ e.etiqueta }}</option>
+                </select>
+            </div>
+
+            <!-- Resumen del conduce -->
+            <div class="cg-info-grid">
+                <div class="cg-info-item">
+                    <span class="cg-info-label"><i class="fa-solid fa-user-tie"></i> Motorista</span>
+                    <span class="cg-info-value">{{ conduceGenerado.motorista || '—' }}</span>
+                </div>
+                <div class="cg-info-item">
+                    <span class="cg-info-label"><i class="fa-solid fa-motorcycle"></i> Vehículo</span>
+                    <span class="cg-info-value">{{ conduceGenerado.vehiculo || '—' }}</span>
+                </div>
+                <div class="cg-info-item" style="grid-column: 1 / -1">
+                    <span class="cg-info-label"><i class="fa-solid fa-location-dot"></i> Dirección de entrega</span>
+                    <span class="cg-info-value">{{ conduceGenerado.direccion_entrega || '—' }}</span>
+                </div>
+            </div>
+
+            <!-- Acción imprimir -->
+            <button class="btn-imprimir" (click)="imprimir()">
+                <i class="fa-solid fa-print"></i> Imprimir Conduce
+            </button>
+        </div>
+
+        <!-- Si no existe → formulario para crearlo -->
+        <div class="conduce-form" *ngIf="!conduceGenerado">
+
+            <!-- Info de la venta (solo lectura) -->
+            <div class="venta-info">
+                <div class="vi-item">
+                    <span class="vi-label">Cliente</span>
+                    <span class="vi-value">{{ venta.cliente_nombre || 'Cliente General' }}</span>
+                </div>
+                <div class="vi-item">
+                    <span class="vi-label">Total</span>
+                    <span class="vi-value vi-total">RD$ {{ venta.total | number:'1.2-2' }}</span>
+                </div>
+                <div class="vi-item">
+                    <span class="vi-label">Productos</span>
+                    <span class="vi-value">{{ venta.detalles.length || 0 }} ítem(s)</span>
+                </div>
+            </div>
+
+            <!-- Campos del conduce -->
+            <div class="form-section">
+                <p class="form-section-title">
+                    <i class="fa-solid fa-person-biking"></i> Datos del Transporte
+                </p>
+
+                <div class="form-group required">
+                    <label>Motorista / Entregador <span class="req">*</span></label>
+                    <div class="input-with-icon">
+                        <i class="fa-solid fa-user-tie"></i>
+                        <input type="text" [(ngModel)]="motorista" placeholder="Nombre de quien entrega el pedido"
+                            class="form-control" />
+                    </div>
+                    <small>Empleado o mensajero que realiza la entrega</small>
+                </div>
+
+                <div class="form-group">
+                    <label>Vehículo / Placa</label>
+                    <div class="input-with-icon">
+                        <i class="fa-solid fa-motorcycle"></i>
+                        <input type="text" [(ngModel)]="vehiculo" placeholder="Ej: Moto Honda - A-123456"
+                            class="form-control" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <p class="form-section-title">
+                    <i class="fa-solid fa-location-dot"></i> Entrega
+                </p>
+
+                <div class="form-group">
+                    <label>Dirección de Entrega</label>
+                    <textarea [(ngModel)]="direccionEntrega" rows="2"
+                        placeholder="Dirección donde se entregará el pedido" class="form-control"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Notas adicionales</label>
+                    <textarea [(ngModel)]="notas" rows="2"
+                        placeholder="Instrucciones especiales, referencias de lugar, etc."
+                        class="form-control"></textarea>
+                </div>
+            </div>
+
+            <!-- Productos a entregar -->
+            <div class="form-section">
+                <p class="form-section-title">
+                    <i class="fa-solid fa-boxes-stacked"></i> Productos a Entregar
+                </p>
+                <div class="productos-list">
+                    <div class="prod-item" *ngFor="let d of venta.detalles">
+                        <span class="prod-nombre">{{ d.producto_nombre }}</span>
+                        <span class="prod-qty">x{{ d.cantidad }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer de acciones -->
+    <div class="mc-footer" *ngIf="!isLoading">
+        <button class="btn-cancelar" (click)="cerrar()">
+            <i class="fa-solid fa-xmark"></i> Cancelar
+        </button>
+        <button class="btn-guardar" *ngIf="!conduceGenerado" (click)="guardarYGenerar()" [disabled]="isSaving">
+            <i class="fa-solid fa-truck-fast" *ngIf="!isSaving"></i>
+            <span class="spinner-sm" *ngIf="isSaving"></span>
+            {{ isSaving ? 'Generando...' : 'Generar Conduce' }}
+        </button>
+        <button class="btn-imprimir-footer" *ngIf="conduceGenerado" (click)="imprimir()">
+            <i class="fa-solid fa-print"></i> Imprimir
+        </button>
+    </div>
+</div>

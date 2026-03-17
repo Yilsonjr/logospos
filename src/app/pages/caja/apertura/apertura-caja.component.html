@@ -1,0 +1,112 @@
+<div class="container-compact py-2">
+
+  <!-- Minimal Header -->
+  <header class="mini-header">
+    <div class="mini-icon-box">
+      <i class="fa-solid fa-cash-register"></i>
+    </div>
+    <h4>Apertura de Caja</h4>
+    <p class="text-slate-500 small mb-0">Inicia tu turno de trabajo</p>
+  </header>
+
+  <!-- CASE: Caja Abierta (Warning Compact) -->
+  @if (cajaAbierta) {
+  <div class="alert-compact shadow-sm">
+    <div class="alert-icon shadow">
+      <i class="fa-solid fa-lock"></i>
+    </div>
+    <h5 class="fw-800 text-slate-800 mb-1">Caja en Uso</h5>
+    <p class="text-slate-500 x-small mb-4">Ya existe un turno activo en esta estación.</p>
+
+    <div class="field-box text-start mb-3 border bg-white">
+      <span class="field-label">Apertura realizada por</span>
+      <span class="field-value">{{ cajaAbierta.usuario_apertura }}</span>
+      <span class="x-small text-slate-400 mt-1">{{ formatearFecha(cajaAbierta.fecha_apertura) }}</span>
+    </div>
+
+    <button class="btn-warning-compact w-100 shadow-sm" (click)="irACierre()">
+      <i class="fa-solid fa-door-closed me-2"></i> Cerrar Caja Actual
+    </button>
+    <button class="btn btn-link btn-sm text-slate-400 mt-2 text-decoration-none" (click)="irAHistorial()">
+      Ver historial
+    </button>
+  </div>
+  }
+
+  <!-- CASE: Formulario (Compact Card) -->
+  @if (!cajaAbierta) {
+  <div class="compact-card">
+    <div class="card-banner d-flex justify-content-between align-items-center">
+      <span class="fw-800 small text-uppercase ls-wider">Nuevo Turno</span>
+      <span class="station-pill">Caja #01</span>
+    </div>
+
+    <form (ngSubmit)="mostrarModalConfirmacion()">
+      <div class="amount-box shadow-sm">
+        <label class="amount-label">Monto de Base (Efectivo)</label>
+        <div class="amount-input-group">
+          <span class="currency-sym">RD$</span>
+          <input type="number" [(ngModel)]="montoInicial" name="montoInicial" class="compact-amount-input"
+            placeholder="0.00" min="0" required autofocus>
+        </div>
+        <p class="x-small text-slate-400 mt-2 mb-0">
+          <i class="fa-solid fa-circle-info me-1"></i> Cuenta el efectivo antes de ingresar
+        </p>
+      </div>
+
+      <div class="details-row">
+        <div class="field-box shadow-xs">
+          <span class="field-label">Cajero</span>
+          <span class="field-value"><i class="fa-solid fa-user-circle me-1 text-indigo-400"></i> {{ usuario }}</span>
+        </div>
+        <div class="field-box shadow-xs">
+          <span class="field-label">Fecha</span>
+          <span class="field-value"><i class="fa-solid fa-calendar-day me-1 text-indigo-400"></i> {{
+            formatearFecha(fechaActual) }}</span>
+        </div>
+      </div>
+
+      <div class="form-footer">
+        <textarea [(ngModel)]="notasApertura" name="notasApertura" rows="2" class="compact-textarea"
+          placeholder="Notas opcionales..."></textarea>
+
+        <button type="submit" class="compact-btn" [disabled]="!montoInicial || montoInicial < 0">
+          <i class="fa-solid fa-bolt me-2"></i> Abrir Caja Ahora
+        </button>
+      </div>
+    </form>
+  </div>
+  }
+
+</div>
+
+<!-- Compact Modal Custom -->
+@if (mostrarConfirmacion) {
+<div class="custom-overlay py-5" (click)="cerrarModalConfirmacion()">
+  <div class="custom-modal-content mx-auto shadow-2xl" (click)="$event.stopPropagation()">
+    <div class="p-4 text-center bg-white rounded-3xl">
+      <div class="alert-icon bg-success bg-opacity-10 text-success mb-3">
+        <i class="fa-solid fa-check fs-5"></i>
+      </div>
+      <h5 class="fw-800 text-slate-800 mb-1">¿Confirmar Apertura?</h5>
+      <p class="text-slate-400 x-small mb-4">Declaraste el siguiente monto inicial:</p>
+
+      <h2 class="modal-confirm-amount mb-4">{{ formatearMoneda(montoInicial || 0) }}</h2>
+
+      <div class="row g-2">
+        <div class="col-6">
+          <button type="button" class="btn btn-light w-100 py-2 rounded-lg fw-700 text-slate-500 x-small"
+            (click)="cerrarModalConfirmacion()">Cancelar</button>
+        </div>
+        <div class="col-6">
+          <button type="button"
+            class="btn btn-success w-100 py-2 rounded-lg fw-700 shadow-sm text-white x-small border-0"
+            (click)="abrirCaja()">
+            Confirmar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+}

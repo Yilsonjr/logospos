@@ -1,0 +1,138 @@
+<!-- Modal de Proveedor -->
+<div class="modal-overlay" (click)="cerrarModal()">
+
+  <div class="modal-card" (click)="$event.stopPropagation()">
+
+    <!-- HEADER -->
+    <header class="modal-header">
+      <div class="modal-header__text">
+        <h2 class="modal-header__title">
+          {{ editando ? 'Editar Proveedor' : 'Nuevo Proveedor' }}
+        </h2>
+        <p class="modal-header__subtitle">
+          {{ editando ? 'Modifica los datos del proveedor' : 'Completa la información del proveedor' }}
+        </p>
+      </div>
+
+      <button class="btn-close" (click)="cerrarModal()" type="button">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </header>
+
+    <!-- FORMULARIO -->
+    <form [formGroup]="proveedorForm" class="modal-body" (ngSubmit)="guardarProveedor()">
+
+      <div class="form-grid">
+
+        <!-- NOMBRE -->
+        <div class="form-group col-span-2">
+          <label class="form-label">Nombre del Proveedor *</label>
+          <input type="text" formControlName="nombre" placeholder="Ej. Distribuidora Central" class="form-input"
+            [class.border-red]="tieneError('nombre')">
+          <div *ngIf="tieneError('nombre')" class="form-error">
+            {{ getMensajeError('nombre') }}
+          </div>
+        </div>
+
+        <!-- DOCUMENTO (RNC/Cédula) -->
+        <div class="form-group">
+          <label class="form-label">RNC / Cédula</label>
+          <div class="d-flex gap-2">
+            <select formControlName="tipo_documento" class="form-input" style="width: auto;">
+              <option value="RNC">RNC</option>
+              <option value="Cédula">Cédula</option>
+              <option value="Pasaporte">Pasaporte</option>
+            </select>
+            <input type="text" formControlName="documento" placeholder="001-0000000-0" class="form-input"
+              [class.border-red]="tieneError('documento')">
+          </div>
+          <div *ngIf="tieneError('documento')" class="form-error">
+            {{ getMensajeError('documento') }}
+          </div>
+        </div>
+
+        <!-- TELÉFONO -->
+        <div class="form-group">
+          <label class="form-label">Teléfono</label>
+          <input type="tel" formControlName="telefono" placeholder="809-555-0000" class="form-input"
+            [class.border-red]="tieneError('telefono')">
+          <div *ngIf="tieneError('telefono')" class="form-error">
+            {{ getMensajeError('telefono') }}
+          </div>
+        </div>
+
+        <!-- EMAIL -->
+        <div class="form-group col-span-2">
+          <label class="form-label">Email</label>
+          <input type="email" formControlName="email" placeholder="contacto@proveedor.com" class="form-input"
+            [class.border-red]="tieneError('email')">
+          <div *ngIf="tieneError('email')" class="form-error">
+            {{ getMensajeError('email') }}
+          </div>
+        </div>
+
+        <!-- DIRECCIÓN -->
+        <div class="form-group col-span-2">
+          <label class="form-label">Dirección</label>
+          <textarea formControlName="direccion" placeholder="Dirección completa del proveedor" class="form-textarea"
+            rows="2" [class.border-red]="tieneError('direccion')">
+          </textarea>
+          <div *ngIf="tieneError('direccion')" class="form-error">
+            {{ getMensajeError('direccion') }}
+          </div>
+        </div>
+
+        <!-- CIUDAD Y PAÍS -->
+        <div class="form-group">
+          <label class="form-label">Ciudad</label>
+          <input type="text" formControlName="ciudad" placeholder="Santo Domingo" class="form-input">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">País</label>
+          <input type="text" formControlName="pais" placeholder="República Dominicana" class="form-input">
+        </div>
+
+        <!-- CONTACTO PRINCIPAL -->
+        <div class="form-group col-span-2">
+          <label class="form-label">Contacto Principal</label>
+          <input type="text" formControlName="contacto" placeholder="Nombre del contacto" class="form-input"
+            [class.border-red]="tieneError('contacto')">
+          <div *ngIf="tieneError('contacto')" class="form-error">
+            {{ getMensajeError('contacto') }}
+          </div>
+        </div>
+
+        <!-- ESTADO ACTIVO -->
+        <div class="form-group col-span-2">
+          <div class="checkbox-group">
+            <input type="checkbox" id="activo" formControlName="activo" class="form-checkbox">
+            <label for="activo" class="checkbox-label">
+              <span class="checkbox-text">Proveedor activo</span>
+              <span class="checkbox-help">Los proveedores inactivos no aparecerán en los formularios</span>
+            </label>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- FOOTER -->
+      <div class="modal-footer">
+        <button type="button" class="btn-cancel" (click)="cerrarModal()" [disabled]="isLoading">
+          Cancelar
+        </button>
+
+        <button type="submit" class="btn-save" [disabled]="isLoading || proveedorForm.invalid"
+          [class.loading]="isLoading">
+          <i *ngIf="isLoading" class="fa-solid fa-spinner fa-spin"></i>
+          <i *ngIf="!isLoading && editando" class="fa-solid fa-pen-to-square"></i>
+          <i *ngIf="!isLoading && !editando" class="fa-solid fa-plus"></i>
+          <span>
+            {{ isLoading ? 'Guardando...' : (editando ? 'Actualizar' : 'Crear') }} Proveedor
+          </span>
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>

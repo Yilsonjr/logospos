@@ -1,0 +1,195 @@
+<div class="container-fluid py-4">
+
+  <!-- Header -->
+  <div class="row justify-content-center mb-4">
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm overflow-hidden" style="background: white;">
+        <div class="card-body p-0">
+          <div class="d-flex align-items-center p-4">
+            <div class="rounded-circle p-4 me-4 text-white shadow-lg d-flex align-items-center justify-content-center"
+              [ngClass]="tipo === 'entrada' ? 'bg-success' : 'bg-danger'"
+              style="width: 70px; height: 70px; font-size: 1.5rem;">
+              <i class="fa-solid" [ngClass]="tipo === 'entrada' ? 'fa-arrow-down' : 'fa-arrow-up'"></i>
+            </div>
+            <div class="flex-grow-1">
+              <h3 class="fw-bold mb-0 text-slate-800">{{ tipo === 'entrada' ? 'Entrada' : 'Salida' }} de Efectivo</h3>
+              <p class="text-slate-500 mb-0 fw-500">Registra {{ tipo === 'entrada' ? 'ingresos' : 'egresos' }} manuales
+                en tu turno de caja actual</p>
+            </div>
+            <button class="btn btn-premium shadow-lg px-4" (click)="abrirModal()"
+              [ngClass]="tipo === 'entrada' ? 'btn-entrada' : 'btn-salida'">
+              <i class="fa-solid fa-plus-circle me-2"></i>Nuevo Registro
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lista Movimientos Recientes -->
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm overflow-hidden">
+        <div class="card-header bg-white py-3 border-bottom border-slate-50">
+          <div class="d-flex justify-content-between align-items-center">
+            <h6 class="mb-0 fw-800 text-slate-400 text-uppercase ls-wider">
+              <i class="fa-solid fa-clock-rotate-left me-2"></i>Movimientos Recientes
+            </h6>
+            <span class="badge rounded-pill bg-slate-50 text-slate-500 border fw-700 px-3 py-2">
+              {{ movimientosRecientes.length }} Registros
+            </span>
+          </div>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead>
+                <tr>
+                  <th class="ps-4">Descripción / Concepto</th>
+                  <th class="text-center">Hora</th>
+                  <th class="pe-4 text-end">Monto Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (mov of movimientosRecientes; track mov.id) {
+                <tr class="border-bottom border-slate-50">
+                  <td class="ps-4 py-3">
+                    <div class="d-flex align-items-center">
+                      <div class="p-2 rounded-lg me-3"
+                        [ngClass]="mov.tipo === 'entrada' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'">
+                        <i class="fa-solid small"
+                          [ngClass]="mov.tipo === 'entrada' ? 'fa-circle-arrow-down' : 'fa-circle-arrow-up'"></i>
+                      </div>
+                      <div>
+                        <div class="fw-700 text-slate-700">{{ mov.concepto }}</div>
+                        @if (mov.referencia) {
+                        <small class="text-slate-400 fw-600">Ref: {{ mov.referencia }}</small>
+                        }
+                      </div>
+                    </div>
+                  </td>
+                  <td class="text-center text-slate-500 fw-600 small">
+                    {{ formatearFecha(mov.created_at || mov.fecha || '').split(',')[1] }}
+                  </td>
+                  <td class="pe-4 py-3 text-end fw-900 fs-5"
+                    [ngClass]="mov.tipo === 'entrada' ? 'text-success' : 'text-danger'">
+                    {{ mov.tipo === 'entrada' ? '+' : '-' }}{{ formatearMoneda(mov.monto) }}
+                  </td>
+                </tr>
+                }
+                @if (movimientosRecientes.length === 0) {
+                <tr>
+                  <td colspan="3" class="py-10 text-center">
+                    <div class="opacity-20 mb-3">
+                      <i class="fa-solid fa-folder-open fa-4x text-slate-300"></i>
+                    </div>
+                    <p class="text-slate-400 fw-700">Aún no hay movimientos registrados hoy</p>
+                  </td>
+                </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Modal Nuevo Movimiento Premium -->
+@if (mostrarModal) {
+<div class="custom-overlay" (click)="cerrarModal()">
+  <div class="custom-modal-content shadow-2xl" (click)="$event.stopPropagation()">
+
+    <!-- Header Premium -->
+    <div class="modal-header-premium" [ngClass]="tipo === 'entrada' ? 'header-entrada' : 'header-salida'">
+      <div class="d-flex align-items-center">
+        <div class="bg-white bg-opacity-25 p-2 rounded-xl me-3">
+          <i class="fa-solid fs-5"
+            [ngClass]="tipo === 'entrada' ? 'fa-hand-holding-dollar' : 'fa-money-bill-transfer'"></i>
+        </div>
+        <h5 class="mb-0 fw-900">Registrar {{ tipo === 'entrada' ? 'Ingreso' : 'Egreso' }}</h5>
+      </div>
+      <button type="button" class="btn-close btn-close-white" (click)="cerrarModal()"></button>
+    </div>
+
+    <div class="modal-body-premium">
+      <form (ngSubmit)="registrarMovimiento()">
+
+        <!-- Input de Monto Gigante -->
+        <div class="mb-3">
+          <label class="premium-label">Monto a {{ tipo === 'entrada' ? 'Ingresar' : 'Retirar' }}</label>
+          <div class="monto-display" [ngClass]="tipo === 'entrada' ? 'focus-entrada' : 'focus-salida'">
+            <div class="input-group justify-content-center align-items-center">
+              <span class="fs-4 fw-900 text-slate-400 me-2">RD$</span>
+              <input type="number" [(ngModel)]="monto" name="monto" class="monto-input" placeholder="0.00" step="0.01"
+                min="0.01" required autofocus style="width: auto; max-width: 200px;">
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+          <!-- Concepto -->
+          <div class="col-md-6">
+            <label class="premium-label">Concepto / Categoría</label>
+            <select [(ngModel)]="concepto" name="concepto" required class="form-select premium-select">
+              <option value="">Seleccionar...</option>
+              @for (c of conceptos; track c) { <option [value]="c">{{ c }}</option> }
+            </select>
+          </div>
+
+          <!-- Metodo de Pago Moderno -->
+          <div class="col-md-6">
+            <label class="premium-label">Método</label>
+            <div class="metodo-selector">
+              <div class="metodo-item">
+                <input type="radio" name="metodo" id="m_efectivo" value="efectivo" [(ngModel)]="metodo">
+                <label for="m_efectivo">
+                  <i class="fa-solid fa-coins"></i>
+                  <span>Efectivo</span>
+                </label>
+              </div>
+              <div class="metodo-item">
+                <input type="radio" name="metodo" id="m_tarjeta" value="tarjeta" [(ngModel)]="metodo">
+                <label for="m_tarjeta">
+                  <i class="fa-solid fa-credit-card"></i>
+                  <span>Tarjeta</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Referencia -->
+        <div class="mb-3">
+          <label class="premium-label">Referencia (Opcional)</label>
+          <div class="input-group input-group-sm">
+            <span class="input-group-text bg-white border-end-0 rounded-start-xl"><i
+                class="fa-solid fa-hashtag text-slate-400"></i></span>
+            <input type="text" [(ngModel)]="referencia" name="referencia"
+              class="form-control premium-input border-start-0" placeholder="Ej: Factura #987">
+          </div>
+        </div>
+
+        <!-- Notas -->
+        <div class="mb-3">
+          <label class="premium-label">Observaciones</label>
+          <textarea [(ngModel)]="notas" name="notas" rows="1" class="form-control premium-textarea"
+            placeholder="Detalles extra..."></textarea>
+        </div>
+
+        <!-- Botón de Acción -->
+        <div class="d-grid">
+          <button type="submit" class="btn btn-premium btn-lg shadow-xl"
+            [ngClass]="tipo === 'entrada' ? 'btn-entrada' : 'btn-salida'"
+            [disabled]="!monto || monto <= 0 || !concepto">
+            <i class="fa-solid fa-check-circle me-2"></i>
+            Confirmar {{ tipo === 'entrada' ? 'Entrada' : 'Salida' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+}

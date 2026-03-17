@@ -1,0 +1,113 @@
+:host {
+  display: block;
+  /* Natural height, let main-content handle scroll */
+}
+
+/* Base Form Styling */
+.form-label {
+  font-weight: 600;
+  font-size: 0.75rem;
+  /* Smaller labels */
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.25rem;
+}
+
+.form-control,
+.form-select {
+  font-size: 0.875rem;
+  border-color: #e2e8f0;
+  padding: 0.4rem 0.75rem;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.input-group-text {
+  background-color: #f8fafc;
+  border-color: #e2e8f0;
+  color: #94a3b8;
+}
+
+/* Card Improvements */
+.card {
+  border: 1px solid #f1f5f9;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.card-header {
+  background-color: #fff;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+/* Table Refinements */
+.table thead th {
+  background-color: #f8fafc;
+  color: #475569;
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.table tbody td {
+  padding: 0.5rem 1rem;
+  vertical-align: middle;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.table tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+/* Search Input highlight */
+.search-input {
+  background-color: #f8fafc;
+  border: 2px solid #e2e8f0;
+  transition: all 0.2s;
+}
+
+.search-input:focus {
+  background-color: #fff;
+  border-color: #3b82f6;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Total Section */
+.total-display {
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  letter-spacing: -0.5px;
+}
+
+/* Custom Scrollbar for dropdowns */
+.search-results::-webkit-scrollbar {
+  width: 6px;
+}
+
+.search-results::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 4px;
+}
+
+/* Animation */
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

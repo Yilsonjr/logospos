@@ -1,0 +1,245 @@
+<div class="container-fluid py-4 min-vh-100 bg-light">
+
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="fw-bold text-dark mb-0">Configuración Fiscal (DGII)</h2>
+            <p class="text-muted small">Control de NCF y Facturación Electrónica</p>
+        </div>
+    </div>
+
+    <!-- Master Switch Card -->
+    <div class="card border-0 shadow-sm mb-4 overflow-hidden rounded-4">
+        <div class="card-body p-0">
+            <div class="row g-0">
+                <div class="col-md-9 p-4 bg-white">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="bg-primary bg-opacity-10 text-primary p-3 rounded-circle shadow-inner">
+                            <i class="fa-solid fa-file-invoice-dollar fs-3"></i>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold mb-1 d-flex align-items-center gap-2">
+                                MODO FISCAL (DGII)
+                                <span class="badge rounded-pill" [class.bg-success]="config.modo_fiscal"
+                                    [class.bg-secondary]="!config.modo_fiscal">
+                                    {{ config.modo_fiscal ? 'ACTIVO' : 'INACTIVO' }}
+                                </span>
+                            </h5>
+                            <p class="text-muted small mb-0">Control de facturación con comprobantes fiscales y
+                                validación de RNC.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 p-4 d-flex align-items-center justify-content-center border-start bg-light-subtle">
+                    <div class="form-check form-switch fs-2">
+                        <input class="form-check-input cursor-pointer" type="checkbox" role="switch" id="fiscalSwitch"
+                            [(ngModel)]="config.modo_fiscal" (change)="guardarConfiguracion()">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <!-- Contribuyente -->
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm h-100 rounded-4">
+                <div class="card-header bg-white border-0 py-4 px-4 d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0 text-dark">Identidad del Contribuyente</h5>
+                    <i class="fa-solid fa-address-card text-muted opacity-50"></i>
+                </div>
+                <div class="card-body px-4 pt-0">
+                    <div class="row g-2">
+                        <div class="col-md-4">
+                            <div class="form-floating mb-3">
+                                <input type="text" class="form-control bg-light border-0" id="floatRNC"
+                                    [(ngModel)]="config.rnc_empresa" placeholder="RNC">
+                                <label for="floatRNC" class="small fw-bold">RNC / Cédula</label>
+                            </div>
+                        </div>
+                        <div class="col-md-5">
+                            <div class="form-floating mb-3">
+                                <input type="text" class="form-control bg-light border-0" id="floatName"
+                                    [(ngModel)]="config.nombre_empresa" placeholder="Razón Social">
+                                <label for="floatName" class="small fw-bold">Nombre o Razón Social</label>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <button class="btn btn-primary w-100 fw-bold py-3 shadow-sm rounded-4"
+                                (click)="guardarConfiguracion()">
+                                GUARDAR
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Impuestos -->
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm h-100 rounded-4">
+                <div class="card-header bg-white border-0 py-4 px-4 d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0 text-dark">Parámetros Tributarios</h5>
+                    <i class="fa-solid fa-percent text-muted opacity-50"></i>
+                </div>
+                <div class="card-body px-4 pt-0">
+                    <div class="row g-3 align-items-center">
+                        <div class="col-8">
+                            <div class="form-floating">
+                                <input type="number" class="form-control bg-light border-0" id="floatITBIS"
+                                    [(ngModel)]="config.itbis_defecto" placeholder="18">
+                                <label for="floatITBIS" class="small fw-bold">ITBIS Predeterminado %</label>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <button class="btn btn-primary w-100 fw-bold py-3 shadow-sm rounded-4"
+                                (click)="guardarConfiguracion()">
+                                GUARDAR
+                            </button>
+                        </div>
+                    </div>
+                    <p class="text-muted small mt-3 mb-0"><i class="fa-solid fa-circle-info me-1"></i> Este valor se
+                        aplicará por defecto en el catálogo.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NCF Table -->
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-5" *ngIf="config.modo_fiscal">
+        <div class="card-header bg-white border-0 py-4 px-4 d-flex justify-content-between align-items-center">
+            <div>
+                <h5 class="fw-bold mb-0 text-dark">Catálogo de Secuencias NCF</h5>
+                <p class="text-muted small mb-0">Gestión de rangos y disponibilidad de comprobantes</p>
+            </div>
+            <button class="btn btn-primary fw-bold px-4 rounded-pill shadow-sm" (click)="nuevaSecuencia()">
+                <i class="fa-solid fa-plus me-2"></i> Nueva Secuencia
+            </button>
+        </div>
+        <div class="table-responsive">
+            <table class="table align-middle table-hover mb-0">
+                <thead class="bg-light-subtle border-bottom border-top">
+                    <tr>
+                        <th class="ps-4 py-3 border-0 text-muted small fw-bold text-uppercase">Tipo de NCF</th>
+                        <th class="py-3 border-0 text-muted small fw-bold text-uppercase">Prefijo</th>
+                        <th class="py-3 border-0 text-muted small fw-bold text-uppercase text-center">Progreso</th>
+                        <th class="py-3 border-0 text-muted small fw-bold text-uppercase text-center">Disp.</th>
+                        <th class="py-3 border-0 text-muted small fw-bold text-uppercase text-center">Vencimiento</th>
+                        <th class="py-3 border-0 text-muted small fw-bold text-uppercase text-center">Estado</th>
+                        <th class="pe-4 py-3 border-0 text-muted small fw-bold text-uppercase text-end">Gestión</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let seq of secuencias" class="transition-all">
+                        <td class="ps-4">
+                            <div class="fw-bold text-dark">{{ seq.tipo_ncf }}</div>
+                            <div class="small text-muted font-monospace opacity-75">DGII-COMPROBANTE</div>
+                        </td>
+                        <td><span class="badge bg-light text-dark border fw-normal">{{ seq.prefijo }}</span></td>
+                        <td class="text-center" style="min-width: 150px;">
+                            <div class="d-flex align-items-center gap-2 px-3">
+                                <div class="progress flex-grow-1" style="height: 6px;">
+                                    <div class="progress-bar bg-primary"
+                                        [style.width]="(seq.numero_actual / seq.rango_final * 100) + '%'"></div>
+                                </div>
+                                <small class="text-muted fw-bold" style="font-size: 0.65rem;">{{ seq.numero_actual
+                                    }}</small>
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <span class="fw-bold" [class.text-danger]="(seq.rango_final - seq.numero_actual) < 50"
+                                [class.text-success]="(seq.rango_final - seq.numero_actual) >= 50">
+                                {{ seq.rango_final - seq.numero_actual }}
+                            </span>
+                        </td>
+                        <td class="text-center small text-muted">{{ seq.fecha_vencimiento | date:'shortDate' }}</td>
+                        <td class="text-center">
+                            <span class="badge rounded-pill" [class.bg-success-subtle]="seq.activo"
+                                [class.text-success]="seq.activo" [class.bg-secondary-subtle]="!seq.activo"
+                                [class.text-secondary]="!seq.activo">
+                                {{ seq.activo ? 'ACTIVO' : 'INACTIVO' }}
+                            </span>
+                        </td>
+                        <td class="text-end pe-4">
+                            <button class="btn btn-sm btn-light border p-2" (click)="editarSecuencia(seq)"
+                                title="Configurar">
+                                <i class="fa-solid fa-gear text-primary"></i>
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+
+</div>
+
+<!-- Modal / Formulario Secuencia (Overlay simple) -->
+<div class="modal-backdrop fade show" *ngIf="mostrandoFormulario"></div>
+<div class="modal fade show d-block" *ngIf="mostrandoFormulario" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow-lg border-0">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold">Configurar Secuencia NCF</h5>
+                <button type="button" class="btn-close btn-close-white" (click)="cancelarEdicion()"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form (ngSubmit)="guardarSecuencia()">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">Tipo de Comprobante</label>
+                        <select class="form-select" [(ngModel)]="secuenciaEnEdicion.tipo_ncf" name="tipo_ncf" required>
+                            <option [value]="tipo.codigo" *ngFor="let tipo of tiposComprobante">
+                                {{ tipo.codigo }} - {{ tipo.descripcion }}
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-4">
+                            <label class="form-label small fw-bold text-muted">Prefijo</label>
+                            <input type="text" class="form-control text-uppercase"
+                                [(ngModel)]="secuenciaEnEdicion.prefijo" name="prefijo" placeholder="B01" required
+                                maxlength="3">
+                        </div>
+                        <div class="col-8">
+                            <label class="form-label small fw-bold text-muted">Vencimiento</label>
+                            <input type="date" class="form-control" [(ngModel)]="secuenciaEnEdicion.fecha_vencimiento"
+                                name="vencimiento" required>
+                        </div>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold text-muted">Rango Inicial</label>
+                            <input type="number" class="form-control" [(ngModel)]="secuenciaEnEdicion.rango_inicial"
+                                name="inicial" required>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold text-muted">Rango Final</label>
+                            <input type="number" class="form-control" [(ngModel)]="secuenciaEnEdicion.rango_final"
+                                name="final" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">Actual (Último usado)</label>
+                        <input type="number" class="form-control bg-light"
+                            [(ngModel)]="secuenciaEnEdicion.numero_actual" name="actual" readonly>
+                        <small class="text-muted">El sistema incrementará automáticamente desde este número.</small>
+                    </div>
+
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" [(ngModel)]="secuenciaEnEdicion.activo"
+                            name="activo" id="secuenciaActiva">
+                        <label class="form-check-label" for="secuenciaActiva">Secuencia Activa</label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-secondary" (click)="cancelarEdicion()">Cancelar</button>
+                <button type="button" class="btn btn-primary fw-bold" (click)="guardarSecuencia()">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,18 @@
+/* Estilos específicos para el reporte de clientes */
+.card-header {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.table th {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.table td {
+    font-size: 0.9rem;
+}
+
+.sticky-top {
+    z-index: 10;
+}

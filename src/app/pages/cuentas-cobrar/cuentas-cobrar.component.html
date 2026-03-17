@@ -1,0 +1,274 @@
+<div class="container-fluid py-4 min-vh-100 bg-light">
+
+  <!-- Header -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 gap-3">
+    <div>
+      <h2 class="fw-bold text-dark mb-0">Cuentas por Cobrar</h2>
+      <p class="text-muted mb-0 small">Gestiona los créditos y pagos pendientes de tus clientes</p>
+    </div>
+    <div class="d-flex gap-2">
+      <button routerLink="/cuentas-cobrar/recordatorios"
+        class="btn btn-primary d-flex align-items-center gap-2 shadow-sm">
+        <i class="fa-solid fa-bell"></i> Recordatorios
+      </button>
+      <button (click)="exportarDatos()" class="btn btn-outline-secondary d-flex align-items-center gap-2">
+        <i class="fa-solid fa-file-export"></i> Exportar
+      </button>
+    </div>
+  </div>
+
+  <!-- Estadísticas -->
+  <div class="row g-3 mb-4">
+    <!-- Total Pendiente -->
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <span class="text-uppercase text-muted fw-bold small" style="font-size: 0.75rem;">Total Pendiente</span>
+            <div class="bg-warning bg-opacity-10 text-warning p-2 rounded">
+              <i class="fa-solid fa-hand-holding-dollar fs-5"></i>
+            </div>
+          </div>
+          <h3 class="fw-bold text-dark mb-0">${{totalPendiente.toFixed(2)}}</h3>
+          <small class="text-muted">Por cobrar actualmente</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cuentas Activas -->
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <span class="text-uppercase text-muted fw-bold small" style="font-size: 0.75rem;">Cuentas Activas</span>
+            <div class="bg-primary bg-opacity-10 text-primary p-2 rounded">
+              <i class="fa-solid fa-file-invoice fs-5"></i>
+            </div>
+          </div>
+          <h3 class="fw-bold text-dark mb-0">{{cuentasPendientes}}</h3>
+          <small class="text-muted">Créditos vigentes</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cuentas Vencidas -->
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <span class="text-uppercase text-muted fw-bold small" style="font-size: 0.75rem;">Cuentas Vencidas</span>
+            <div class="bg-danger bg-opacity-10 text-danger p-2 rounded">
+              <i class="fa-solid fa-triangle-exclamation fs-5"></i>
+            </div>
+          </div>
+          <h3 class="fw-bold text-dark mb-0">{{cuentasVencidas}}</h3>
+          <small class="text-muted">Requieren atención inmediata</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Monto Vencido -->
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <span class="text-uppercase text-muted fw-bold small" style="font-size: 0.75rem;">Monto Vencido</span>
+            <div class="bg-danger bg-opacity-10 text-danger p-2 rounded">
+              <i class="fa-solid fa-chart-line fs-5"></i>
+            </div>
+          </div>
+          <h3 class="fw-bold text-dark mb-0">${{totalVencido.toFixed(2)}}</h3>
+          <small class="text-muted">Total en mora</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtros y Vista -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white py-3 border-bottom">
+      <div class="row g-3 align-items-center">
+        <!-- Buscador -->
+        <div class="col-md-4">
+          <div class="input-group input-group-sm">
+            <span class="input-group-text bg-light border-end-0 text-muted">
+              <i class="fa-solid fa-search"></i>
+            </span>
+            <input type="text" [(ngModel)]="busqueda" (input)="onBusquedaChange()"
+              class="form-control border-start-0 ps-0 bg-light" placeholder="Cliente...">
+          </div>
+        </div>
+
+        <!-- Filtros de Estado -->
+        <div class="col-md-6 text-md-center">
+          <div class="btn-group btn-group-sm shadow-sm" role="group">
+            <button type="button" class="btn fw-semibold" [class.btn-primary]="filtroEstado === 'todas'"
+              [class.btn-outline-primary]="filtroEstado !== 'todas'" (click)="cambiarFiltro('todas')">Todas</button>
+            <button type="button" class="btn fw-semibold" [class.btn-warning]="filtroEstado === 'pendiente'"
+              [class.btn-outline-warning]="filtroEstado !== 'pendiente'"
+              (click)="cambiarFiltro('pendiente')">Pendientes</button>
+            <button type="button" class="btn fw-semibold" [class.btn-info]="filtroEstado === 'parcial'"
+              [class.btn-outline-info]="filtroEstado !== 'parcial'" (click)="cambiarFiltro('parcial')">Parcial</button>
+            <button type="button" class="btn fw-semibold" [class.btn-danger]="filtroEstado === 'vencida'"
+              [class.btn-outline-danger]="filtroEstado !== 'vencida'"
+              (click)="cambiarFiltro('vencida')">Vencidas</button>
+          </div>
+        </div>
+
+        <!-- Vista -->
+        <div class="col-md-2 text-end">
+          <div class="btn-group btn-group-sm shadow-sm">
+            <button class="btn" [class.btn-primary]="vistaActual === 'tarjetas'"
+              [class.btn-outline-primary]="vistaActual !== 'tarjetas'" (click)="vistaActual = 'tarjetas'">
+              <i class="fa-solid fa-grip"></i>
+            </button>
+            <button class="btn" [class.btn-primary]="vistaActual === 'tabla'"
+              [class.btn-outline-primary]="vistaActual !== 'tabla'" (click)="vistaActual = 'tabla'">
+              <i class="fa-solid fa-list"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  @if (isLoading) {
+  <div class="text-center py-5">
+    <div class="spinner-border text-primary" role="status"></div>
+    <p class="mt-2 text-muted small">Preparando cuentas por cobrar...</p>
+  </div>
+  } @else {
+
+  <!-- Vista Tarjetas -->
+  @if (vistaActual === 'tarjetas') {
+  <div class="row g-4">
+    @for (cuenta of cuentasFiltradas; track cuenta.id) {
+    <div class="col-md-6 col-lg-4">
+      <div class="card h-100 border-0 shadow-sm hover-shadow transition-all position-relative overflow-visible">
+        <div class="card-header bg-white border-bottom-0 pt-3 px-3 d-flex justify-content-between align-items-center">
+          <span [class]="getEstadoBadgeClass(cuenta.estado)">{{cuenta.estado | uppercase}}</span>
+
+          <!-- Menu Opciones -->
+          <div class="dropdown">
+            <button class="btn btn-light btn-sm rounded-circle d-flex align-items-center justify-content-center"
+              (click)="toggleMenu($event, cuenta.id!)" style="width: 32px; height: 32px;">
+              <i class="fa-solid fa-ellipsis-vertical"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow border-0" [class.show]="menuAbiertoId === cuenta.id"
+              style="position: absolute; right: 0; left: auto; margin-top: 5px;">
+              @if (cuenta.estado !== 'pagada') {
+              <li><button class="dropdown-item py-2" (click)="abrirModalPago(cuenta)"><i
+                    class="fa-solid fa-hand-holding-dollar me-2 text-primary"></i>Registrar Pago</button></li>
+              }
+              <li><button class="dropdown-item py-2" (click)="abrirHistorial(cuenta)"><i
+                    class="fa-solid fa-clock-rotate-left me-2 text-secondary"></i>Ver Historial</button></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="card-body px-3 pt-0">
+          <h5 class="fw-bold text-dark mb-1">{{cuenta.cliente_nombre}}</h5>
+          <p class="text-muted small mb-3">Venta: {{formatearFecha(cuenta.fecha_venta)}}</p>
+
+          <div class="row g-2 mb-3 bg-light rounded p-2 mx-0 text-center">
+            <div class="col-6 border-end">
+              <small class="text-muted d-block small">TOTAL</small>
+              <span class="fw-bold text-dark">${{cuenta.monto_total.toLocaleString()}}</span>
+            </div>
+            <div class="col-6">
+              <small class="text-muted d-block small">PENDIENTE</small>
+              <span class="fw-bold text-danger">${{cuenta.monto_pendiente.toLocaleString()}}</span>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-between align-items-center">
+            <small class="text-muted">Vencimiento:</small>
+            <span class="small fw-bold" [class.text-danger]="diasVencimiento(cuenta.fecha_vencimiento) < 0">
+              {{formatearFecha(cuenta.fecha_vencimiento)}}
+            </span>
+          </div>
+        </div>
+
+        <div class="card-footer bg-light border-top-0 pb-3 pt-2 d-flex gap-2">
+          @if (cuenta.estado !== 'pagada') {
+          <button class="btn btn-primary btn-sm w-100 fw-bold rounded-pill" (click)="abrirModalPago(cuenta)">
+            COBRAR
+          </button>
+          }
+          <button class="btn btn-outline-secondary btn-sm w-100 fw-bold rounded-pill" (click)="abrirHistorial(cuenta)">
+            DETALLES
+          </button>
+        </div>
+      </div>
+    </div>
+    }
+  </div>
+  }
+
+  <!-- Vista Tabla -->
+  @if (vistaActual === 'tabla') {
+  <div class="card border-0 shadow-sm overflow-hidden">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="bg-light text-secondary text-uppercase small fw-bold">
+          <tr>
+            <th class="px-4 py-3">Cliente</th>
+            <th class="px-4 py-3">Venta</th>
+            <th class="px-4 py-3">Vencimiento</th>
+            <th class="text-end">Total</th>
+            <th class="text-end">Pendiente</th>
+            <th class="text-center">Estado</th>
+            <th class="text-end pe-4">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (cuenta of cuentasFiltradas; track cuenta.id) {
+          <tr>
+            <td class="px-4 py-3 fw-bold text-dark">{{cuenta.cliente_nombre}}</td>
+            <td class="px-4 py-3 text-muted small">{{formatearFecha(cuenta.fecha_venta)}}</td>
+            <td class="px-4 py-3 small">{{formatearFecha(cuenta.fecha_vencimiento)}}</td>
+            <td class="text-end fw-bold">${{cuenta.monto_total.toLocaleString()}}</td>
+            <td class="text-end fw-bold text-danger">${{cuenta.monto_pendiente.toLocaleString()}}</td>
+            <td class="text-center">
+              <span [class]="getEstadoBadgeClass(cuenta.estado)">{{cuenta.estado | uppercase}}</span>
+            </td>
+            <td class="text-end pe-4">
+              <div class="btn-group btn-group-sm">
+                @if (cuenta.estado !== 'pagada') {
+                <button (click)="abrirModalPago(cuenta)" class="btn btn-outline-primary" title="Cobrar">
+                  <i class="fa-solid fa-hand-holding-dollar"></i>
+                </button>
+                }
+                <button (click)="abrirHistorial(cuenta)" class="btn btn-outline-secondary" title="Historial">
+                  <i class="fa-solid fa-clock-rotate-left"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+  }
+
+  @if (cuentasFiltradas.length === 0) {
+  <div class="text-center py-5">
+    <i class="fa-solid fa-folder-open fa-3x text-muted opacity-25 mb-3"></i>
+    <h5 class="fw-bold">No hay cuentas por cobrar</h5>
+  </div>
+  }
+  }
+
+</div>
+
+<!-- Modales -->
+@if (isModalPagoOpen && cuentaSeleccionada) {
+<app-modal-pago [cuenta]="cuentaSeleccionada" (close)="cerrarModalPago()" (pagoRegistrado)="onPagoRegistrado()">
+</app-modal-pago>
+}
+
+@if (isHistorialOpen && cuentaIdHistorial) {
+<app-historial-pagos [cuentaId]="cuentaIdHistorial" (close)="cerrarHistorial()">
+</app-historial-pagos>
+}

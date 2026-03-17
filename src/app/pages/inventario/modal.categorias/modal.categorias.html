@@ -1,0 +1,149 @@
+<!-- Overlay del modal con event binding -->
+<div class="modal-overlay" (click)="cerrarModal()">
+
+  <!-- Modal card con event propagation stop -->
+  <div class="modal-card" (click)="$event.stopPropagation()">
+
+    <!-- HEADER DEL MODAL -->
+    <header class="modal-header">
+      <div class="modal-header__text">
+        <h2 class="modal-header__title">
+          {{ editando ? 'Editar Categoría' : 'Nueva Categoría' }}
+        </h2>
+        <p class="modal-header__subtitle">
+          {{ editando ? 'Modifica los datos de la categoría' : 'Completa la información para crear una nueva categoría'
+          }}
+        </p>
+      </div>
+
+      <!-- Botón cerrar con event binding -->
+      <button class="btn-close" (click)="cerrarModal()" type="button">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </header>
+
+    <!-- FORMULARIO REACTIVO -->
+    <form [formGroup]="categoriaForm" class="modal-body" (ngSubmit)="guardarCategoria()">
+
+      <div class="form-grid">
+
+        <!-- CAMPO NOMBRE -->
+        <div class="form-group col-span-2">
+          <label class="form-label">
+            Nombre de la Categoría *
+          </label>
+
+          <input type="text" formControlName="nombre" placeholder="Ej. Limpieza, Bebidas, Snacks..." class="form-input"
+            [class.border-red]="tieneError('nombre')">
+
+          <div *ngIf="tieneError('nombre')" class="form-error">
+            {{ getMensajeError('nombre') }}
+          </div>
+        </div>
+
+        <!-- CAMPO DESCRIPCIÓN -->
+        <div class="form-group col-span-2">
+          <label class="form-label">
+            Descripción (Opcional)
+          </label>
+
+          <!-- Textarea con formControlName -->
+          <textarea formControlName="descripcion" placeholder="Descripción opcional de la categoría..."
+            class="form-textarea" rows="3" [class.border-red]="tieneError('descripcion')">
+          </textarea>
+
+          <div *ngIf="tieneError('descripcion')" class="form-error">
+            {{ getMensajeError('descripcion') }}
+          </div>
+        </div>
+
+        <!-- SELECTOR DE COLOR -->
+        <div class="form-group col-span-2">
+          <label class="form-label">
+            Color de la Categoría *
+          </label>
+
+          <!-- Paleta de colores predefinidos -->
+          <div class="color-palette">
+
+            <button *ngFor="let color of coloresPredefinidos; trackBy: trackByColor" type="button" class="color-option"
+              [class.selected]="f['color'].value === color.valor" [style.background-color]="color.valor"
+              (click)="seleccionarColor(color.valor)" [title]="color.nombre">
+
+              <!-- Icono de check si está seleccionado -->
+              <i *ngIf="f['color'].value === color.valor" class="fa-solid fa-check color-check"></i>
+            </button>
+          </div>
+
+          <!-- Input de color personalizado -->
+          <div class="color-custom">
+            <label class="color-custom-label">O elige un color personalizado:</label>
+            <div class="color-input-wrapper">
+              <!-- Input type="color" conectado al formulario -->
+              <input type="color" formControlName="color" class="color-input">
+
+              <!-- Mostrar el valor hex del color seleccionado -->
+              <span class="color-value">{{ f['color'].value }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ESTADO ACTIVA/INACTIVA -->
+        <div class="form-group col-span-2">
+          <div class="checkbox-group">
+
+            <input type="checkbox" id="activo" formControlName="activo" class="form-checkbox">
+
+            <label for="activo" class="checkbox-label">
+              <span class="checkbox-text">Categoría activa</span>
+              <span class="checkbox-help">Las categorías inactivas no aparecerán en los formularios</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- PREVIEW DE LA CATEGORÍA -->
+        <div class="form-group col-span-2">
+          <label class="form-label">Vista previa:</label>
+
+          <!-- 
+            Preview dinámico que muestra cómo se verá la categoría
+            Property binding para estilos dinámicos
+            Interpolation para mostrar el nombre
+          -->
+          <div class="category-preview">
+            <span class="category-badge" [style.background-color]="f['color'].value"
+              [style.color]="getTextColor(f['color'].value)">
+              {{ f['nombre'].value || 'Nombre de categoría' }}
+            </span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- FOOTER CON BOTONES -->
+      <div class="modal-footer">
+
+        <!-- Botón Cancelar -->
+        <button type="button" class="btn-cancel" (click)="cerrarModal()" [disabled]="isLoading">
+          Cancelar
+        </button>
+
+        <!-- Botón Guardar -->
+        <button type="submit" class="btn-save" [disabled]="isLoading || categoriaForm.invalid"
+          [class.loading]="isLoading">
+
+          <!-- Icono dinámico según el estado -->
+          <i *ngIf="isLoading" class="fa-solid fa-spinner fa-spin"></i>
+          <i *ngIf="!isLoading && editando" class="fa-solid fa-pen-to-square"></i>
+          <i *ngIf="!isLoading && !editando" class="fa-solid fa-plus"></i>
+
+          <!-- Texto dinámico según el estado -->
+          <span>
+            {{ isLoading ? 'Guardando...' : (editando ? 'Actualizar' : 'Crear') }} Categoría
+          </span>
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>

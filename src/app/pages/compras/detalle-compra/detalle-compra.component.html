@@ -1,0 +1,149 @@
+<div class="container-fluid p-2 bg-light d-flex flex-column h-100 overflow-hidden" style="height: 100%;">
+
+    <!-- Header -->
+    <header
+        class="d-flex justify-content-between align-items-center mb-3 flex-shrink-0 bg-white p-3 rounded-3 border shadow-sm">
+        <div class="d-flex align-items-center gap-3">
+            <a routerLink="/compras" class="btn btn-outline-secondary btn-sm shadow-sm">
+                <i class="fa-solid fa-arrow-left"></i> Volver
+            </a>
+            @if (compra) {
+            <div>
+                <h1 class="h5 fw-bold text-dark mb-1">
+                    Compra #{{compra.numero_factura || compra.id}}
+                </h1>
+                <p class="text-muted small mb-0">
+                    <i class="fa-regular fa-calendar me-1"></i> {{formatearFecha(compra.fecha_compra)}}
+                </p>
+            </div>
+            }
+        </div>
+
+        @if (compra) {
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge rounded-pill px-3 py-2 border"
+                [class.bg-success-subtle]="compra.estado === 'completada' || compra.estado === 'pagada'"
+                [class.text-success]="compra.estado === 'completada' || compra.estado === 'pagada'"
+                [class.border-success-subtle]="compra.estado === 'completada' || compra.estado === 'pagada'"
+                [class.bg-warning-subtle]="compra.estado === 'pendiente'"
+                [class.text-warning-emphasis]="compra.estado === 'pendiente'"
+                [class.border-warning-subtle]="compra.estado === 'pendiente'"
+                [class.bg-danger-subtle]="compra.estado === 'cancelada'"
+                [class.text-danger]="compra.estado === 'cancelada'"
+                [class.border-danger-subtle]="compra.estado === 'cancelada'">
+                {{compra.estado | titlecase}}
+            </span>
+        </div>
+        }
+    </header>
+
+    @if (isLoading) {
+    <div class="d-flex justify-content-center align-items-center flex-grow-1">
+        <div class="spinner-border text-primary" role="status"></div>
+    </div>
+    } @else if (compra) {
+    <div class="row g-3 flex-grow-1 overflow-auto">
+
+        <!-- Panel Izquierdo: Detalles -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white py-3">
+                    <h6 class="mb-0 fw-bold">Productos Comprados</h6>
+                </div>
+                <div class="card-body p-0 table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light text-secondary small text-uppercase">
+                            <tr>
+                                <th class="ps-4">Producto</th>
+                                <th class="text-center">Cant.</th>
+                                <th class="text-end">Precio Unit.</th>
+                                <th class="text-end pe-4">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (detalle of compra.detalles; track detalle.id) {
+                            <tr>
+                                <td class="ps-4 fw-medium">{{detalle.producto_nombre}}</td>
+                                <td class="text-center">{{detalle.cantidad}}</td>
+                                <td class="text-end text-muted font-monospace">${{detalle.precio_unitario |
+                                    number:'1.2-2'}}</td>
+                                <td class="text-end pe-4 fw-bold font-monospace">${{detalle.subtotal | number:'1.2-2'}}
+                                </td>
+                            </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel Derecho: Resumen -->
+        <div class="col-lg-4">
+            <div class="d-flex flex-column gap-3 h-100">
+
+                <!-- Proveedor -->
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h6 class="text-uppercase small text-muted fw-bold mb-3">Proveedor</h6>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="bg-light rounded p-3 text-secondary">
+                                <i class="fa-solid fa-truck fs-4"></i>
+                            </div>
+                            <div>
+                                <h5 class="fw-bold text-dark mb-0">{{compra.proveedor_nombre}}</h5>
+                                <div class="small text-muted mt-1">ID: {{compra.proveedor_id}}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Total -->
+                <div class="card border-0 shadow-sm flex-grow-1">
+                    <div class="card-body">
+                        <h6 class="text-uppercase small text-muted fw-bold mb-3">Resumen Financiero</h6>
+
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-secondary">Subtotal</span>
+                            <span class="fw-bold font-monospace">${{compra.subtotal | number:'1.2-2'}}</span>
+                        </div>
+
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-secondary">Impuestos</span>
+                            <span class="fw-bold font-monospace">${{compra.impuesto | number:'1.2-2'}}</span>
+                        </div>
+
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-secondary">Descuento</span>
+                            <span class="fw-bold font-monospace text-success">-${{compra.descuento |
+                                number:'1.2-2'}}</span>
+                        </div>
+
+                        <hr>
+
+                        <div class="d-flex justify-content-between align-items-end">
+                            <span class="h5 fw-bold text-dark mb-0">Total</span>
+                            <span class="h3 fw-bold text-primary mb-0 font-monospace">${{compra.total |
+                                number:'1.2-2'}}</span>
+                        </div>
+
+                        @if (compra.notas) {
+                        <div class="mt-4 p-3 bg-light rounded border border-light-subtle">
+                            <h6 class="small fw-bold text-uppercase text-muted mb-2">Notas</h6>
+                            <p class="small text-dark mb-0 fst-italic">{{compra.notas}}</p>
+                        </div>
+                        }
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+    } @else {
+    <div class="d-flex flex-column align-items-center justify-content-center flex-grow-1 text-muted">
+        <i class="fa-solid fa-circle-exclamation fa-3x mb-3 opacity-50"></i>
+        <h5>No se encontró la compra</h5>
+        <a routerLink="/compras" class="btn btn-link">Volver al listado</a>
+    </div>
+    }
+</div>

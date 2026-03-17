@@ -1,0 +1,101 @@
+<div class="modal-overlay" (click)="cerrarModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+        <!-- HEADER -->
+        <header class="modal-header">
+            <div class="modal-header__text">
+                <h2 class="modal-header__title">Gestión de Unidades de Medida</h2>
+                <p class="modal-header__subtitle">Administra las unidades en las que vendes tus productos</p>
+            </div>
+            <button class="btn-close" (click)="cerrarModal()" type="button">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </header>
+
+        <!-- BODY -->
+        <div class="modal-body">
+            <!-- Filtros y botón nueva unidad -->
+            <div class="actions-toolbar">
+                <div class="filtros-group">
+                    <button (click)="cambiarFiltro('todas')" [class.filtro-activo]="filtroActivo === 'todas'"
+                        class="filtro-btn">
+                        Todas ({{ todasUnidades.length }})
+                    </button>
+                    <button (click)="cambiarFiltro('activas')" [class.filtro-activo]="filtroActivo === 'activas'"
+                        class="filtro-btn filtro-btn--activas">
+                        Activas ({{ totalActivas }})
+                    </button>
+                    <button (click)="cambiarFiltro('inactivas')" [class.filtro-activo]="filtroActivo === 'inactivas'"
+                        class="filtro-btn filtro-btn--inactivas">
+                        Inactivas ({{ totalInactivas }})
+                    </button>
+                </div>
+                <button (click)="abrirModalUnidad()" class="btn-nueva-categoria">
+                    <i class="fa-solid fa-plus"></i>
+                    Nueva Unidad
+                </button>
+            </div>
+
+            <!-- Lista de unidades -->
+            @if (unidadesFiltradas.length === 0) {
+            <div class="empty-state">
+                <i class="fa-solid fa-scale-balanced"></i>
+                @if (filtroActivo === 'todas') {
+                <p class="empty-state__text">No hay unidades registradas</p>
+                <button (click)="abrirModalUnidad()" class="empty-state__btn">Crear primera unidad</button>
+                } @else if (filtroActivo === 'activas') {
+                <p class="empty-state__text">No hay unidades activas</p>
+                } @else {
+                <p class="empty-state__text">No hay unidades inactivas</p>
+                }
+            </div>
+            } @else {
+            <div class="categorias-grid">
+                @for (unidad of unidadesFiltradas; track unidad.id) {
+                <div class="categoria-card">
+                    <div class="categoria-card__header">
+                        <div class="categoria-card__info">
+                            <div>
+                                <h3 class="categoria-card__nombre">{{ unidad.nombre }}</h3>
+                            </div>
+                        </div>
+                        <!-- Acciones -->
+                        <div class="categoria-card__actions">
+                            <button (click)="editarUnidad(unidad)" class="btn-action btn-action--edit"
+                                title="Editar unidad">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+                            <button (click)="eliminarUnidad(unidad)" class="btn-action btn-action--delete"
+                                title="Eliminar unidad">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Footer -->
+                    <div class="categoria-card__footer">
+                        <span class="categoria-badge" style="background-color: #eff6ff; color: #3b82f6;">
+                            {{ unidad.abreviatura || 'Sin Abreviatura' }}
+                        </span>
+                        <span class="categoria-status" [class.categoria-status--activa]="unidad.activo"
+                            [class.categoria-status--inactiva]="!unidad.activo">
+                            {{ unidad.activo ? 'Activa' : 'Inactiva' }}
+                        </span>
+                    </div>
+                </div>
+                }
+            </div>
+            }
+        </div>
+
+        <!-- FOOTER -->
+        <div class="modal-footer">
+            <button type="button" class="btn-cerrar" (click)="cerrarModal()">Cerrar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal individual -->
+@if (isModalUnidadOpen) {
+<app-modal-unidades [unidadEditar]="unidadEditando" (close)="cerrarModalUnidad()"
+    (unidadGuardada)="onUnidadGuardada($event)">
+</app-modal-unidades>
+}

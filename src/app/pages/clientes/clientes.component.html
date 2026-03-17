@@ -1,0 +1,265 @@
+<div class="container-fluid p-2 bg-light d-flex flex-column h-100 overflow-hidden" style="height: 100%;">
+
+  <!-- Header Mejorado -->
+  <header
+    class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3 mb-3 flex-shrink-0 bg-white p-3 rounded-3 border shadow-sm">
+    <div class="d-flex align-items-center gap-3">
+      <div
+        class="bg-primary-subtle text-primary rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
+        style="width: 48px; height: 48px;">
+        <i class="fa-solid fa-users fs-4"></i>
+      </div>
+      <div>
+        <h1 class="h5 fw-bold text-dark mb-1">Gestión de Clientes</h1>
+        <p class="text-secondary small mb-0 d-flex align-items-center gap-1">
+          <i class="fa-solid fa-circle-check text-success" style="font-size: 0.6rem;"></i>
+          Cartera de clientes y créditos.
+        </p>
+      </div>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2 w-100 w-md-auto justify-content-center justify-content-md-end">
+      <button (click)="exportarDatos()"
+        class="btn btn-sm btn-outline-success d-flex align-items-center gap-2 fw-semibold px-3">
+        <i class="fa-solid fa-file-excel"></i> Exportar
+      </button>
+      <button (click)="abrirModalCliente()"
+        class="btn btn-sm btn-primary d-flex align-items-center gap-2 fw-semibold shadow-sm px-4">
+        <i class="fa-solid fa-plus"></i> Nuevo Cliente
+      </button>
+    </div>
+  </header>
+
+  <!-- Stats Cards Compactas -->
+  <section class="row g-2 mb-2 flex-shrink-0">
+
+    <!-- Total Clientes -->
+    <div class="col-md-3 col-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body p-2 d-flex align-items-center gap-3">
+          <div class="p-2 bg-primary-subtle text-primary rounded flex-shrink-0">
+            <i class="fa-solid fa-users fs-5"></i>
+          </div>
+          <div class="flex-grow-1 lh-1">
+            <div class="text-uppercase text-muted fw-bold small tracking-wide mb-1" style="font-size: 0.7rem;">Total
+            </div>
+            <h4 class="fw-bold text-dark mb-0">{{totalActivos}}</h4>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Regulares -->
+    <div class="col-md-3 col-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body p-2 d-flex align-items-center gap-3">
+          <div class="p-2 bg-secondary-subtle text-secondary rounded flex-shrink-0">
+            <i class="fa-solid fa-user fs-5"></i>
+          </div>
+          <div class="flex-grow-1 lh-1">
+            <div class="text-uppercase text-muted fw-bold small tracking-wide mb-1" style="font-size: 0.7rem;">Regular
+            </div>
+            <h4 class="fw-bold text-dark mb-0">{{totalRegulares}}</h4>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mayoristas -->
+    <div class="col-md-3 col-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body p-2 d-flex align-items-center gap-3">
+          <div class="p-2 bg-info-subtle text-info rounded flex-shrink-0">
+            <i class="fa-solid fa-building fs-5"></i>
+          </div>
+          <div class="flex-grow-1 lh-1">
+            <div class="text-uppercase text-muted fw-bold small tracking-wide mb-1" style="font-size: 0.7rem;">Mayorista
+            </div>
+            <h4 class="fw-bold text-dark mb-0">{{totalMayoristas}}</h4>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIP -->
+    <div class="col-md-3 col-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body p-2 d-flex align-items-center gap-3">
+          <div class="p-2 bg-warning-subtle text-warning rounded flex-shrink-0">
+            <i class="fa-solid fa-crown fs-5"></i>
+          </div>
+          <div class="flex-grow-1 lh-1">
+            <div class="text-uppercase text-muted fw-bold small tracking-wide mb-1" style="font-size: 0.7rem;">VIP</div>
+            <h4 class="fw-bold text-dark mb-0">{{totalVIP}}</h4>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- Tabla de Clientes (Ocupa el resto) -->
+  <section class="card border-0 shadow-sm flex-grow-1 d-flex flex-column overflow-hidden" style="min-height: 0;">
+
+    <!-- Toolbar -->
+    <div
+      class="card-header bg-white border-bottom p-2 d-flex flex-column flex-md-row justify-content-between align-items-center gap-2 flex-shrink-0">
+
+      <!-- Búsqueda -->
+      <div class="position-relative w-100" style="max-width: 300px;">
+        <span class="position-absolute top-50 start-0 translate-middle-y ms-3 text-muted">
+          <i class="fa-solid fa-search small"></i>
+        </span>
+        <input type="text" placeholder="Buscar por nombre, cédula, RNC..." (input)="onBusquedaChange($event)"
+          class="form-control form-control-sm ps-5 border-0 bg-light shadow-sm">
+      </div>
+
+      <!-- Filtros -->
+      <div class="btn-group btn-group-sm">
+        <button (click)="cambiarFiltroEstado('todos')" [class.active]="filtroActivo === 'todos'"
+          class="btn btn-outline-secondary">Todos</button>
+        <button (click)="cambiarFiltroEstado('activos')" [class.active]="filtroActivo === 'activos'"
+          class="btn btn-outline-primary">Activos</button>
+        <button (click)="cambiarFiltroEstado('inactivos')" [class.active]="filtroActivo === 'inactivos'"
+          class="btn btn-outline-secondary">Inactivos</button>
+      </div>
+
+    </div>
+
+    <!-- Table Body (Scrollable) -->
+    <div class="table-responsive flex-grow-1 overflow-auto bg-white position-relative">
+      <table class="table table-hover table-sm align-middle mb-0 w-100" style="font-size: 0.9rem;">
+        <thead class="bg-light text-secondary text-uppercase small fw-bold sticky-top"
+          style="position: sticky; top: 0; z-index: 10;">
+          <tr>
+            <th class="px-3 py-2 border-0 bg-light">Cliente</th>
+            <th class="px-3 py-2 border-0 bg-light">Contacto</th>
+            <th class="px-3 py-2 border-0 bg-light text-center">Tipo</th>
+            <th class="px-3 py-2 border-0 text-center bg-light">Límite</th>
+            <th class="px-3 py-2 border-0 text-center bg-light">Balance</th>
+            <th class="px-3 py-2 border-0 text-center bg-light">Estado</th>
+            <th class="px-3 py-2 border-0 text-end bg-light">Acciones</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @if (clientesFiltrados.length === 0) {
+          <tr>
+            <td colspan="7" class="text-center py-5">
+              <div class="text-muted opacity-50 mb-2">
+                <i class="fa-solid fa-users-slash fa-2x"></i>
+              </div>
+              <h6 class="fw-bold text-dark">No se encontraron clientes</h6>
+              <button (click)="abrirModalCliente()" class="btn btn-sm btn-link pt-0">Registrar nuevo</button>
+            </td>
+          </tr>
+          } @else {
+          @for (cliente of clientesFiltrados; track cliente.id) {
+          <tr>
+            <!-- Cliente -->
+            <td class="px-3 py-1">
+              <div class="d-flex flex-column lh-1">
+                <div class="d-flex align-items-center gap-2">
+                  <span class="fw-semibold text-dark">{{cliente.nombre}}</span>
+                  @if (cliente.rnc) {
+                  <span class="badge rounded-pill fw-bold"
+                    style="background:#fef3c7; color:#92400e; border:1px solid #fcd34d; font-size:0.6rem;">
+                    B01
+                  </span>
+                  }
+                </div>
+                @if (cliente.rnc) {
+                <small class="text-warning-emphasis" style="font-size: 0.68rem;">
+                  <i class="fa-solid fa-building me-1" style="font-size:0.55rem;"></i>RNC: {{cliente.rnc}}
+                </small>
+                } @else if (cliente.cedula) {
+                <small class="text-muted" style="font-size: 0.68rem;">
+                  <i class="fa-solid fa-id-card me-1" style="font-size:0.55rem;"></i>{{cliente.cedula}}
+                </small>
+                }
+              </div>
+            </td>
+
+            <!-- Contacto -->
+            <td class="px-3 py-1 text-muted small">
+              <div class="d-flex flex-column lh-1">
+                @if (cliente.telefono) {
+                <span class="d-flex align-items-center gap-1">
+                  <i class="fa-solid fa-phone" style="font-size: 0.6rem;"></i> {{cliente.telefono}}
+                </span>
+                }
+                @if (cliente.email) {
+                <small class="text-truncate" style="max-width: 150px;">{{cliente.email}}</small>
+                }
+              </div>
+            </td>
+
+            <!-- Tipo -->
+            <td class="px-3 py-1 text-center">
+              <span [className]="getTipoBadgeClass(cliente.tipo_cliente)"
+                style="font-size: 0.7rem;">{{cliente.tipo_cliente}}</span>
+            </td>
+
+            <!-- Límite -->
+            <td class="px-3 py-1 text-center fw-semibold text-dark small">
+              {{formatearMoneda(cliente.limite_credito)}}
+            </td>
+
+            <!-- Balance -->
+            <td class="px-3 py-1 text-center small">
+              <div [class]="cliente.balance_pendiente > 0 ? 'text-danger fw-bold' : 'text-muted'">
+                {{formatearMoneda(cliente.balance_pendiente)}}
+              </div>
+              @if (cliente.limite_credito > 0) {
+              <small class="text-success d-block" style="font-size: 0.65rem;">
+                Disp: {{formatearMoneda(getCreditoDisponible(cliente))}}
+              </small>
+              }
+            </td>
+
+            <!-- Estado -->
+            <td class="px-3 py-1 text-center">
+              @if (cliente.activo) {
+              <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill">Activo</span>
+              } @else {
+              <span
+                class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill">Inactivo</span>
+              }
+            </td>
+
+            <!-- Acciones -->
+            <td class="px-3 py-1 text-end">
+              <div class="btn-group">
+                <button (click)="editarCliente(cliente)" class="btn btn-sm btn-link text-primary p-0 me-2"
+                  title="Editar">
+                  <i class="fa-solid fa-pen-to-square"></i>
+                </button>
+                <button (click)="eliminarCliente(cliente)" [class.text-danger]="cliente.activo"
+                  [class.text-success]="!cliente.activo" class="btn btn-sm btn-link p-0"
+                  title="{{cliente.activo ? 'Desactivar' : 'Activar'}}">
+                  <i [class.fa-trash]="cliente.activo" [class.fa-check-circle]="!cliente.activo" class="fa-solid"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Footer -->
+    <div class="card-footer bg-white border-top p-2 d-flex justify-content-between align-items-center flex-shrink-0"
+      style="font-size: 0.8rem;">
+      <span class="text-muted">Total: {{clientesFiltrados.length}}</span>
+    </div>
+
+  </section>
+</div>
+
+<!-- MODAL -->
+@if (isModalClienteOpen) {
+<app-modal-clientes [clienteEditar]="clienteEditando" (close)="cerrarModalCliente()"
+  (clienteGuardado)="onClienteGuardado($event)">
+</app-modal-clientes>
+}

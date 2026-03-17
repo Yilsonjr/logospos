@@ -1,0 +1,180 @@
+/* =========================================
+   POS LAYOUT (NUCLEAR OPTION - OVERLAY)
+   ========================================= */
+
+/* Ignorar el flujo normal del documento y posicionar sobre todo */
+.pos-layout {
+  position: fixed !important;
+  top: 64px;
+  /* Debajo del Topbar (asumiendo 64px) */
+  left: 260px;
+  /* A la derecha del Sidebar Expandido */
+  right: 0;
+  /* Hasta el borde derecho de la pantalla */
+  bottom: 0;
+  /* Hasta el fondo de la pantalla */
+  width: auto !important;
+  height: auto !important;
+
+  /* Layout Interno Flex */
+  display: flex;
+  flex-direction: row;
+  background-color: #f8f9fa;
+  z-index: 100;
+  /* Asegurar que esté encima del contenido normal */
+  overflow: hidden;
+
+  /* Transición suave al colapsar sidebar */
+  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Modificador cuando el sidebar está colapsado */
+.pos-layout--collapsed {
+  left: 70px !important;
+  /* Ancho exacto del sidebar colapsado */
+}
+
+/* Ajuste dinámico si el sidebar colapsa (requiere clase en body o similar) */
+/* Por ahora asumimos sidebar expandido. Si colapsa, queda espacio, pero el POS se ve */
+
+/* Si el host tiene display none, nada se ve. Asegurar block */
+:host {
+  display: block;
+}
+
+/* 3. Área de Productos (Izquierda - Flexible) */
+.products-area {
+  flex: 1;
+  /* Crecer para llenar espacio */
+  display: flex;
+  flex-direction: column;
+
+  /* Restricciones */
+  min-width: 0;
+  /* Crítico para flex children */
+  height: 100%;
+
+  /* Estilo */
+  border-right: 1px solid #e5e7eb;
+}
+
+/* Header Productos */
+.products-header {
+  flex-shrink: 0;
+  /* Altura fija */
+  padding: 1rem;
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* Grid Productos (Scrollable) */
+.products-grid-container {
+  flex: 1;
+  /* Llenar altura restante */
+  overflow-y: auto;
+  /* Scroll vertical */
+  padding: 1rem;
+}
+
+/* 4. Área del Carrito (Derecha - Fija) */
+.cart-area {
+  width: 380px;
+  /* Ancho Fijo Estricto */
+  flex-shrink: 0;
+  /* No encoger nunca */
+  display: flex;
+  flex-direction: column;
+
+  /* Restricciones */
+  height: 100%;
+  background: white;
+  border-left: 1px solid #e5e7eb;
+  z-index: 10;
+  box-shadow: -4px 0 15px rgba(0, 0, 0, 0.05);
+}
+
+/* Header Carrito */
+.cart-header {
+  flex-shrink: 0;
+  padding: 0.75rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* Lista Items (Scrollable) */
+.cart-items-container {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Footer Carrito */
+.cart-footer {
+  flex-shrink: 0;
+  padding: 1rem;
+  border-top: 1px solid #e5e7eb;
+  background: white;
+}
+
+/* =========================================
+   UTILIDADES & COMPONENTES
+   ========================================= */
+/* Scrollbar Fino */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Product Card */
+.product-card {
+  background: white;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.product-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  border-color: #d1d5db;
+}
+
+/* =========================================
+   RESPONSIVE (Mobile)
+   ========================================= */
+@media (max-width: 1024px) {
+
+  /* En tablets pequeñas, reducir ancho carrito */
+  .cart-area {
+    width: 320px;
+  }
+}
+
+@media (max-width: 768px) {
+
+  /* En móvil, apilar vertical o usar tabs/modal */
+  .pos-layout {
+    flex-direction: column;
+  }
+
+  .cart-area {
+    width: 100%;
+    height: auto;
+    max-height: 40vh;
+    /* Carrito abajo */
+    border-left: none;
+    border-top: 1px solid #e5e7eb;
+  }
+}

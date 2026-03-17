@@ -1,0 +1,126 @@
+<div class="nc-overlay" (click)="cancelar.emit()">
+    <div class="nc-modal" (click)="$event.stopPropagation()">
+
+        <!-- Header -->
+        <div class="nc-header">
+            <div class="nc-header-left">
+                <div class="nc-icon"><i class="fa-solid fa-rotate-left"></i></div>
+                <div>
+                    <h2>Nota de Crédito</h2>
+                    <span class="nc-ref">Ref. Factura #{{ venta?.numero_venta || ventaId }}</span>
+                </div>
+            </div>
+            <button class="nc-close" (click)="cancelar.emit()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <!-- Loading state -->
+        <div class="nc-loading" *ngIf="isLoading">
+            <div class="spinner"></div>
+            <span>Cargando factura original...</span>
+        </div>
+
+        <!-- Body -->
+        <div class="nc-body" *ngIf="!isLoading">
+            <div class="nc-grid">
+
+                <!-- LEFT: Items -->
+                <div class="nc-items-col">
+                    <div class="col-title">
+                        <i class="fa-solid fa-boxes-stacked"></i>
+                        Artículos de la Factura Original
+                    </div>
+                    <div class="items-list">
+                        <div class="item-row" *ngFor="let item of items" [class.item-selected]="item.seleccionado">
+                            <label class="item-check-wrap">
+                                <input type="checkbox" [(ngModel)]="item.seleccionado" (change)="onItemToggle(item)">
+                            </label>
+                            <div class="item-info">
+                                <span class="item-nombre">{{ item.producto_nombre }}</span>
+                                <span class="item-precio">{{ formatMoneda(item.precio_unitario) }} × {{
+                                    item.cantidad_original }}</span>
+                            </div>
+                            <div class="item-qty" *ngIf="item.seleccionado">
+                                <label class="qty-label">Devolver</label>
+                                <div class="qty-controls">
+                                    <button type="button" (click)="decrementQty(item)"
+                                        [disabled]="item.cantidad_devolver <= 1">
+                                        <i class="fa-solid fa-minus"></i>
+                                    </button>
+                                    <input type="number" [(ngModel)]="item.cantidad_devolver"
+                                        (change)="validarCantidad(item)" [min]="1" [max]="item.cantidad_original">
+                                    <button type="button" (click)="incrementQty(item)"
+                                        [disabled]="item.cantidad_devolver >= item.cantidad_original">
+                                        <i class="fa-solid fa-plus"></i>
+                                    </button>
+                                </div>
+                                <span class="item-subtotal">{{ formatMoneda(item.precio_unitario *
+                                    item.cantidad_devolver) }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RIGHT: Summary + Reason -->
+                <div class="nc-summary-col">
+                    <div class="col-title">
+                        <i class="fa-solid fa-receipt"></i>
+                        Resumen de Devolución
+                    </div>
+
+                    <!-- Selected items preview -->
+                    <div class="nc-summary-items">
+                        <div *ngIf="itemsSeleccionados.length === 0" class="nc-empty-sel">
+                            <i class="fa-regular fa-hand-pointer"></i>
+                            <span>Selecciona los artículos a devolver</span>
+                        </div>
+                        <div class="nc-sel-item" *ngFor="let item of itemsSeleccionados">
+                            <span class="sel-nombre">{{ item.producto_nombre }}</span>
+                            <span class="sel-qty">× {{ item.cantidad_devolver }}</span>
+                            <span class="sel-sub">{{ formatMoneda(item.precio_unitario * item.cantidad_devolver)
+                                }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Totals -->
+                    <div class="nc-totals">
+                        <div class="total-row total-main">
+                            <span>Total Nota de Crédito:</span>
+                            <strong>{{ formatMoneda(totalDevolucion) }}</strong>
+                        </div>
+                    </div>
+
+                    <!-- Motivo -->
+                    <div class="nc-motivo">
+                        <label>Motivo de devolución *</label>
+                        <select [(ngModel)]="motivoSeleccionado">
+                            <option value="">-- Seleccionar motivo --</option>
+                            <option *ngFor="let m of motivos" [value]="m">{{ m }}</option>
+                        </select>
+                        <textarea *ngIf="motivoSeleccionado === 'Otro'" [(ngModel)]="motivoPersonalizado"
+                            placeholder="Describe el motivo..." rows="2"></textarea>
+                    </div>
+
+                    <!-- NCF info -->
+                    <div class="nc-fiscal-info">
+                        <i class="fa-solid fa-circle-info"></i>
+                        Se generará automáticamente un <strong>NCF tipo B04</strong> referenciando el comprobante
+                        original.
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="nc-foot">
+                        <button type="button" class="btn-cancelar" (click)="cancelar.emit()">Cancelar</button>
+                        <button type="button" class="btn-confirmar" (click)="confirmar()"
+                            [disabled]="!puedeConfirmar || isSaving">
+                            <i class="fa-solid" [class.fa-check]="!isSaving" [class.fa-spinner]="isSaving"></i>
+                            {{ isSaving ? 'Generando...' : 'Confirmar Devolución' }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>

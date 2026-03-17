@@ -1,0 +1,251 @@
+<div class="container-fluid p-2 bg-light d-flex flex-column h-100 overflow-hidden" style="height: 100%;">
+
+  <!-- Header Mejorado -->
+  <header
+    class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3 mb-3 flex-shrink-0 bg-white p-3 rounded-3 border shadow-sm">
+    <div class="d-flex align-items-center gap-3">
+      <div class="bg-info-subtle text-info rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
+        style="width: 48px; height: 48px;">
+        <i class="fa-solid fa-cart-shopping fs-4"></i>
+      </div>
+      <div>
+        <h1 class="h5 fw-bold text-dark mb-1">Gestión de Compras</h1>
+        <p class="text-secondary small mb-0 d-flex align-items-center gap-1">
+          <i class="fa-solid fa-circle-info text-info" style="font-size: 0.6rem;"></i>
+          Historial de compras a proveedores.
+        </p>
+      </div>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2 w-100 w-md-auto justify-content-center justify-content-md-end">
+      <button (click)="exportarDatos()"
+        class="btn btn-sm btn-outline-success d-flex align-items-center gap-2 fw-semibold px-3">
+        <i class="fa-solid fa-file-excel"></i> Exportar
+      </button>
+      <a routerLink="/compras/nueva"
+        class="btn btn-sm btn-primary d-flex align-items-center gap-2 fw-semibold shadow-sm px-4">
+        <i class="fa-solid fa-plus"></i> Nueva Compra
+      </a>
+    </div>
+  </header>
+
+  <!-- Stats Cards Compactas -->
+  <section class="row g-2 mb-2 flex-shrink-0">
+
+    <!-- Total Compras -->
+    <div class="col-md-3 col-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body p-2 d-flex align-items-center gap-3">
+          <div class="p-2 bg-primary-subtle text-primary rounded flex-shrink-0">
+            <i class="fa-solid fa-receipt fs-5"></i>
+          </div>
+          <div class="flex-grow-1 lh-1">
+            <div class="text-uppercase text-muted fw-bold small tracking-wide mb-1" style="font-size: 0.7rem;">Total
+            </div>
+            <h4 class="fw-bold text-dark mb-0">{{totalCompras}}</h4>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Monto Total -->
+    <div class="col-md-3 col-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body p-2 d-flex align-items-center gap-3">
+          <div class="p-2 bg-success-subtle text-success rounded flex-shrink-0">
+            <i class="fa-solid fa-dollar-sign fs-5"></i>
+          </div>
+          <div class="flex-grow-1 lh-1">
+            <div class="text-uppercase text-muted fw-bold small tracking-wide mb-1" style="font-size: 0.7rem;">Inversión
+            </div>
+            <h4 class="fw-bold text-dark mb-0">${{totalMonto.toLocaleString()}}</h4>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pendientes -->
+    <div class="col-md-3 col-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body p-2 d-flex align-items-center gap-3">
+          <div class="p-2 bg-warning-subtle text-warning-emphasis rounded flex-shrink-0">
+            <i class="fa-solid fa-hourglass-half fs-5"></i>
+          </div>
+          <div class="flex-grow-1 lh-1">
+            <div class="text-uppercase text-muted fw-bold small tracking-wide mb-1" style="font-size: 0.7rem;">
+              Pendientes</div>
+            <h4 class="fw-bold text-dark mb-0">{{comprasPendientes}}</h4>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Monto Pendiente -->
+    <div class="col-md-3 col-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body p-2 d-flex align-items-center gap-3">
+          <div class="p-2 bg-danger-subtle text-danger rounded flex-shrink-0">
+            <i class="fa-solid fa-hand-holding-dollar fs-5"></i>
+          </div>
+          <div class="flex-grow-1 lh-1">
+            <div class="text-uppercase text-muted fw-bold small tracking-wide mb-1" style="font-size: 0.7rem;">Deuda
+            </div>
+            <h4 class="fw-bold text-dark mb-0">${{montoComprasPendientes.toLocaleString()}}</h4>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- Tabla de Compras (Ocupa el resto) -->
+  <section class="card border-0 shadow-sm flex-grow-1 d-flex flex-column overflow-hidden" style="min-height: 0;">
+
+    <!-- Toolbar -->
+    <div
+      class="card-header bg-white border-bottom p-2 d-flex flex-column flex-md-row justify-content-between align-items-center gap-2 flex-shrink-0">
+
+      <!-- Búsqueda -->
+      <div class="position-relative w-100" style="max-width: 300px;">
+        <span class="position-absolute top-50 start-0 translate-middle-y ms-3 text-muted">
+          <i class="fa-solid fa-search small"></i>
+        </span>
+        <input type="text" [(ngModel)]="busqueda" (input)="aplicarFiltros()"
+          placeholder="Buscar por proveedor, factura o NCF..."
+          class="form-control form-control-sm ps-5 border-0 bg-light shadow-sm">
+      </div>
+
+      <!-- Filtro Checkbox -->
+      <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" id="mostrarAnuladas" [(ngModel)]="mostrarAnuladas"
+          (change)="toggleMostrarAnuladas()">
+        <label class="form-check-label small fw-semibold text-secondary" for="mostrarAnuladas">Mostrar anuladas</label>
+      </div>
+
+    </div>
+
+    <!-- Table Body (Scrollable) -->
+    <div class="table-responsive flex-grow-1 overflow-auto bg-white position-relative">
+      <table class="table table-hover table-sm align-middle mb-0 w-100" style="font-size: 0.9rem;">
+        <thead class="bg-light text-secondary text-uppercase small fw-bold sticky-top"
+          style="position: sticky; top: 0; z-index: 10;">
+          <tr>
+            <th class="px-3 py-2 border-0 bg-light">Factura</th>
+            @if (modoFiscalActivo) {
+            <th class="px-3 py-2 border-0 bg-light" style="color:#92400e;">NCF Proveedor</th>
+            }
+            <th class="px-3 py-2 border-0 bg-light">Proveedor</th>
+            <th class="px-3 py-2 border-0 bg-light">Fecha</th>
+            <th class="px-3 py-2 border-0 text-end bg-light">Subtotal</th>
+            <th class="px-3 py-2 border-0 text-end bg-light">Impuesto</th>
+            <th class="px-3 py-2 border-0 text-end bg-light">Total</th>
+            <th class="px-3 py-2 border-0 text-center bg-light">Estado</th>
+            <th class="px-3 py-2 border-0 text-end bg-light">Acciones</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @if (isLoading) {
+          <tr>
+            <td [attr.colspan]="modoFiscalActivo ? 9 : 8" class="text-center py-5">
+              <div class="spinner-border text-primary spinner-border-sm" role="status"></div>
+              <span class="ms-2 small text-muted">Cargando compras...</span>
+            </td>
+          </tr>
+          } @else if (comprasFiltradas.length === 0) {
+          <tr>
+            <td [attr.colspan]="modoFiscalActivo ? 9 : 8" class="text-center py-5">
+              <div class="text-muted opacity-50 mb-2">
+                <i class="fa-solid fa-cart-arrow-down fa-2x"></i>
+              </div>
+              <h6 class="fw-bold text-dark">No hay compras registradas</h6>
+              <a routerLink="/compras/nueva" class="btn btn-sm btn-link pt-0">Registrar nueva</a>
+            </td>
+          </tr>
+          } @else {
+          @for (compra of comprasFiltradas; track compra.id) {
+          <tr>
+            <td class="px-3 py-2 fw-semibold text-dark">
+              {{compra.numero_factura || '#' + compra.id}}
+            </td>
+            <!-- NCF Proveedor -->
+            @if (modoFiscalActivo) {
+            <td class="px-3 py-2">
+              @if (compra.ncf) {
+              <div class="d-flex flex-column lh-1">
+                <span class="badge fw-bold font-monospace"
+                  style="background:#fef3c7; color:#92400e; border:1px solid #fcd34d; font-size:0.7rem;">
+                  {{ compra.ncf }}
+                </span>
+                @if (compra.tipo_ncf) {
+                <small class="text-muted mt-1" style="font-size:0.65rem;">{{ compra.tipo_ncf }}</small>
+                }
+              </div>
+              } @else {
+              <span class="text-muted small">—</span>
+              }
+            </td>
+            }
+
+            <!-- Proveedor -->
+            <td class="px-3 py-2 text-muted">
+              {{compra.proveedor_nombre}}
+            </td>
+
+            <!-- Fecha -->
+            <td class="px-3 py-2 text-muted small">
+              {{formatearFecha(compra.fecha_compra)}}
+            </td>
+
+            <!-- Subtotal -->
+            <td class="px-3 py-2 text-end text-muted font-monospace small">
+              ${{compra.subtotal.toFixed(2)}}
+            </td>
+
+            <!-- Impuesto -->
+            <td class="px-3 py-2 text-end text-muted font-monospace small">
+              ${{compra.impuesto.toFixed(2)}}
+            </td>
+
+            <!-- Total -->
+            <td class="px-3 py-2 text-end fw-bold text-dark font-monospace">
+              ${{compra.total.toFixed(2)}}
+            </td>
+
+            <!-- Estado -->
+            <td class="px-3 py-2 text-center">
+              <span [class]="getEstadoBadgeClass(compra.estado)" style="font-size: 0.7rem;">{{compra.estado}}</span>
+            </td>
+
+            <!-- Acciones -->
+            <td class="px-3 py-2 text-end">
+              <div class="btn-group">
+                <a [routerLink]="['/compras', compra.id]" class="btn btn-sm btn-link text-primary p-0 me-2"
+                  title="Ver detalles">
+                  <i class="fa-solid fa-eye"></i>
+                </a>
+                @if (compra.estado !== 'cancelada') {
+                <button (click)="anularCompra(compra)" class="btn btn-sm btn-link text-warning p-0 me-2" title="Anular">
+                  <i class="fa-solid fa-ban"></i>
+                </button>
+                }
+                <button (click)="eliminarCompra(compra)" class="btn btn-sm btn-link text-danger p-0" title="Eliminar">
+                  <i class="fa-solid fa-trash-can"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Footer -->
+    <div class="card-footer bg-white border-top p-2 d-flex justify-content-between align-items-center flex-shrink-0"
+      style="font-size: 0.8rem;">
+      <span class="text-muted">Mostrando {{comprasFiltradas.length}} registros</span>
+    </div>
+
+  </section>
+</div>

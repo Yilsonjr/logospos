@@ -1,0 +1,104 @@
+<!-- Overlay móvil -->
+<div class="sidebar-overlay" [class.show]="!isCollapsed" (click)="toggleSidebar()"></div>
+
+<div class="sidebar-container d-flex flex-column flex-shrink-0 p-2 h-100 position-fixed overflow-y-auto"
+  style="top: 0; left: 0; z-index: 9999;" [class.collapsed]="isCollapsed" [class.show]="!isCollapsed">
+
+  <!-- Header: Logo y Toggle -->
+  <div class="sidebar-header d-flex align-items-center mb-4 pb-3">
+    <div class="d-flex align-items-center justify-content-center rounded-3 flex-shrink-0 gradient-logo shadow-sm"
+      style="width: 42px; height: 42px; background: linear-gradient(135deg, #3699ff 0%, #007bff 100%);">
+      <i class="fa-solid fa-store text-white fs-5"></i>
+    </div>
+
+    @if (!isCollapsed) {
+    <div class="ms-3 lh-1 overflow-hidden" style="white-space: nowrap;">
+      <h5 class="mb-0 fw-bold brand-text" style="font-size: 1.1rem;">LogosPOS</h5>
+      <small class="text-muted" style="font-size: 0.75rem; opacity: 0.7;">Sistema de Ventas</small>
+    </div>
+    }
+
+    <!-- Botón Colapsar -->
+    <button
+      class="btn btn-sm btn-toggle ms-auto d-none d-md-flex align-items-center justify-content-center rounded-circle"
+      (click)="toggleSidebar()" style="width: 28px; height: 28px;" [title]="isCollapsed ? 'Expandir' : 'Colapsar'">
+      <i class="fa-solid" [class.fa-chevron-left]="!isCollapsed" [class.fa-chevron-right]="isCollapsed"
+        style="font-size: 0.8rem;"></i>
+    </button>
+  </div>
+
+  <!-- Navegación -->
+  <ul class="nav nav-pills flex-column mb-auto gap-1">
+    @for (item of menuItemsFiltrados; track item.label) {
+    <li class="nav-item">
+      <!-- Item Principal -->
+      <a [routerLink]="item.submenu ? null : item.link" class="nav-link d-flex align-items-center text-truncate"
+        routerLinkActive="active" [routerLinkActiveOptions]="{exact: item.link === '/dashboard'}"
+        [title]="isCollapsed ? item.label : ''" (click)="handleMenuClick($event, item)"
+        style="cursor: pointer; height: 44px;">
+
+        <i [class]="item.icon" class="fs-5 flex-shrink-0 d-flex justify-content-center" style="width: 24px;"></i>
+
+        @if (!isCollapsed) {
+        <span class="ms-3 flex-grow-1 text-truncate" style="font-size: 0.95rem;">{{ item.label }}</span>
+
+        @if (item.submenu) {
+        <i class="fa-solid fa-chevron-down ms-auto transition-transform"
+          [style.transform]="item.expanded ? 'rotate(180deg)' : 'rotate(0deg)'"
+          style="font-size: 0.7rem; opacity: 0.7;"></i>
+        }
+        }
+      </a>
+
+      <!-- Submenú -->
+      @if (item.submenu && item.expanded && !isCollapsed) {
+      <div class="submenu-container ms-2 ps-2"> <!-- Contenedor oscuro -->
+        <ul class="nav flex-column gap-1">
+          @for (subitem of item.submenu; track subitem.label) {
+          <li class="nav-item">
+            <a [routerLink]="subitem.link" class="nav-sublink rounded-2 d-flex align-items-center"
+              routerLinkActive="active" style="padding: 8px 12px 8px 16px;">
+              <i [class]="subitem.icon" class="me-3" style="font-size: 0.9rem; opacity: 0.8;"></i>
+              <span style="font-size: 0.9rem;">{{ subitem.label }}</span>
+            </a>
+          </li>
+          }
+        </ul>
+      </div>
+      }
+    </li>
+    }
+  </ul>
+
+  <!-- Footer: Usuario -->
+  <div class="user-footer pt-3 mt-3">
+    @if (isCollapsed) {
+    <div class="text-center">
+      <div
+        class="avatar rounded-circle d-flex align-items-center justify-content-center text-white fw-bold mb-2 mx-auto"
+        style="width: 38px; height: 38px; font-size: 0.9rem;" [style.background-color]="obtenerColorRol()">
+        {{ obtenerIniciales() }}
+      </div>
+      <button class="btn btn-sm btn-outline-danger w-100 p-1 rounded-circle" style="width: 32px; height: 32px;"
+        (click)="cerrarSesion()" title="Cerrar Sesión">
+        <i class="fa-solid fa-power-off"></i>
+      </button>
+    </div>
+    } @else {
+    <div class="d-flex align-items-center p-2 rounded-3 hover-bg-dark transition-all">
+      <div class="avatar rounded-3 d-flex align-items-center justify-content-center text-white fw-bold shadow-sm"
+        style="width: 40px; height: 40px; min-width: 40px; font-size: 1rem;"
+        [style.background-color]="obtenerColorRol()">
+        {{ obtenerIniciales() }}
+      </div>
+      <div class="ms-3 overflow-hidden">
+        <div class="fw-bold user-name text-truncate lh-1 mb-1">{{ obtenerPrimerNombre() }}</div>
+        <div class="user-role text-truncate small lh-1">{{ usuario?.rol?.nombre }}</div>
+      </div>
+      <button class="btn btn-sm btn-icon ms-auto text-danger" (click)="cerrarSesion()" title="Cerrar Sesión">
+        <i class="fa-solid fa-arrow-right-from-bracket fs-5"></i>
+      </button>
+    </div>
+    }
+  </div>
+</div>

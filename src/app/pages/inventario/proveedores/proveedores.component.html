@@ -1,0 +1,233 @@
+<div class="container-fluid p-2 bg-light d-flex flex-column h-100 overflow-hidden" style="height: 100%;">
+
+  <!-- Header Mejorado -->
+  <header
+    class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3 mb-3 flex-shrink-0 bg-white p-3 rounded-3 border shadow-sm">
+    <div class="d-flex align-items-center gap-3">
+      <div
+        class="bg-primary-subtle text-primary rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
+        style="width: 48px; height: 48px;">
+        <i class="fa-solid fa-truck-fast fs-4"></i>
+      </div>
+      <div>
+        <h1 class="h5 fw-bold text-dark mb-1">Proveedores</h1>
+        <p class="text-secondary small mb-0 d-flex align-items-center gap-1">
+          <i class="fa-solid fa-circle-check text-success" style="font-size: 0.6rem;"></i>
+          Administración de proveedores y pagos.
+        </p>
+      </div>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2 w-100 w-md-auto justify-content-center justify-content-md-end">
+      <button (click)="exportarDatos()"
+        class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-2 fw-semibold px-3">
+        <i class="fa-solid fa-file-export"></i> Exportar
+      </button>
+      <button (click)="abrirModal()"
+        class="btn btn-sm btn-primary d-flex align-items-center gap-2 fw-semibold shadow-sm px-4">
+        <i class="fa-solid fa-plus"></i> Nuevo Proveedor
+      </button>
+    </div>
+  </header>
+
+  <!-- Stats Cards Compactas -->
+  <section class="row g-2 mb-2 flex-shrink-0">
+
+    <!-- Total Proveedores -->
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body p-2 d-flex align-items-center gap-3">
+          <div class="p-2 bg-primary-subtle text-primary rounded flex-shrink-0">
+            <i class="fa-solid fa-users fs-5"></i>
+          </div>
+          <div class="flex-grow-1 lh-1">
+            <div class="text-uppercase text-muted fw-bold small tracking-wide mb-1" style="font-size: 0.7rem;">Total
+              Proveedores</div>
+            <h4 class="fw-bold text-dark mb-0">{{totalProveedores}}</h4>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Activos -->
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body p-2 d-flex align-items-center gap-3">
+          <div class="p-2 bg-success-subtle text-success rounded flex-shrink-0">
+            <i class="fa-solid fa-user-check fs-5"></i>
+          </div>
+          <div class="flex-grow-1 lh-1">
+            <div class="text-uppercase text-muted fw-bold small tracking-wide mb-1" style="font-size: 0.7rem;">Activos
+            </div>
+            <h4 class="fw-bold text-dark mb-0">{{totalActivos}}</h4>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Inactivos -->
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body p-2 d-flex align-items-center gap-3">
+          <div class="p-2 bg-danger-subtle text-danger rounded flex-shrink-0">
+            <i class="fa-solid fa-user-xmark fs-5"></i>
+          </div>
+          <div class="flex-grow-1 lh-1">
+            <div class="text-uppercase text-muted fw-bold small tracking-wide mb-1" style="font-size: 0.7rem;">Inactivos
+            </div>
+            <h4 class="fw-bold text-dark mb-0">{{totalInactivos}}</h4>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- Tabla de Proveedores (Ocupa el resto) -->
+  <section class="card border-0 shadow-sm flex-grow-1 d-flex flex-column overflow-hidden" style="min-height: 0;">
+
+    <!-- Toolbar -->
+    <div
+      class="card-header bg-white border-bottom p-2 d-flex flex-column flex-md-row justify-content-between align-items-center gap-2 flex-shrink-0">
+
+      <!-- Búsqueda -->
+      <div class="position-relative w-100" style="max-width: 300px;">
+        <span class="position-absolute top-50 start-0 translate-middle-y ms-3 text-muted">
+          <i class="fa-solid fa-search small"></i>
+        </span>
+        <input type="text" placeholder="Buscar proveedor..." (input)="onBusquedaChange($event)"
+          class="form-control form-control-sm ps-5 border-0 bg-light shadow-sm">
+      </div>
+
+      <!-- Filtros -->
+      <div class="btn-group btn-group-sm">
+        <button (click)="cambiarFiltroEstado('todos')" [class.active]="filtroActivo === 'todos'"
+          class="btn btn-outline-secondary">Todos</button>
+        <button (click)="cambiarFiltroEstado('activos')" [class.active]="filtroActivo === 'activos'"
+          class="btn btn-outline-success">Activos</button>
+        <button (click)="cambiarFiltroEstado('inactivos')" [class.active]="filtroActivo === 'inactivos'"
+          class="btn btn-outline-danger">Inactivos</button>
+      </div>
+
+    </div>
+
+    <!-- Table Body (Scrollable) -->
+    <div class="table-responsive flex-grow-1 overflow-auto bg-white position-relative">
+      <table class="table table-hover table-sm align-middle mb-0 w-100" style="font-size: 0.9rem;">
+        <thead class="bg-light text-secondary text-uppercase small fw-bold sticky-top"
+          style="position: sticky; top: 0; z-index: 10;">
+          <tr>
+            <th class="px-3 py-2 border-0 bg-light">Proveedor</th>
+            <th class="px-3 py-2 border-0 bg-light">Documento</th>
+            <th class="px-3 py-2 border-0 bg-light">Teléfono</th>
+            <th class="px-3 py-2 border-0 bg-light">Email</th>
+            <th class="px-3 py-2 border-0 text-center bg-light">Ubicación</th>
+            <th class="px-3 py-2 border-0 text-center bg-light">Estado</th>
+            <th class="px-3 py-2 border-0 text-end bg-light">Acciones</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @if (isLoading) {
+          <tr>
+            <td colspan="7" class="text-center py-5">
+              <div class="d-flex flex-column align-items-center gap-2">
+                <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                <small class="text-muted">Cargando...</small>
+              </div>
+            </td>
+          </tr>
+          } @else if (proveedoresFiltrados.length === 0) {
+          <tr>
+            <td colspan="7" class="text-center py-5">
+              <div class="text-muted opacity-50 mb-2">
+                <i class="fa-solid fa-users-slash fa-2x"></i>
+              </div>
+              <h6 class="fw-bold text-dark">No se encontraron proveedores</h6>
+              <button (click)="abrirModal()" class="btn btn-sm btn-link pt-0">Registrar nuevo</button>
+            </td>
+          </tr>
+          } @else {
+          @for (proveedor of proveedoresFiltrados; track proveedor.id) {
+          <tr>
+            <!-- Proveedor -->
+            <td class="px-3 py-1">
+              <div class="d-flex align-items-center gap-2">
+                <div
+                  class="rounded-circle bg-primary-subtle text-primary d-flex align-items-center justify-content-center fw-bold small"
+                  style="width: 32px; height: 32px;">
+                  {{proveedor.nombre.charAt(0).toUpperCase()}}
+                </div>
+                <div class="d-flex flex-column lh-1">
+                  <span class="fw-semibold text-dark">{{proveedor.nombre}}</span>
+                  @if (proveedor.contacto) {
+                  <small class="text-muted" style="font-size: 0.7rem;">{{proveedor.contacto}}</small>
+                  }
+                </div>
+              </div>
+            </td>
+
+            <!-- Documento -->
+            <td class="px-3 py-1 text-muted small">
+              <span class="badge bg-light text-dark border me-1">{{proveedor.tipo_documento || 'RNC'}}</span>
+              {{proveedor.documento || '-'}}
+            </td>
+
+            <!-- Contacto -->
+            <td class="px-3 py-1 text-muted small">{{proveedor.telefono || '-'}}</td>
+
+            <!-- Email -->
+            <td class="px-3 py-1 text-muted small text-truncate" style="max-width: 150px;">{{proveedor.email || '-'}}
+            </td>
+
+            <!-- Ubicación -->
+            <td class="px-3 py-1 text-center small text-muted">
+              {{proveedor.ciudad ? proveedor.ciudad : ''}}{{proveedor.ciudad && proveedor.pais ? ', ' :
+              ''}}{{proveedor.pais ? proveedor.pais : ''}}
+            </td>
+
+            <!-- Estado -->
+            <td class="px-3 py-1 text-center">
+              @if (proveedor.activo) {
+              <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill">Activo</span>
+              } @else {
+              <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill">Inactivo</span>
+              }
+            </td>
+
+            <!-- Acciones -->
+            <td class="px-3 py-1 text-end">
+              <div class="btn-group">
+                <button (click)="abrirModalEditar(proveedor)" class="btn btn-sm btn-link text-primary p-0 me-2"
+                  title="Editar">
+                  <i class="fa-solid fa-pen-to-square"></i>
+                </button>
+                <button (click)="eliminarProveedor(proveedor)" [class.text-danger]="proveedor.activo"
+                  [class.text-success]="!proveedor.activo" class="btn btn-sm btn-link p-0"
+                  title="{{proveedor.activo ? 'Desactivar' : 'Activar'}}">
+                  <i [class.fa-trash]="proveedor.activo" [class.fa-check-circle]="!proveedor.activo"
+                    class="fa-solid"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Footer -->
+    <div class="card-footer bg-white border-top p-2 d-flex justify-content-between align-items-center flex-shrink-0"
+      style="font-size: 0.8rem;">
+      <span class="text-muted">Total: {{proveedoresFiltrados.length}}</span>
+    </div>
+
+  </section>
+</div>
+
+@if (isModalOpen) {
+<app-modal-proveedores [proveedorEditar]="proveedorEditar" (close)="cerrarModal()"
+  (proveedorGuardado)="onProveedorGuardado()">
+</app-modal-proveedores>
+}

@@ -1,0 +1,123 @@
+<!-- Modal de Gestión de Categorías -->
+<div class="modal-overlay" (click)="cerrarModal()">
+
+  <div class="modal-card" (click)="$event.stopPropagation()">
+
+    <!-- HEADER -->
+    <header class="modal-header">
+      <div class="modal-header__text">
+        <h2 class="modal-header__title">Gestión de Categorías</h2>
+        <p class="modal-header__subtitle">Administra las categorías de productos</p>
+      </div>
+
+      <button class="btn-close" (click)="cerrarModal()" type="button">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </header>
+
+    <!-- BODY -->
+    <div class="modal-body">
+
+      <!-- Filtros y botón nueva categoría -->
+      <div class="actions-toolbar">
+
+        <!-- Filtros -->
+        <div class="filtros-group">
+          <button (click)="cambiarFiltro('todas')" [class.filtro-activo]="filtroActivo === 'todas'" class="filtro-btn">
+            Todas ({{ todasCategorias.length }})
+          </button>
+          <button (click)="cambiarFiltro('activas')" [class.filtro-activo]="filtroActivo === 'activas'"
+            class="filtro-btn filtro-btn--activas">
+            Activas ({{ totalActivas }})
+          </button>
+          <button (click)="cambiarFiltro('inactivas')" [class.filtro-activo]="filtroActivo === 'inactivas'"
+            class="filtro-btn filtro-btn--inactivas">
+            Inactivas ({{ totalInactivas }})
+          </button>
+        </div>
+
+        <!-- Botón nueva categoría -->
+        <button (click)="abrirModalCategoria()" class="btn-nueva-categoria">
+          <i class="fa-solid fa-plus"></i>
+          Nueva Categoría
+        </button>
+      </div>
+
+      <!-- Lista de categorías -->
+      @if (categoriasFiltradas.length === 0) {
+      <div class="empty-state">
+        <i class="fa-solid fa-tags"></i>
+        @if (filtroActivo === 'todas') {
+        <p class="empty-state__text">No hay categorías registradas</p>
+        <button (click)="abrirModalCategoria()" class="empty-state__btn">
+          Crear primera categoría
+        </button>
+        } @else if (filtroActivo === 'activas') {
+        <p class="empty-state__text">No hay categorías activas</p>
+        } @else {
+        <p class="empty-state__text">No hay categorías inactivas</p>
+        }
+      </div>
+      } @else {
+      <div class="categorias-grid">
+        @for (categoria of categoriasFiltradas; track categoria.id) {
+        <div class="categoria-card">
+
+          <!-- Header de la tarjeta -->
+          <div class="categoria-card__header">
+            <div class="categoria-card__info">
+              <div class="categoria-card__color" [style.background-color]="categoria.color">
+              </div>
+              <div>
+                <h3 class="categoria-card__nombre">{{ categoria.nombre }}</h3>
+                @if (categoria.descripcion) {
+                <p class="categoria-card__descripcion">{{ categoria.descripcion }}</p>
+                }
+              </div>
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="categoria-card__actions">
+              <button (click)="editarCategoria(categoria)" class="btn-action btn-action--edit" title="Editar categoría">
+                <i class="fa-solid fa-pen"></i>
+              </button>
+              <button (click)="eliminarCategoria(categoria)" class="btn-action btn-action--delete"
+                title="Eliminar categoría">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Footer de la tarjeta -->
+          <div class="categoria-card__footer">
+            <span class="categoria-badge" [style.background-color]="categoria.color + '20'"
+              [style.color]="categoria.color">
+              {{ categoria.nombre }}
+            </span>
+            <span class="categoria-status" [class.categoria-status--activa]="categoria.activo"
+              [class.categoria-status--inactiva]="!categoria.activo">
+              {{ categoria.activo ? 'Activa' : 'Inactiva' }}
+            </span>
+          </div>
+        </div>
+        }
+      </div>
+      }
+    </div>
+
+    <!-- FOOTER -->
+    <div class="modal-footer">
+      <button type="button" class="btn-cerrar" (click)="cerrarModal()">
+        Cerrar
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modal de crear/editar categoría -->
+@if (isModalCategoriaOpen) {
+<app-modal-categorias [categoriaEditar]="categoriaEditando" (close)="cerrarModalCategoria()"
+  (categoriaGuardada)="onCategoriaGuardada($event)">
+</app-modal-categorias>
+}

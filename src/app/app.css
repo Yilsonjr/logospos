@@ -1,0 +1,101 @@
+/* =========================================
+   RESET & GLOBAL LAYOUT (CLEAN SCROLL)
+   ========================================= */
+
+/* Reset Universal CRÍTICO para alturas correctas */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* 1. App-like Behavior (MODIFICADO: Permitir scroll natural) */
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: #f3f4f6;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  overflow-y: auto;
+  /* RESTAURADO SCROLLBAR */
+}
+
+/* 2. Layout Principal */
+.app-layout {
+  display: block;
+  width: 100%;
+  min-height: 100vh;
+  position: relative;
+  overflow: visible;
+  /* Remover overflow hidden */
+}
+
+/* 3. Contenedor de Contenido Principal */
+.main-content {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+
+  /* Layout Líquido con Margen por el Sidebar Fixed */
+  margin-left: 260px;
+  /* Sidebar width */
+  width: auto;
+
+  background-color: #f9fafb;
+  position: relative;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  padding-top: 64px;
+  /* Espacio para Topbar */
+  padding-bottom: 50px;
+  /* Extra padding footer */
+}
+
+/* Modificadores de Sidebar */
+.main-content--sidebar-collapsed {
+  margin-left: 70px !important;
+}
+
+.main-content--no-sidebar {
+  margin-left: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+/* Responsividad para móviles y pantallas pequeñas */
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 0 !important; /* Elimina el borde blanco a la izquierda en mobile */
+    min-width: 100vw;
+  }
+}
+
+/* Pantalla de Carga */
+.loading-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #4f46e5;
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -1,0 +1,262 @@
+<div class="container-fluid p-2 bg-light d-flex flex-column h-100 overflow-hidden" style="height: 100%;">
+
+  <!-- Header Mejorado -->
+  <header
+    class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3 mb-3 flex-shrink-0 bg-white p-3 rounded-3 border shadow-sm">
+    <div class="d-flex align-items-center gap-3">
+      <div
+        class="bg-primary-subtle text-primary rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
+        style="width: 48px; height: 48px;">
+        <i class="fa-solid fa-boxes-stacked fs-4"></i>
+      </div>
+      <div>
+        <h1 class="h5 fw-bold text-dark mb-1">Gestión de Inventario</h1>
+        <p class="text-secondary small mb-0 d-flex align-items-center gap-1">
+          <i class="fa-solid fa-circle-check text-success" style="font-size: 0.6rem;"></i>
+          Control en tiempo real de stock y valoraciones.
+        </p>
+      </div>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2 w-100 w-md-auto justify-content-center justify-content-md-end">
+      <button (click)="abrirModalCategorias()"
+        class="btn btn-sm btn-outline-success d-flex align-items-center gap-2 fw-semibold px-3">
+        <i class="fa-solid fa-layer-group"></i> Categorías
+      </button>
+      <button (click)="abrirModalUnidades()"
+        class="btn btn-sm btn-outline-info d-flex align-items-center gap-2 fw-semibold px-3">
+        <i class="fa-solid fa-scale-balanced"></i> Unidades
+      </button>
+      <button (click)="exportarDatos()"
+        class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-2 fw-semibold px-3">
+        <i class="fa-solid fa-file-export"></i> Exportar
+      </button>
+      <button (click)="abrirModal()"
+        class="btn btn-sm btn-primary d-flex align-items-center gap-2 fw-semibold shadow-sm px-4">
+        <i class="fa-solid fa-plus"></i> Nuevo Producto
+      </button>
+    </div>
+  </header>
+
+  <!-- Stats Cards Compactas -->
+  <section class="row g-2 mb-2 flex-shrink-0">
+
+    <!-- Total Productos -->
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body p-2 d-flex align-items-center gap-3">
+          <div class="p-2 bg-primary-subtle text-primary rounded flex-shrink-0">
+            <i class="fa-solid fa-box fs-5"></i>
+          </div>
+          <div class="flex-grow-1 lh-1">
+            <div class="text-uppercase text-muted fw-bold small tracking-wide mb-1" style="font-size: 0.7rem;">Total
+              Productos</div>
+            <div class="d-flex align-items-end gap-2">
+              <h4 class="fw-bold text-dark mb-0">{{totalProductos}}</h4>
+              <span [class]="getPorcentajeCambioProductos().startsWith('+') ? 'text-success' : 'text-danger'"
+                class="fw-bold small d-flex align-items-center mb-1" style="font-size: 0.75rem;">
+                <i [class]="getPorcentajeCambioProductos().startsWith('+') ? 'fa-solid fa-arrow-up me-1' : 'fa-solid fa-arrow-down me-1'"
+                  style="font-size: 0.6rem;"></i>
+                {{getPorcentajeCambioProductos()}}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alertas Stock -->
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body p-2 d-flex align-items-center gap-3">
+          <div class="p-2 bg-danger-subtle text-danger rounded flex-shrink-0">
+            <i class="fa-solid fa-triangle-exclamation fs-5"></i>
+          </div>
+          <div class="flex-grow-1 lh-1">
+            <div class="text-uppercase text-muted fw-bold small tracking-wide mb-1" style="font-size: 0.7rem;">Stock
+              Bajo</div>
+            <div class="d-flex align-items-end gap-2">
+              <h4 class="fw-bold text-dark mb-0">{{getProductosStockMin(10)}}</h4>
+              <span class="text-danger fw-bold small d-flex align-items-center mb-1" style="font-size: 0.75rem;">
+                {{getProductosUrgentes()}} Urgente
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Valor Inventario -->
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body p-2 d-flex align-items-center gap-3">
+          <div class="p-2 bg-success-subtle text-success rounded flex-shrink-0">
+            <i class="fa-solid fa-sack-dollar fs-5"></i>
+          </div>
+          <div class="flex-grow-1 lh-1">
+            <div class="text-uppercase text-muted fw-bold small tracking-wide mb-1" style="font-size: 0.7rem;">Valor
+              Total</div>
+            <div class="d-flex align-items-end gap-2">
+              <h4 class="fw-bold text-dark mb-0">{{getTotalInventario() | number:'1.0-2'}}</h4>
+              <span [class]="getValoracionMercado().startsWith('+') ? 'text-success' : 'text-danger'"
+                class="fw-bold small d-flex align-items-center mb-1" style="font-size: 0.75rem;">
+                <i [class]="getValoracionMercado().startsWith('+') ? 'fa-solid fa-arrow-up me-1' : 'fa-solid fa-arrow-down me-1'"
+                  style="font-size: 0.6rem;"></i>
+                {{getValoracionMercado()}}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tabla de Productos (Ocupa el resto) -->
+  <section class="card border-0 shadow-sm flex-grow-1 d-flex flex-column overflow-hidden" style="min-height: 0;">
+
+    <!-- Toolbar Compacto -->
+    <div
+      class="card-header bg-white border-bottom p-2 d-flex flex-column flex-md-row justify-content-between align-items-center gap-2 flex-shrink-0">
+      <div class="position-relative w-100" style="max-width: 300px;">
+        <span class="position-absolute top-50 start-0 translate-middle-y ms-3 text-muted">
+          <i class="fa-solid fa-search small"></i>
+        </span>
+        <input type="text" placeholder="Buscar..."
+          class="form-control form-control-sm ps-5 border-0 bg-light shadow-sm">
+      </div>
+
+      <div class="d-flex gap-2">
+        <button class="btn btn-sm btn-white border shadow-sm text-secondary fw-medium d-flex align-items-center gap-1">
+          <i class="fa-solid fa-filter text-muted small"></i> Filtrar
+        </button>
+        <button class="btn btn-sm btn-white border shadow-sm text-secondary fw-medium d-flex align-items-center gap-1">
+          <i class="fa-solid fa-sort text-muted small"></i> Ordenar
+        </button>
+      </div>
+    </div>
+
+    <!-- Table Body (Scrollable) -->
+    <div class="table-responsive flex-grow-1 overflow-auto bg-white position-relative">
+      <table class="table table-hover table-sm align-middle mb-0 w-100" style="font-size: 0.9rem;">
+        <thead class="bg-light text-secondary text-uppercase small fw-bold sticky-top"
+          style="position: sticky; top: 0; z-index: 10;">
+          <tr>
+            <th class="px-3 py-2 border-0 bg-light">Imag</th>
+            <th class="px-3 py-2 border-0 bg-light">Código</th>
+            <th class="px-3 py-2 border-0 bg-light">Producto</th>
+            <th class="px-3 py-2 border-0 bg-light">Cat</th>
+            <th class="px-3 py-2 border-0 text-center bg-light">Compra</th>
+            <th class="px-3 py-2 border-0 text-center bg-light">Venta</th>
+            <th class="px-3 py-2 border-0 text-center bg-light">Stock</th>
+            <th class="px-3 py-2 border-0 text-end bg-light">Acciones</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @if (isLoading) {
+          <tr>
+            <td colspan="8" class="text-center py-5">
+              <div class="d-flex flex-column align-items-center gap-2">
+                <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                <small class="text-muted">Cargando...</small>
+              </div>
+            </td>
+          </tr>
+          } @else if (productos.length === 0) {
+          <tr>
+            <td colspan="8" class="text-center py-5">
+              <div class="text-muted opacity-50 mb-2">
+                <i class="fa-solid fa-box-open fa-2x"></i>
+              </div>
+              <h6 class="fw-bold text-dark">Sin productos</h6>
+              <button (click)="abrirModal()" class="btn btn-sm btn-link pt-0">Crear nuevo</button>
+            </td>
+          </tr>
+          } @else {
+          @for (prod of productos; track prod.id) {
+          <tr>
+            <!-- Imagen -->
+            <td class="px-3 py-1"> <!-- Padding vertical reducido -->
+              <div class="bg-light rounded d-flex align-items-center justify-content-center overflow-hidden border"
+                style="width: 36px; height: 36px;">
+                @if (prod.imagen_url) {
+                <img [src]="prod.imagen_url" [alt]="prod.nombre" class="w-100 h-100 object-fit-cover"
+                  (error)="onImageError($event)">
+                } @else {
+                <i class="fa-solid fa-image text-secondary opacity-25 small"></i>
+                }
+              </div>
+            </td>
+
+            <!-- SKU/Código -->
+            <td class="px-3 py-1 text-muted small user-select-all" style="white-space: nowrap;">
+              {{prod.sku || prod.codigo_barras || '-'}}
+            </td>
+
+            <!-- Nombre -->
+            <td class="px-3 py-1 fw-semibold text-dark text-truncate" style="max-width: 200px;" title="{{prod.nombre}}">
+              {{prod.nombre}}</td>
+
+            <!-- Categoria (Badge) -->
+            <td class="px-3 py-1">
+              <span [className]="getBadgeClass(prod.categoria)" style="font-size: 0.7rem;">{{prod.categoria}}</span>
+            </td>
+
+            <!-- Precios -->
+            <td class="px-3 py-1 text-center text-muted small">{{prod.precio_compra | currency:'USD':'symbol':'1.0-0'}}
+            </td>
+            <td class="px-3 py-1 text-center fw-bold text-dark small">{{prod.precio_venta |
+              currency:'USD':'symbol':'1.0-0'}}</td>
+
+            <!-- Stock -->
+            <td class="px-3 py-1 text-center">
+              <span [class]="getStockMin(prod.stock)">{{prod.stock}} <small class="text-muted fw-normal ms-1"
+                  style="font-size: 0.65rem;">{{prod.stock < 20 ? '(Bajo)' : '' }}</small></span>
+            </td>
+
+            <!-- Acciones -->
+            <td class="px-3 py-1 text-end">
+              <div class="btn-group">
+                <button (click)="editarProducto(prod)" class="btn btn-sm btn-link text-primary p-0 me-2" title="Editar">
+                  <i class="fa-solid fa-pen-to-square"></i>
+                </button>
+                <button (click)="eliminarProducto(prod)" class="btn btn-sm btn-link text-danger p-0" title="Eliminar">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Compacta -->
+    <div class="card-footer bg-white border-top p-2 d-flex justify-content-between align-items-center flex-shrink-0"
+      style="font-size: 0.8rem;">
+      <span class="text-muted">Total: {{productos.length}}</span>
+      <div class="btn-group btn-group-sm">
+        <button class="btn btn-outline-secondary disabled py-0 px-2">Ant</button>
+        <button class="btn btn-outline-secondary py-0 px-2">Sig</button>
+      </div>
+    </div>
+
+  </section>
+</div>
+
+@if (isModalOpen) {
+<app-modal-productos [productoEditar]="productoEditando" (close)="handleCerrarModal()"
+  (productoCreado)="onProductoCreado()">
+</app-modal-productos>
+}
+
+@if (isModalGestionCategoriasOpen) {
+<app-modal-gestion-categorias (close)="handleCerrarModalCategorias()">
+</app-modal-gestion-categorias>
+}
+
+@if (isModalGestionUnidadesOpen) {
+<app-modal-gestion-unidades (close)="handleCerrarModalUnidades()">
+</app-modal-gestion-unidades>
+}

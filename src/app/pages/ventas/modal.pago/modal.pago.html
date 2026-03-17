@@ -1,0 +1,246 @@
+<div class="modal-overlay" (click)="cancelar.emit()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+        <!-- Header -->
+        <div class="modal-header bg-primary text-white">
+            <div class="d-flex align-items-center">
+                <h5 class="fw-bold m-0"><i class="fa-solid fa-cash-register me-2"></i>Procesar Pago</h5>
+            </div>
+            <button type="button" class="btn-close btn-close-white" (click)="cancelar.emit()"></button>
+        </div>
+
+        <!-- Body (Scrollable) -->
+        <div class="modal-body">
+            <div class="p-4">
+                <div class="row g-4">
+                    <!-- Columna Izquierda: Métodos -->
+                    <div class="col-md-5">
+                        <h6 class="fw-bold text-muted mb-3">MÉTODO DE PAGO</h6>
+                        <div class="d-grid gap-2">
+                            <button *ngFor="let m of metodosPago"
+                                class="btn btn-lg text-start d-flex align-items-center justify-content-between p-3"
+                                [class.btn-primary]="metodoPago === m.valor"
+                                [class.btn-outline-secondary]="metodoPago !== m.valor"
+                                [class.bg-white]="metodoPago !== m.valor" (click)="cambiarMetodoPago(m.valor)">
+                                <span><i [class]="m.icono + ' me-2'"></i> {{ m.etiqueta }}</span>
+                                <i class="fa-solid fa-check-circle" *ngIf="metodoPago === m.valor"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Columna Derecha: Totales -->
+                    <div class="col-md-7">
+                        <div class="card border-0 shadow-sm mb-4">
+                            <div class="card-body bg-white rounded">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="text-muted">Total a Pagar:</span>
+                                    <span class="fs-4 fw-bold text-primary">{{ formatearMoneda(total) }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- === EFECTIVO === -->
+                        <div *ngIf="metodoPago === 'efectivo'">
+                            <label class="form-label fw-bold"><i
+                                    class="fa-solid fa-money-bill-wave me-1 text-success"></i> Efectivo Recibido</label>
+                            <div class="input-group input-group-lg mb-3">
+                                <span class="input-group-text bg-white">$</span>
+                                <input type="number" class="form-control" [(ngModel)]="montoEfectivo"
+                                    (input)="calcularCambio()" placeholder="0.00" min="0" autofocus>
+                            </div>
+                            <!-- Cambio -->
+                            <div class="card border-0 mt-2"
+                                [ngClass]="cambio >= 0 ? 'bg-success-subtle' : 'bg-danger-subtle'">
+                                <div class="card-body d-flex justify-content-between align-items-center py-3">
+                                    <span class="fw-bold"
+                                        [ngClass]="cambio >= 0 ? 'text-success-emphasis' : 'text-danger'">
+                                        {{ cambio >= 0 ? 'Cambio / Devuelta:' : 'Falta:' }}
+                                    </span>
+                                    <span class="fs-3 fw-bold" [ngClass]="cambio >= 0 ? 'text-success' : 'text-danger'">
+                                        {{ formatearMoneda(cambio < 0 ? -cambio : cambio) }} </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- === TARJETA O CRÉDITO === -->
+                        <div *ngIf="metodoPago === 'tarjeta' || metodoPago === 'credito'">
+                            <div class="alert alert-info d-flex align-items-center">
+                                <i class="fa-solid fa-info-circle me-2 fs-5"></i>
+                                <div>
+                                    <strong>Cobro exacto:</strong><br>
+                                    Se cobrarán <strong>{{ formatearMoneda(total) }}</strong> por {{ metodoPago ===
+                                    'tarjeta' ? 'tarjeta' : 'crédito' }}.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- === TRANSFERENCIA === -->
+                        <div *ngIf="metodoPago === 'transferencia'">
+                            <div class="alert alert-info d-flex align-items-center mb-3">
+                                <i class="fa-solid fa-building-columns me-2 fs-5"></i>
+                                <div>
+                                    <strong>Pago por transferencia:</strong><br>
+                                    Se registrarán <strong>{{ formatearMoneda(total) }}</strong> por transferencia
+                                    bancaria.
+                                </div>
+                            </div>
+
+                            <!-- Banco Destino -->
+                            <label class="form-label fw-bold small text-muted">BANCO DESTINO *</label>
+                            <select class="form-select mb-2" [(ngModel)]="bancoDestino">
+                                <option value="">-- Seleccionar banco --</option>
+                                <option *ngFor="let b of bancosRD" [value]="b.id">{{ b.nombre }}</option>
+                            </select>
+
+                            <!-- Referencia -->
+                            <label class="form-label fw-bold small text-muted">REFERENCIA (OPCIONAL)</label>
+                            <input type="text" class="form-control" [(ngModel)]="referenciaTransferencia"
+                                placeholder="Ej: #0012345, confirmación">
+                        </div>
+
+                        <!-- === MIXTO (3 VÍAS) === -->
+                        <div *ngIf="metodoPago === 'mixto'">
+                            <!-- Efectivo parte -->
+                            <label class="form-label fw-bold small text-muted">
+                                <i class="fa-solid fa-money-bill-wave text-success me-1"></i> EFECTIVO
+                            </label>
+                            <div class="input-group mb-2">
+                                <span class="input-group-text bg-white"><i
+                                        class="fa-solid fa-money-bill-wave text-success"></i></span>
+                                <input type="number" class="form-control" [(ngModel)]="montoEfectivo"
+                                    (input)="calcularMixto()" placeholder="0.00" min="0">
+                            </div>
+
+                            <!-- Tarjeta parte -->
+                            <label class="form-label fw-bold small text-muted">
+                                <i class="fa-solid fa-credit-card text-primary me-1"></i> TARJETA
+                            </label>
+                            <div class="input-group mb-2">
+                                <span class="input-group-text bg-white"><i
+                                        class="fa-solid fa-credit-card text-primary"></i></span>
+                                <input type="number" class="form-control" [(ngModel)]="montoTarjeta"
+                                    (input)="calcularMixto()" placeholder="0.00" min="0">
+                            </div>
+
+                            <!-- Transferencia parte -->
+                            <label class="form-label fw-bold small text-muted">
+                                <i class="fa-solid fa-building-columns text-info me-1"></i> TRANSFERENCIA
+                            </label>
+                            <div class="input-group mb-2">
+                                <span class="input-group-text bg-white"><i
+                                        class="fa-solid fa-building-columns text-info"></i></span>
+                                <input type="number" class="form-control" [(ngModel)]="montoTransferencia"
+                                    (input)="calcularMixto()" placeholder="0.00" min="0">
+                            </div>
+
+                            <!-- Banco (solo si hay monto transferencia) -->
+                            <div *ngIf="montoTransferencia > 0" class="mb-2">
+                                <label class="form-label fw-bold small text-muted">BANCO DESTINO *</label>
+                                <select class="form-select form-select-sm" [(ngModel)]="bancoDestino">
+                                    <option value="">-- Seleccionar banco --</option>
+                                    <option *ngFor="let b of bancosRD" [value]="b.id">{{ b.nombre }}</option>
+                                </select>
+                                <input type="text" class="form-control form-control-sm mt-1"
+                                    [(ngModel)]="referenciaTransferencia" placeholder="Referencia (opcional)">
+                            </div>
+
+                            <!-- Resumen Mixto -->
+                            <div class="card border-0 mt-2"
+                                [ngClass]="cambio >= 0 ? 'bg-success-subtle' : 'bg-warning-subtle'">
+                                <div class="card-body py-2">
+                                    <div class="d-flex justify-content-between small mb-1">
+                                        <span class="text-muted">Total pagado:</span>
+                                        <span class="fw-bold">{{ formatearMoneda(totalPagadoMixto) }}</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span class="fw-bold"
+                                            [ngClass]="cambio >= 0 ? 'text-success-emphasis' : 'text-warning-emphasis'">
+                                            {{ cambio >= 0 ? 'Cambio:' : 'Pendiente:' }}
+                                        </span>
+                                        <span class="fs-5 fw-bold"
+                                            [ngClass]="cambio >= 0 ? 'text-success' : 'text-warning'">
+                                            {{ formatearMoneda(cambio < 0 ? -cambio : cambio) }} </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Alerta Crédito: Cliente requerido -->
+                        <div class="alert alert-warning mt-3" *ngIf="metodoPago === 'credito' && !clienteSeleccionado">
+                            <i class="fa-solid fa-exclamation-triangle me-2"></i> Debes seleccionar un cliente para
+                            venta a crédito.
+                        </div>
+
+                        <!-- Alerta: Banco requerido -->
+                        <div class="alert alert-warning mt-3" *ngIf="necesitaBanco() && !bancoDestino">
+                            <i class="fa-solid fa-building-columns me-2"></i> Selecciona el banco destino de la
+                            transferencia.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ========== SECCIÓN FISCAL (solo si modo_fiscal activo) ========== -->
+                <div *ngIf="configFiscal?.modo_fiscal" class="mt-3 pt-3 border-top">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <div style="background:#fef3c7; color:#d97706; padding:8px 10px; border-radius:8px;">
+                            <i class="fa-solid fa-file-invoice-dollar"></i>
+                        </div>
+                        <div>
+                            <h6 class="fw-bold mb-0" style="color:#92400e;">Comprobante Fiscal (NCF)</h6>
+                            <small class="text-muted">Requerido por la DGII en modo fiscal</small>
+                        </div>
+                    </div>
+
+                    <!-- Selector Tipo Comprobante -->
+                    <div class="row g-2 mb-3">
+                        @for (tipo of tiposComprobante; track tipo.codigo) {
+                        <div class="col-6">
+                            <button type="button" class="btn w-100 text-start p-2 rounded-3 border"
+                                [style.background]="tipoComprobante === tipo.codigo ? '#fef3c7' : '#fff'"
+                                [style.border-color]="tipoComprobante === tipo.codigo ? '#d97706' : '#dee2e6'"
+                                [style.color]="tipoComprobante === tipo.codigo ? '#92400e' : '#6b7280'"
+                                (click)="tipoComprobante = tipo.codigo; tipoComprobanteChange.emit(tipo.codigo)">
+                                <div class="d-flex align-items-start gap-2">
+                                    <span class="badge rounded-pill fw-bold flex-shrink-0"
+                                        [style.background]="tipoComprobante === tipo.codigo ? '#d97706' : '#e5e7eb'"
+                                        [style.color]="tipoComprobante === tipo.codigo ? '#fff' : '#374151'">
+                                        {{ tipo.codigo }}
+                                    </span>
+                                    <span class="small lh-sm">{{ tipo.descripcion }}</span>
+                                </div>
+                            </button>
+                        </div>
+                        }
+                    </div>
+
+                    <!-- RNC del cliente (solo si B01) -->
+                    <div *ngIf="tipoComprobante === 'B01'" class="mb-1">
+                        <label class="form-label fw-bold small mb-1" style="color:#92400e;">
+                            <i class="fa-solid fa-building me-1"></i> RNC del Cliente
+                        </label>
+                        <input type="text" class="form-control border-warning" [(ngModel)]="rncCliente"
+                            (ngModelChange)="rncClienteChange.emit($event)" placeholder="000-00000-0 (9 dígitos)"
+                            maxlength="11">
+                        <div class="form-text text-warning-emphasis">
+                            <i class="fa-solid fa-circle-info me-1"></i>
+                            Requerido para emitir Factura de Crédito Fiscal (B01)
+                        </div>
+                    </div>
+                </div>
+                <!-- ================================================================ -->
+
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="modal-footer bg-white border-top-0 p-3 d-flex justify-content-end">
+            <button type="button" class="btn btn-outline-secondary btn-lg px-4 me-2" (click)="cancelar.emit()"
+                [disabled]="procesandoTarjeta">Cancelar</button>
+            <button type="button" class="btn btn-primary btn-lg px-5 fw-bold" (click)="onConfirmar()"
+                [disabled]="!puedeConfirmar || procesandoTarjeta">
+                <span *ngIf="procesandoTarjeta"><i class="fa-solid fa-spinner fa-spin me-2"></i> PROCESANDO
+                    TARJETA...</span>
+                <span *ngIf="!procesandoTarjeta"><i class="fa-solid fa-check me-2"></i> CONFIRMAR PAGO</span>
+            </button>
+        </div>
+    </div>
+</div>

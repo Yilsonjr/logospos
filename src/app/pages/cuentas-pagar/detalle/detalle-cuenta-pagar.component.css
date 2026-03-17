@@ -1,0 +1,61 @@
+:host {
+    display: block;
+    height: 100vh;
+    background-color: #f8fafc;
+}
+
+.tracking-wider {
+    letter-spacing: 0.05em;
+}
+
+.rounded-4 {
+    border-radius: 1rem !important;
+}
+
+.card {
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.bg-dark {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
+}
+
+.table thead th {
+    border-top: none;
+    border-bottom: 2px solid #f1f5f9;
+}
+
+.table tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+.table-hover tbody tr:hover {
+    background-color: #f8fafc !important;
+}
+
+/* Scrollbar styling */
+.overflow-auto::-webkit-scrollbar {
+    width: 6px;
+}
+
+.overflow-auto::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.overflow-auto::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+}
+
+.overflow-auto::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+.btn-light:hover {
+    background-color: #f1f5f9;
+    border-color: #e2e8f0;
+}

@@ -1,3 +1,171 @@
 /* You can add global styles to this file, and also import other style files */
 
-@import "tailwindcss";
+/* Bootstrap 5 Global Styles */
+
+/* SweetAlert2 z-index fix */
+.swal2-container {
+  z-index: 99999 !important;
+}
+
+.swal2-popup {
+  z-index: 100000 !important;
+}
+
+/* Layout Global */
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.main-content {
+  flex: 1;
+  margin-left: 240px;
+  background: #f9fafb;
+  min-height: 100vh;
+  transition: margin-left 0.3s ease;
+}
+
+/* Responsive para el contenido principal */
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 0;
+  }
+}
+
+
+/* Estilos para subtítulos descriptivos */
+.text-gray-600 {
+  color: #6b7280;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+/* Mejora visual para subtítulos de páginas */
+h1+p.text-gray-600,
+h2+p.text-gray-600 {
+  margin-top: 0.25rem;
+  font-size: 0.95rem;
+  color: #6b7280;
+  font-weight: 400;
+  opacity: 0.9;
+}
+
+/* Animación sutil para subtítulos */
+@keyframes fadeInSubtitle {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+
+  to {
+    opacity: 0.9;
+    transform: translateY(0);
+  }
+}
+
+h1+p.text-gray-600,
+h2+p.text-gray-600 {
+  animation: fadeInSubtitle 0.3s ease-out;
+}
+
+
+/* Animaciones para modales y transiciones */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.animate-slideUp {
+  animation: slideUp 0.3s ease-out;
+}
+
+/* Mejoras de hover para botones */
+button:not(:disabled) {
+  transition: all 0.2s ease;
+}
+
+button:not(:disabled):active {
+  transform: scale(0.98);
+}
+
+/* Efectos de focus mejorados */
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+/* Gradientes suaves */
+.bg-gradient-to-br,
+.bg-gradient-to-r {
+  background-size: 200% 200%;
+  transition: background-position 0.3s ease;
+}
+
+.bg-gradient-to-br:hover,
+.bg-gradient-to-r:hover {
+  background-position: right center;
+}
+
+/* Sombras suaves */
+.shadow-soft {
+  box-shadow: 0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04);
+}
+
+/* Cards con hover effect */
+.card-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Backdrop blur para modales */
+.backdrop-blur-sm {
+  backdrop-filter: blur(8px);
+}
+
+/* Scrollbar personalizado */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #cbd5e1 0%, #94a3b8 100%);
+  border-radius: 10px;
+  border: 2px solid #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #94a3b8 0%, #64748b 100%);
+}

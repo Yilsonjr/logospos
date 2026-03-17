@@ -1,0 +1,203 @@
+<div class="container-fluid py-3 bg-light min-vh-100">
+
+  <div class="row justify-content-center">
+    <div class="col-xl-10">
+
+      <!-- Header -->
+      <div class="d-flex align-items-center mb-2">
+        <button (click)="cancelar()" class="btn btn-white rounded-circle shadow-sm me-3 hover-scale" title="Volver">
+          <i class="fa-solid fa-arrow-left text-secondary"></i>
+        </button>
+        <div>
+          <h3 class="fw-bold text-dark mb-0 tracking-tight">
+            {{ isEditing ? 'Editar Cuenta' : 'Nueva Cuenta' }}
+          </h3>
+          <p class="text-muted small mb-0">Gestión de Cuentas por Pagar</p>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      @if (isLoading && isEditing) {
+      <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="text-muted mt-2 fw-medium">Cargando información...</p>
+      </div>
+      }
+
+      <!-- Main Content -->
+      @if (!isLoading || !isEditing) {
+      <form (ngSubmit)="guardar()" #cuentaForm="ngForm" class="row g-4">
+
+        <!-- Column: Form -->
+        <div class="col-lg-7 col-xl-8">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-bottom-0 pt-2 px-4 pb-0">
+              <h5 class="fw-bold text-dark mb-0"><i class="fa-regular fa-pen-to-square me-2 text-primary"></i>Datos de
+                la Factura</h5>
+            </div>
+
+            <div class="card-body p-3">
+              <div class="row g-2">
+
+                <!-- Proveedor Selection -->
+                <div class="col-12">
+                  <label class="form-label fw-bold small text-muted text-uppercase">Proveedor</label>
+                  <select [(ngModel)]="formulario.proveedor_id" name="proveedor_id" required
+                    class="form-select form-select-lg border-0 bg-light"
+                    [class.is-invalid]="cuentaForm.submitted && !formulario.proveedor_id">
+                    <option [ngValue]="0" disabled selected>Selecciona un proveedor...</option>
+                    @for (proveedor of proveedores; track proveedor.id) {
+                    <option [ngValue]="proveedor.id">{{proveedor.nombre}}</option>
+                    }
+                  </select>
+                  @if (cuentaForm.submitted && !formulario.proveedor_id) {
+                  <div class="text-danger small mt-1"><i class="fa-solid fa-circle-exclamation me-1"></i>Requerido</div>
+                  }
+                </div>
+
+                <!-- Concepto -->
+                <div class="col-12 mt-2">
+                  <div class="form-floating">
+                    <input type="text" [(ngModel)]="formulario.concepto" name="concepto" required
+                      class="form-control bg-light border-0" id="conceptoIO" placeholder="Ej: Compra de Mercancia">
+                    <label for="conceptoIO">Concepto de la deuda *</label>
+                  </div>
+                </div>
+
+                <!-- Numero Factura & Categoria -->
+                <div class="col-md-6">
+                  <div class="form-floating">
+                    <input type="text" [(ngModel)]="formulario.numero_factura" name="numero_factura"
+                      class="form-control bg-light border-0" id="numFactura" placeholder="FAC-001">
+                    <label for="numFactura">No. Factura (Opcional)</label>
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <div class="form-floating">
+                    <select [(ngModel)]="formulario.categoria" name="categoria" required
+                      (ngModelChange)="sugerirPrioridad()" class="form-select bg-light border-0" id="catSelect">
+                      @for (categoria of categorias; track categoria) {
+                      <option [value]="categoria">{{categoria}}</option>
+                      }
+                    </select>
+                    <label for="catSelect">Categoría *</label>
+                  </div>
+                </div>
+
+                <!-- Monto IMPONENTE -->
+                <div class="col-12 mt-3">
+                  <label class="form-label fw-bold small text-muted text-uppercase mb-1">Monto a Pagar</label>
+                  <div class="input-group input-group-lg shadow-sm rounded overflow-hidden">
+                    <span class="input-group-text bg-white border-0 text-muted ps-3">$</span>
+                    <input type="number" [(ngModel)]="formulario.monto_total" name="monto_total" required min="0.01"
+                      step="0.01" class="form-control border-0 fw-bold fs-3 text-dark" placeholder="0.00">
+                  </div>
+                </div>
+
+                <!-- Fechas Row -->
+                <div class="col-md-6 mt-3">
+                  <label class="form-label fw-bold small text-muted text-uppercase">Emisión</label>
+                  <input type="date" [(ngModel)]="formulario.fecha_factura" name="fecha_factura" required
+                    (ngModelChange)="sugerirFechaVencimiento()" class="form-control bg-light border-0 p-3">
+                </div>
+
+                <div class="col-md-6 mt-3">
+                  <label class="form-label fw-bold small text-muted text-uppercase">Vencimiento</label>
+                  <input type="date" [(ngModel)]="formulario.fecha_vencimiento" name="fecha_vencimiento" required
+                    class="form-control bg-light border-0 p-3">
+                </div>
+
+                <!-- Prioridad & Notas -->
+                <div class="col-12 mt-4">
+                  <label class="form-label fw-bold small text-muted text-uppercase">Prioridad & Notas</label>
+                  <div class="d-flex gap-2 align-items-center mb-2">
+                    @for (p of prioridades; track p.valor) {
+                    <div class="form-check form-check-inline m-0">
+                      <input class="form-check-input" type="radio" name="prioridad" [id]="'prio_'+p.valor"
+                        [value]="p.valor" [(ngModel)]="formulario.prioridad">
+                      <label class="form-check-label small pointer" [for]="'prio_'+p.valor">{{p.etiqueta}}</label>
+                    </div>
+                    }
+                  </div>
+                  <textarea [(ngModel)]="formulario.notas" name="notas" rows="2" class="form-control bg-light border-0"
+                    placeholder="Notas internas sobre este pago..."></textarea>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Column: Preview & Sticky Actions -->
+        <div class="col-lg-5 col-xl-4">
+          <div class="sticky-top" style="top: 2rem; z-index: 10;">
+
+            <!-- Live Preview Card -->
+            <div class="card border-0 shadow-sm bg-gradient-primary text-white mb-2 overflow-hidden position-relative">
+              <div class="position-absolute top-0 end-0 p-3 opacity-25">
+                <i class="fa-solid fa-receipt fs-1"></i>
+              </div>
+              <div class="card-body p-4 position-relative z-1">
+                <small class="text-white-50 text-uppercase fw-bold ls-1">Vista Previa</small>
+
+                <div class="mt-3">
+                  <div class="text-white-50 small mb-1">Monto Total</div>
+                  <h2 class="display-6 fw-bold mb-0">${{formulario.monto_total | number:'1.2-2'}}</h2>
+                </div>
+
+                <hr class="border-white opacity-25 my-3">
+
+                <div class="d-flex justify-content-between mb-2">
+                  <span class="text-white-50">Proveedor</span>
+                  <span class="fw-bold text-truncate" style="max-width: 150px;">
+                    {{obtenerNombreProveedor(formulario.proveedor_id)}}
+                  </span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                  <span class="text-white-50">Vencimiento</span>
+                  <span class="fw-medium">{{formatearFechaVencimiento(formulario.fecha_vencimiento) ||
+                    '--/--/----'}}</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                  <span class="text-white-50">Prioridad</span>
+                  <span class="badge border border-white text-white bg-transparent rounded-pill px-3">
+                    {{obtenerEtiquetaPrioridad(formulario.prioridad)}}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-grid gap-2 mb-2">
+              <button type="submit" [disabled]="isLoading || !cuentaForm.form.valid"
+                class="btn btn-primary btn-lg shadow-sm fw-bold">
+                <i class="fa-solid fa-check me-2"></i> {{ isEditing ? 'Guardar Cambios' : 'Registrar Cuenta' }}
+              </button>
+              <button type="button" (click)="cancelar()" class="btn btn-white border shadow-sm text-muted">
+                Cancelar Operación
+              </button>
+            </div>
+
+            <!-- Tips / Info -->
+            <div class="card bg-white border-0 shadow-sm">
+              <div class="card-body">
+                <h6 class="fw-bold small text-muted text-uppercase mb-2">Ayuda Rápida</h6>
+                <ul class="list-unstyled small text-muted mb-0">
+                  <li class="mb-2 d-flex"><i class="fa-solid fa-circle-info text-info me-2 mt-1"></i> <span>La fecha de
+                      vencimiento se calcula automáticamente a 30 días, pero puedes cambiarla.</span></li>
+                  <li class="d-flex"><i class="fa-solid fa-tag text-warning me-2 mt-1"></i> <span>Categorizar
+                      correctamente ayuda en los reportes de gastos anuales.</span></li>
+                </ul>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </form>
+      }
+
+    </div>
+  </div>
+</div>

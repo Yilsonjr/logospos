@@ -1,0 +1,38 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
+/* Transiciones suaves para hover en tarjetas */
+.stat-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .05) !important;
+}
+
+/* Estilo para las barras del gráfico */
+.bar-container:hover .bar-tooltip {
+  opacity: 1 !important;
+  transition: opacity 0.2s ease;
+}
+
+/* Scrollbar personalizado para listas */
+.overflow-auto::-webkit-scrollbar {
+  width: 6px;
+}
+
+.overflow-auto::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.overflow-auto::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 20px;
+}
+
+.overflow-auto:hover::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+}

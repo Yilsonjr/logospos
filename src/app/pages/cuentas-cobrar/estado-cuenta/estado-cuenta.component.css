@@ -1,0 +1,617 @@
+/* Estado de Cuenta — Premium UX */
+:host {
+    --green: #16a34a;
+    --amber: #f59e0b;
+    --red: #ef4444;
+    --crimson: #991b1b;
+    --blue: #2563eb;
+}
+
+.ec-container {
+    padding: 24px;
+    max-width: 1300px;
+    margin: 0 auto;
+}
+
+/* Header */
+.ec-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+}
+
+.ec-title h1 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #1e293b;
+    margin: 0;
+}
+
+.ec-title h1 i {
+    color: var(--blue);
+    margin-right: 8px;
+}
+
+.ec-title p {
+    color: #64748b;
+    font-size: 0.85rem;
+    margin: 4px 0 0;
+}
+
+.ec-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-export,
+.btn-print {
+    padding: 9px 18px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-export {
+    background: #7c3aed;
+    color: #fff;
+}
+
+.btn-print {
+    background: #0f172a;
+    color: #fff;
+}
+
+.btn-export:hover,
+.btn-print:hover {
+    filter: brightness(1.15);
+}
+
+.btn-export:disabled,
+.btn-print:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* Client Selector */
+.cliente-selector {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.search-wrapper {
+    position: relative;
+}
+
+.search-wrapper i {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+}
+
+.search-input {
+    width: 100%;
+    padding: 12px 16px 12px 42px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.search-input:focus {
+    border-color: var(--blue);
+}
+
+.clientes-lista {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, .12);
+    z-index: 100;
+    overflow: hidden;
+}
+
+.cliente-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.cliente-item:hover {
+    background: #f8fafc;
+}
+
+.cliente-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #2563eb, #7c3aed);
+    color: #fff;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 1rem;
+}
+
+.cliente-nombre {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #1e293b;
+}
+
+.cliente-rnc {
+    font-size: 0.75rem;
+    color: #64748b;
+}
+
+.cliente-pendiente {
+    margin-left: auto;
+    font-weight: 700;
+    color: #dc2626;
+    font-size: 0.9rem;
+}
+
+.cliente-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    background: #eff6ff;
+    border: 1.5px solid #bfdbfe;
+    border-radius: 40px;
+    margin-top: 8px;
+}
+
+.chip-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--blue);
+    color: #fff;
+    font-weight: 800;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chip-rnc {
+    color: #64748b;
+    font-size: 0.8rem;
+}
+
+.chip-clear {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #94a3b8;
+    padding: 2px;
+    margin-left: 4px;
+    line-height: 1;
+}
+
+.chip-clear:hover {
+    color: #ef4444;
+}
+
+/* Loading */
+.ec-loading {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 40px;
+    justify-content: center;
+    color: #64748b;
+}
+
+.spinner {
+    width: 28px;
+    height: 28px;
+    border: 3px solid #e2e8f0;
+    border-top-color: var(--blue);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Summary Cards */
+.summary-cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 18px;
+}
+
+.scard {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 18px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+}
+
+.scard-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.scard-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: #64748b;
+}
+
+.scard-valor {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #1e293b;
+    margin-top: 2px;
+    display: block;
+}
+
+.total .scard-icon {
+    background: #eff6ff;
+    color: var(--blue);
+}
+
+.corriente .scard-icon {
+    background: #f0fdf4;
+    color: var(--green);
+}
+
+.vencido .scard-icon {
+    background: #fff7ed;
+    color: var(--amber);
+}
+
+.critico .scard-icon {
+    background: #fef2f2;
+    color: var(--red);
+}
+
+/* Aging Bands Card */
+.aging-bands-card,
+.invoices-card,
+.global-table-wrapper {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+}
+
+.section-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    margin: 0 0 16px;
+}
+
+.bands-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.band-row {
+    display: grid;
+    grid-template-columns: 180px 1fr 120px 48px;
+    align-items: center;
+    gap: 16px;
+}
+
+.band-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #334155;
+}
+
+.band-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.band-dias {
+    font-size: 0.72rem;
+    color: #94a3b8;
+    font-weight: 400;
+}
+
+.band-bar {
+    height: 10px;
+    background: #f1f5f9;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.band-fill {
+    height: 100%;
+    border-radius: 5px;
+    transition: width 0.6s ease;
+}
+
+.band-monto {
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-align: right;
+}
+
+.band-pct {
+    font-size: 0.78rem;
+    color: #94a3b8;
+    text-align: right;
+}
+
+/* Invoice Table */
+.table-wrapper,
+.global-table-wrapper {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.84rem;
+}
+
+thead th {
+    background: #f8fafc;
+    padding: 10px 12px;
+    text-align: left;
+    font-weight: 700;
+    color: #475569;
+    border-bottom: 2px solid #e2e8f0;
+    white-space: nowrap;
+}
+
+tbody td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #f8fafc;
+}
+
+.num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+thead th.num {
+    text-align: right;
+}
+
+.factura-id {
+    font-family: monospace;
+    font-weight: 600;
+    color: var(--blue);
+}
+
+.fw-bold {
+    font-weight: 700;
+}
+
+.text-success {
+    color: var(--green) !important;
+}
+
+.text-warning {
+    color: var(--amber) !important;
+}
+
+.text-danger {
+    color: var(--red) !important;
+}
+
+tfoot td {
+    padding: 10px 12px;
+    background: #f8fafc;
+    border-top: 2px solid #e2e8f0;
+    font-size: 0.85rem;
+}
+
+/* Days badges */
+.dias-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.dias-ok {
+    background: #f0fdf4;
+    color: var(--green);
+}
+
+.dias-warn {
+    background: #fffbeb;
+    color: var(--amber);
+}
+
+.dias-danger {
+    background: #fef2f2;
+    color: var(--red);
+}
+
+.dias-critico {
+    background: #fef2f2;
+    color: var(--crimson);
+    font-weight: 800;
+}
+
+/* Estado badge */
+.estado-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.badge-ok {
+    background: #f0fdf4;
+    color: var(--green);
+}
+
+.badge-warn {
+    background: #fffbeb;
+    color: #92400e;
+}
+
+.badge-info {
+    background: #eff6ff;
+    color: var(--blue);
+}
+
+.badge-danger {
+    background: #fef2f2;
+    color: var(--red);
+}
+
+/* Row highlights */
+.row-critico {
+    background: #fff5f5 !important;
+}
+
+.row-vencido {
+    background: #fff8f0 !important;
+}
+
+.row-riesgo {
+    background: #fefce8 !important;
+}
+
+tbody tr:hover {
+    background: #f8fafc;
+}
+
+/* Global aging table extras */
+.cliente-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+}
+
+.mini-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #2563eb, #7c3aed);
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.btn-ver {
+    background: #eff6ff;
+    color: var(--blue);
+    border: none;
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-ver:hover {
+    background: #dbeafe;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #94a3b8;
+}
+
+.empty-state i {
+    opacity: 0.3;
+    margin-bottom: 16px;
+}
+
+/* Global card wrapper */
+.ec-global {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px;
+}
+
+@media (max-width: 1024px) {
+    .summary-cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .band-row {
+        grid-template-columns: 160px 1fr 90px 40px;
+    }
+}
+
+@media (max-width: 640px) {
+    .summary-cards {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .ec-header {
+        flex-direction: column;
+        gap: 12px;
+    }
+}
+
+/* Print */
+@media print {
+
+    .ec-header .ec-actions,
+    .cliente-selector,
+    .btn-ver {
+        display: none !important;
+    }
+
+    .ec-container {
+        padding: 0;
+    }
+}

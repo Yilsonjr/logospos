@@ -1,0 +1,326 @@
+<form [formGroup]="compraForm" (ngSubmit)="guardarCompra()" class="d-flex flex-column min-vh-100 bg-light p-2">
+
+  <!-- Header: Título y Navegación (Compacto) -->
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <div class="d-flex align-items-center gap-3">
+      <!-- DATOS GENERALES (Fila Superior Compacta) -->
+      <div class="card border shadow-sm mb-2">
+        <div class="card-body py-3 px-4">
+          <div class="row g-3 align-items-end">
+            <!-- Proveedor -->
+            <div class="col-md-4 col-12">
+              <label class="form-label text-uppercase small text-muted fw-bold">Proveedor <span
+                  class="text-danger">*</span></label>
+              <div class="input-group input-group-sm">
+                <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-truck text-muted"></i></span>
+                <select formControlName="proveedor_id" class="form-select border-start-0 ps-2 bg-white fw-medium">
+                  <option [ngValue]="''">Seleccionar proveedor...</option>
+                  @for (prov of proveedores; track prov.id) {
+                  <option [ngValue]="prov.id">{{prov.nombre}}</option>
+                  }
+                </select>
+              </div>
+            </div>
+
+            <!-- Factura -->
+            <div class="col-md-3 col-6">
+              <label class="form-label text-uppercase small text-muted fw-bold">N° Factura</label>
+              <div class="input-group input-group-sm">
+                <span class="input-group-text bg-light border-end-0"><i
+                    class="fa-solid fa-receipt text-muted"></i></span>
+                <input type="text" formControlName="numero_factura" class="form-control border-start-0 ps-2"
+                  placeholder="Ej: FAC-001">
+              </div>
+            </div>
+
+            <!-- Fecha -->
+            <div class="col-md-3 col-6">
+              <label class="form-label text-uppercase small text-muted fw-bold">Fecha <span
+                  class="text-danger">*</span></label>
+              <input type="date" formControlName="fecha_compra" class="form-control form-control-sm">
+            </div>
+
+            <!-- Pago -->
+            <div class="col-md-2 col-6">
+              <label class="form-label text-uppercase small text-muted fw-bold">Método Pago</label>
+              <select formControlName="metodo_pago" class="form-select form-select-sm">
+                @for (metodo of metodosPago; track metodo) {
+                <option [value]="metodo">{{metodo}}</option>
+                }
+              </select>
+            </div>
+
+            <!-- Sección Fiscal (DGII) -->
+            @if (configFiscal?.modo_fiscal) {
+            <div class="col-md-3 col-6 border-start ps-3">
+              <label class="form-label text-uppercase small mb-1" style="color:#92400e; font-weight:700;">
+                <i class="fa-solid fa-file-invoice-dollar me-1"></i>Tipo Comprobante
+              </label>
+              <select formControlName="tipo_ncf" class="form-select form-select-sm border-warning fw-bold">
+                <option value="">Sin NCF</option>
+                <option value="B01">B01 - Crédito Fiscal</option>
+                <option value="B11">B11 - Compras (Informal)</option>
+                <option value="B13">B13 - Gastos Menores</option>
+                <option value="B14">B14 - Regímenes Especiales</option>
+                <option value="B15">B15 - Gubernamental</option>
+              </select>
+            </div>
+            <div class="col-md-3 col-6">
+              <label class="form-label text-uppercase small mb-1" style="color:#92400e; font-weight:700;">
+                NCF de Proveedor
+              </label>
+              <div class="input-group input-group-sm">
+                <span class="input-group-text bg-warning-subtle border-warning"><i
+                    class="fa-solid fa-hashtag text-warning-emphasis"></i></span>
+                <input type="text" formControlName="ncf" class="form-control border-warning fw-bold"
+                  placeholder="Ej: B1100000001">
+              </div>
+            </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+
+    <!-- COLUMNA IZQUIERDA: PRODUCTOS Y INFO -->
+    <div class="col-lg-8 d-flex flex-column gap-2">
+
+      <!-- Tarjeta Principal: Buscador y Tabla -->
+      <div class="card border shadow-sm flex-fill" style="min-height: 400px;">
+
+        <!-- Header Buscador -->
+        <div class="card-header bg-white border-bottom p-3">
+          <div class="input-group input-group-md">
+            <span class="input-group-text bg-white border-end-0 text-primary ps-3"><i
+                class="fa-solid fa-magnifying-glass"></i></span>
+            <input type="text" [formControl]="busquedaControl" (input)="onSearchInput($event)"
+              (blur)="ocultarResultados()" (keyup.enter)="buscarPorCodigoBarrasGlobal($event)"
+              class="form-control border-start-0 ps-2 search-input shadow-none"
+              placeholder="Buscar producto por nombre, código o escanear..." autocomplete="off"
+              style="font-size: 1rem;">
+            <button class="btn btn-outline-primary px-4 fw-semibold" type="button"
+              (click)="buscarPorCodigoBarrasGlobal($event)">
+              <i class="fa-solid fa-plus me-1"></i> Agregar
+            </button>
+          </div>
+
+          <!-- Dropdown Resultados (Flotante) -->
+          <div class="position-relative">
+            @if (mostrarResultados && resultadosBusqueda.length > 0) {
+            <div
+              class="position-absolute w-100 bg-white shadow-lg rounded-bottom border mt-1 search-results animate-fade-in"
+              style="z-index: 1050; max-height: 300px; overflow-y: auto;">
+              <ul class="list-group list-group-flush mb-0">
+                @for (prod of resultadosBusqueda; track prod.id) {
+                <li
+                  class="list-group-item list-group-item-action cursor-pointer py-2 px-3 d-flex justify-content-between align-items-center"
+                  (mousedown)="seleccionarProducto(prod)">
+                  <div>
+                    <div class="fw-bold text-dark">{{prod.nombre}}</div>
+                    <div class="text-muted small">
+                      <span class="badge bg-light text-secondary border me-2">{{prod.sku || 'No SKU'}}</span>
+                      Stock: {{prod.stock}}
+                    </div>
+                  </div>
+                  <div class="text-end">
+                    <div class="fw-bold text-primary">{{prod.precio_compra | currency}}</div>
+                  </div>
+                </li>
+                }
+              </ul>
+            </div>
+            }
+          </div>
+        </div>
+
+        <!-- Tabla Scrollable -->
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table align-middle mb-0 w-100">
+              <thead class="bg-light">
+                <tr>
+                  <th class="ps-4" style="width: auto;">Producto</th>
+                  <th class="text-center" style="width: 140px;">Cant.</th>
+                  <th class="text-end" style="width: 150px;">Costo Unit.</th>
+                  <th class="text-end" style="width: 150px;">Total</th>
+                  <th class="text-center" style="width: 50px;"></th>
+                </tr>
+              </thead>
+              <tbody formArrayName="detalles">
+                @for (detalle of detalles.controls; track $index; let i = $index) {
+                <tr [formGroupName]="i">
+                  <!-- Nombre -->
+                  <td class="ps-4 py-3 align-middle">
+                    @if (!detalle.get('producto_id')?.value) {
+                    <div class="text-muted fst-italic opacity-75">
+                      <i class="fa-solid fa-arrow-up me-1"></i> Busque un producto arriba...
+                    </div>
+                    } @else {
+                    <div class="fw-bold text-dark text-wrap" style="line-height: 1.2;">
+                      {{ getProductoNombre(detalle.get('producto_id')?.value) }}
+                    </div>
+                    }
+                    <input type="hidden" formControlName="producto_id">
+                  </td>
+
+                  <!-- Cantidad -->
+                  <td class="py-3 px-2 align-middle">
+                    <div class="input-group input-group-sm flex-nowrap shadow-sm bg-white rounded">
+                      <button class="btn btn-outline-secondary border-0 text-dark fw-bold" type="button"
+                        (click)="detalle.get('cantidad')?.setValue(detalle.get('cantidad')?.value - 1)"
+                        [disabled]="detalle.get('cantidad')?.value <= 1" style="width: 30px;">
+                        <i class="fa-solid fa-minus" style="font-size: 0.7rem;"></i>
+                      </button>
+                      <input type="number" formControlName="cantidad" min="1"
+                        class="form-control text-center fw-bold text-dark border-0 shadow-none p-0 bg-transparent"
+                        style="min-width: 40px;">
+                      <button class="btn btn-outline-secondary border-0 text-dark fw-bold" type="button"
+                        (click)="detalle.get('cantidad')?.setValue(detalle.get('cantidad')?.value + 1)"
+                        style="width: 30px;">
+                        <i class="fa-solid fa-plus" style="font-size: 0.7rem;"></i>
+                      </button>
+                    </div>
+                  </td>
+
+                  <!-- Costo -->
+                  <td class="py-3 px-2 align-middle">
+                    <div class="input-group input-group-sm flex-nowrap shadow-sm">
+                      <span class="input-group-text border-end-0 bg-light text-muted fw-bold">$</span>
+                      <input type="number" formControlName="precio_unitario" min="0" step="0.01"
+                        class="form-control text-end border-start-0 bg-white shadow-none fw-semibold">
+                    </div>
+                  </td>
+
+                  <!-- Total -->
+                  <td class="py-3 pe-3 text-end align-middle">
+                    <span class="fw-bold text-primary fs-6 font-monospace">
+                      ${{calcularSubtotalDetalle(i) | number:'1.2-2'}}
+                    </span>
+                  </td>
+
+                  <!-- Acciones -->
+                  <td class="py-3 text-center">
+                    <button type="button" (click)="eliminarDetalle(i)"
+                      class="btn btn-sm btn-light text-danger rounded-circle border-0 shadow-sm"
+                      style="width: 30px; height: 30px;" title="Quitar">
+                      <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                  </td>
+                </tr>
+                }
+                @if (detalles.length === 0) {
+                <tr>
+                  <td colspan="5" class="py-5 text-center">
+                    <div class="d-flex flex-column align-items-center opacity-50">
+                      <i class="fa-solid fa-cart-plus fa-3x mb-3 text-secondary"></i>
+                      <h6 class="text-muted fw-bold">Lista de compra vacía</h6>
+                      <p class="small text-muted mb-0">Comience agregando productos con el buscador arriba.</p>
+                    </div>
+                  </td>
+                </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- COLUMNA DERECHA: NOTAS Y RESUMEN -->
+    <div class="col-lg-4 d-flex flex-column gap-3">
+
+      <!-- Panel de Notas y Opciones -->
+      <div class="card border shadow-sm">
+        <div class="card-header bg-white py-2 px-3 border-bottom">
+          <h6 class="mb-0 text-uppercase small fw-bold text-muted"><i class="fa-solid fa-sliders me-2"></i>Opciones
+          </h6>
+        </div>
+        <div class="card-body p-2">
+          <!-- Impuesto Toggle -->
+          <div class="form-check form-switch mb-2 p-2 bg-light rounded border ps-5 d-flex align-items-center">
+            <input class="form-check-input ms-0 me-3" type="checkbox" id="incluirImpuesto" [(ngModel)]="incluirImpuesto"
+              [ngModelOptions]="{standalone: true}" style="width: 2.5em; height: 1.25em;">
+            <div class="flex-grow-1">
+              <label class="form-check-label fw-bold cursor-pointer d-block" for="incluirImpuesto">Aplicar
+                Impuesto</label>
+              <small class="text-muted d-block lh-1">Calcula ITBIS automáticamente</small>
+            </div>
+          </div>
+
+          @if(incluirImpuesto) {
+          <div class="mb-2 animate-fade-in">
+            <label class="form-label small">Tasa Impuesto (%)</label>
+            <div class="input-group input-group-sm">
+              <input type="number" [(ngModel)]="tasaImpuesto" [ngModelOptions]="{standalone: true}"
+                class="form-control">
+              <span class="input-group-text">%</span>
+            </div>
+          </div>
+          }
+
+          <div class="mb-0">
+            <label class="form-label small">Notas / Observaciones</label>
+            <textarea formControlName="notas" class="form-control form-control-sm bg-light" rows="3"
+              placeholder="Detalles adicionales sobre la compra..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel de Desglose (No Sticky, scroll natural) -->
+      <div class="card border shadow-sm bg-white">
+        <div class="card-body p-2">
+          <div class="d-flex justify-content-between mb-2 text-muted small">
+            <span>Subtotal</span>
+            <span class="fw-bold text-dark">${{subtotal | number:'1.2-2'}}</span>
+          </div>
+
+          <div class="d-flex justify-content-between mb-2 text-muted small">
+            <span>Impuesto</span>
+            <span class="fw-bold text-dark">${{impuesto | number:'1.2-2'}}</span>
+          </div>
+
+          <div class="d-flex justify-content-between align-items-center mb-3 text-muted small">
+            <span>Descuento</span>
+            <div class="w-25">
+              <input type="number" formControlName="descuento_monto"
+                class="form-control form-control-sm text-end p-1 border-0 border-bottom rounded-0 shadow-none"
+                placeholder="0.00">
+            </div>
+          </div>
+
+          <hr class="my-2">
+
+          <div class="d-flex justify-content-between align-items-end mb-3">
+            <span class="h5 fw-bold mb-0 text-dark">Total</span>
+            <span class="h4 fw-bold mb-0 text-primary">${{total | number:'1.2-2'}}</span>
+          </div>
+
+          <!-- Botones dentro del flujo natural -->
+          <div class="d-flex flex-column gap-2 mt-3">
+            <button type="submit" [disabled]="isSaving || detalles.length === 0"
+              class="btn btn-primary w-100 py-2 fw-bold shadow-sm">
+              @if (isSaving) {
+              <span class="spinner-border spinner-border-sm me-2"></span>Confirmando...
+              } @else {
+              <i class="fa-solid fa-check me-2"></i> Confirmar Compra
+              }
+            </button>
+            <button type="button" (click)="cancelar()" class="btn btn-outline-secondary w-100 py-2 fw-semibold">
+              Cancelar
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <div class="mb-2 pb-2"></div>
+
+</form>

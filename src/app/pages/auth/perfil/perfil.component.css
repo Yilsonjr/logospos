@@ -1,0 +1,46 @@
+/* Perfil Styles */
+.card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 .5rem 1rem rgba(0,0,0,.08)!important;
+}
+
+.border-dashed {
+  border-style: dashed !important;
+}
+
+/* Spinner Custom */
+.spinner-border {
+  width: 1.2rem;
+  height: 1.2rem;
+  border-width: 0.15em;
+}
+
+/* Inputs focus states for the password form */
+.input-group-text, .form-control {
+  border-color: #dee2e6;
+}
+
+.form-control:focus {
+  border-color: #ffc107;
+  box-shadow: 0 0 0 0.25rem rgba(255, 193, 7, 0.25);
+}
+
+.form-control:focus + .input-group-text,
+.input-group:focus-within .input-group-text {
+  border-color: #ffc107;
+  color: #ffc107 !important;
+}
+
+/* Custom rounded corners matching the UI */
+.rounded-4 {
+  border-radius: 1rem !important;
+}
+
+/* Make text a bit sleeker */
+body, .form-label, .btn {
+  letter-spacing: 0.01em;
+}

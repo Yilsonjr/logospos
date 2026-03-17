@@ -1,0 +1,352 @@
+:host {
+    display: block;
+    min-height: 100%;
+}
+
+/* === Dashboard Cards === */
+.card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 1.25rem;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* === Premium Modal System === */
+.custom-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(8px);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.custom-modal-content {
+    width: 95%;
+    max-width: 500px;
+    background: #ffffff;
+    border-radius: 2rem;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+    animation: modalSlideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.modal-header-premium {
+    padding: 1rem 1.5rem;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Header Gradients */
+.header-entrada {
+    background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+}
+
+.header-salida {
+    background: linear-gradient(135deg, #dc2626 0%, #f43f5e 100%);
+}
+
+.modal-body-premium {
+    padding: 1.25rem 1.5rem;
+    background: #f8fafc;
+}
+
+/* === Animations === */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes modalSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* === Form Elements === */
+.monto-display {
+    background: white;
+    padding: 0.75rem 1.25rem;
+    border-radius: 1.25rem;
+    border: 2px solid #e2e8f0;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.monto-display.focus-entrada {
+    border-color: #10b981;
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+}
+
+.monto-display.focus-salida {
+    border-color: #f43f5e;
+    box-shadow: 0 0 0 4px rgba(244, 63, 94, 0.1);
+}
+
+.monto-input {
+    border: none;
+    background: transparent;
+    font-size: 2.25rem;
+    font-weight: 900;
+    width: 100%;
+    text-align: center;
+    outline: none;
+    color: #1e293b;
+}
+
+.monto-input::placeholder {
+    color: #cbd5e1;
+}
+
+.premium-label {
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+    margin-bottom: 0.25rem;
+    display: block;
+}
+
+.premium-select,
+.premium-input,
+.premium-textarea {
+    border-radius: 0.85rem;
+    border: 1.5px solid #e2e8f0;
+    padding: 0.6rem 1rem;
+    font-weight: 600;
+    color: #334155;
+    transition: all 0.2s ease;
+}
+
+.premium-select:focus,
+.premium-input:focus,
+.premium-textarea:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    outline: none;
+}
+
+/* === Radio Bottons Modern === */
+.metodo-selector {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+}
+
+.metodo-item {
+    position: relative;
+}
+
+.metodo-item input {
+    position: absolute;
+    opacity: 0;
+}
+
+.metodo-item label {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 0.6rem;
+    background: white;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 700;
+    color: #64748b;
+    font-size: 0.85rem;
+}
+
+.metodo-item label i {
+    margin-right: 0.5rem;
+    margin-bottom: 0 !important;
+}
+
+.metodo-item input:checked+label {
+    border-color: #2563eb;
+    background: #eff6ff;
+    color: #2563eb;
+}
+
+/* === Tables === */
+.table thead th {
+    background: #f1f5f9;
+    color: #475569;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.65rem;
+    letter-spacing: 0.05em;
+    padding: 1rem;
+    border: none;
+}
+
+.table tbody td {
+    padding: 1rem;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+/* === Custom Utilities (Tailwind Polyfills) === */
+.bg-success {
+    background-color: #10b981 !important;
+}
+
+.bg-danger {
+    background-color: #f43f5e !important;
+}
+
+.text-success {
+    color: #10b981 !important;
+}
+
+.text-danger {
+    color: #f43f5e !important;
+}
+
+.rounded-circle {
+    border-radius: 50% !important;
+}
+
+.shadow-sm {
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+}
+
+.fw-bold {
+    font-weight: 700 !important;
+}
+
+.fs-2 {
+    font-size: 2rem !important;
+}
+
+.btn-premium {
+    border-radius: 1.25rem;
+    padding: 0.75rem 1.5rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.btn-premium:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+}
+
+.btn-premium:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.btn-entrada {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+}
+
+.btn-salida {
+    background: linear-gradient(135deg, #fb7185 0%, #f43f5e 100%);
+    color: white;
+}
+
+/* === Missing Utility Classes === */
+.bg-slate-50 {
+    background-color: #f8fafc !important;
+}
+
+.text-slate-400 {
+    color: #94a3b8 !important;
+}
+
+.text-slate-500 {
+    color: #64748b !important;
+}
+
+.text-slate-700 {
+    color: #334155 !important;
+}
+
+.text-slate-800 {
+    color: #1e293b !important;
+}
+
+.bg-emerald-50 {
+    background-color: #ecfdf5 !important;
+}
+
+.text-emerald-600 {
+    color: #059669 !important;
+}
+
+.bg-rose-50 {
+    background-color: #fff1f2 !important;
+}
+
+.text-rose-600 {
+    color: #e11d48 !important;
+}
+
+.fw-500 {
+    font-weight: 500 !important;
+}
+
+.fw-600 {
+    font-weight: 600 !important;
+}
+
+.fw-700 {
+    font-weight: 700 !important;
+}
+
+.fw-800 {
+    font-weight: 800 !important;
+}
+
+.fw-900 {
+    font-weight: 900 !important;
+}
+
+.ls-wider {
+    letter-spacing: 0.05em !important;
+}
+
+.rounded-lg {
+    border-radius: 0.5rem !important;
+}
+
+.rounded-xl {
+    border-radius: 0.75rem !important;
+}
+
+/* Fixed badge visibility */
+.badge.bg-slate-50 {
+    background-color: #f1f5f9 !important;
+    /* A bit darker for better contrast */
+    color: #475569 !important;
+}

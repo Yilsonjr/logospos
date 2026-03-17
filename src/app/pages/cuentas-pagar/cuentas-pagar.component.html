@@ -1,0 +1,370 @@
+<div class="container-fluid py-4 min-vh-100 bg-light">
+
+  <!-- Header -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 gap-3">
+    <div>
+      <h2 class="fw-bold text-dark mb-0">Cuentas por Pagar</h2>
+      <p class="text-muted mb-0 small">Gestiona las deudas con proveedores</p>
+    </div>
+    <div class="d-flex gap-2">
+      <button (click)="irAPlanPagos()" class="btn btn-primary d-flex align-items-center gap-2 shadow-sm">
+        <i class="fa-solid fa-calendar-alt"></i> Plan de Pagos
+      </button>
+      <button (click)="irANuevaCuenta()" class="btn btn-success d-flex align-items-center gap-2 shadow-sm">
+        <i class="fa-solid fa-plus"></i> Nueva Cuenta
+      </button>
+    </div>
+  </div>
+
+  <!-- Resumen -->
+  <div class="row g-3 mb-4">
+    <!-- Pendientes -->
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <span class="text-uppercase text-muted fw-bold small" style="font-size: 0.75rem;">Pendientes</span>
+            <div class="bg-warning bg-opacity-10 text-warning p-2 rounded">
+              <i class="fa-solid fa-clock fs-5"></i>
+            </div>
+          </div>
+          <h3 class="fw-bold text-dark mb-0">{{resumen.total_pendiente}}</h3>
+          <small class="text-muted">Cuentas por pagar</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vencidas -->
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <span class="text-uppercase text-muted fw-bold small" style="font-size: 0.75rem;">Vencidas</span>
+            <div class="bg-danger bg-opacity-10 text-danger p-2 rounded">
+              <i class="fa-solid fa-circle-exclamation fs-5"></i>
+            </div>
+          </div>
+          <h3 class="fw-bold text-dark mb-0">{{resumen.total_vencidas}}</h3>
+          <small class="text-muted">Requieren atención</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Parciales -->
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <span class="text-uppercase text-muted fw-bold small" style="font-size: 0.75rem;">Parciales</span>
+            <div class="bg-info bg-opacity-10 text-info p-2 rounded">
+              <i class="fa-solid fa-chart-pie fs-5"></i>
+            </div>
+          </div>
+          <h3 class="fw-bold text-dark mb-0">{{resumen.total_parciales}}</h3>
+          <small class="text-muted">En proceso de pago</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Total Pendiente -->
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <span class="text-uppercase text-muted fw-bold small" style="font-size: 0.75rem;">Monto Pendiente</span>
+            <div class="bg-success bg-opacity-10 text-success p-2 rounded">
+              <i class="fa-solid fa-sack-dollar fs-5"></i>
+            </div>
+          </div>
+          <h3 class="fw-bold text-dark mb-0">${{resumen.monto_total_pendiente.toLocaleString()}}</h3>
+          <small class="text-muted">Total deuda global</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-3">
+      <div class="row g-3">
+        <!-- Busqueda -->
+        <div class="col-md-3">
+          <label class="form-label small fw-bold text-muted mb-1">Buscar</label>
+          <div class="input-group">
+            <span class="input-group-text bg-light border-end-0">
+              <i class="fa-solid fa-search text-muted"></i>
+            </span>
+            <input type="text" [(ngModel)]="filtroTexto" (ngModelChange)="aplicarFiltros()"
+              class="form-control border-start-0 bg-light" placeholder="Proveedor, concepto...">
+          </div>
+        </div>
+
+        <!-- Estado -->
+        <div class="col-md-2">
+          <label class="form-label small fw-bold text-muted mb-1">Estado</label>
+          <select [(ngModel)]="filtros.estado" (ngModelChange)="aplicarFiltrosAvanzados()" class="form-select">
+            <option value="">Todos</option>
+            @for (estado of estados; track estado.valor) {
+            <option [value]="estado.valor">{{estado.etiqueta}}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Prioridad -->
+        <div class="col-md-2">
+          <label class="form-label small fw-bold text-muted mb-1">Prioridad</label>
+          <select [(ngModel)]="filtros.prioridad" (ngModelChange)="aplicarFiltrosAvanzados()" class="form-select">
+            <option value="">Todas</option>
+            @for (prioridad of prioridades; track prioridad.valor) {
+            <option [value]="prioridad.valor">{{prioridad.etiqueta}}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Categoría -->
+        <div class="col-md-2">
+          <label class="form-label small fw-bold text-muted mb-1">Categoría</label>
+          <select [(ngModel)]="filtros.categoria" (ngModelChange)="aplicarFiltrosAvanzados()" class="form-select">
+            <option value="">Todas</option>
+            @for (categoria of categorias; track categoria) {
+            <option [value]="categoria">{{categoria}}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Acciones Filtro -->
+        <div class="col-md-3 d-flex align-items-end gap-2">
+          <button (click)="limpiarFiltros()" class="btn btn-light border w-100" title="Limpiar Filtros">
+            <i class="fa-solid fa-filter-circle-xmark me-1"></i> Limpiar
+          </button>
+          <div class="btn-group w-100">
+            <button type="button" class="btn" [class.btn-primary]="vistaActual === 'tarjetas'"
+              [class.btn-outline-primary]="vistaActual !== 'tarjetas'" (click)="vistaActual = 'tarjetas'"
+              title="Vista Tarjetas">
+              <i class="fa-solid fa-grip"></i>
+            </button>
+            <button type="button" class="btn" [class.btn-primary]="vistaActual === 'tabla'"
+              [class.btn-outline-primary]="vistaActual !== 'tabla'" (click)="vistaActual = 'tabla'" title="Vista Tabla">
+              <i class="fa-solid fa-table"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  @if (isLoading) {
+  <div class="text-center py-5">
+    <div class="spinner-border text-primary" role="status"></div>
+    <p class="text-muted mt-2">Cargando cuentas por pagar...</p>
+  </div>
+  }
+
+  <!-- Vista Tarjetas -->
+  @if (!isLoading && vistaActual === 'tarjetas') {
+  <div class="row g-4">
+    @for (cuenta of cuentasFiltradas; track cuenta.id) {
+    <div class="col-md-6 col-lg-4">
+      <div class="card h-100 border-0 shadow-sm hover-shadow transition-all">
+        <div class="card-header bg-white border-bottom-0 pt-3 px-3 d-flex justify-content-between align-items-start">
+          <div class="d-flex gap-2">
+            <span [class]="obtenerClaseEstado(cuenta.estado)">{{obtenerEtiquetaEstado(cuenta.estado)}}</span>
+            <span
+              [class]="obtenerClasePrioridad(cuenta.prioridad)">{{obtenerEtiquetaPrioridad(cuenta.prioridad)}}</span>
+          </div>
+          <div class="dropdown">
+            <button class="btn btn-light btn-sm rounded-circle d-flex align-items-center justify-content-center"
+              type="button" (click)="toggleMenu($event, cuenta.id!)" style="width: 32px; height: 32px;"
+              [title]="'Opciones'">
+              <i class="fa-solid fa-ellipsis-vertical"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow border-0" [class.show]="menuAbiertoId === cuenta.id"
+              style="margin-top: 5px; right: 0; left: auto;">
+              <li><button class="dropdown-item py-2" (click)="verDetalles(cuenta)"><i
+                    class="fa-solid fa-eye me-2 text-primary"></i>Ver Detalles</button></li>
+              <li><button class="dropdown-item py-2" (click)="editarCuenta(cuenta)"><i
+                    class="fa-solid fa-pen-to-square me-2 text-warning"></i>Editar</button></li>
+              <li>
+                <a class="dropdown-item text-success fw-semibold" href="#"
+                  (click)="marcarComoPagada(cuenta); toggleMenu($event, cuenta.id!)"
+                  [class.disabled]="cuenta.estado === 'pagada'">
+                  <i class="fa-solid fa-money-bill-wave me-2"></i>Abonar / Pagar
+                </a>
+              </li>
+              <li>
+                <hr class="dropdown-divider my-1">
+              </li>
+              <li><button class="dropdown-item py-2 text-danger" (click)="eliminarCuenta(cuenta)"><i
+                    class="fa-solid fa-trash me-2"></i>Eliminar</button></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="card-body px-3 pt-0">
+          <h5 class="fw-bold text-dark mb-1 text-truncate" [title]="cuenta.concepto">{{cuenta.concepto}}</h5>
+          <p class="text-muted small mb-3"><i class="fa-solid fa-truck me-1"></i> {{cuenta.proveedor_nombre}}</p>
+
+          <div class="row g-2 mb-3 bg-light rounded p-2 mx-0">
+            <div class="col-6">
+              <small class="text-muted d-block" style="font-size: 0.7rem;">TOTAL</small>
+              <span class="fw-bold text-dark">${{cuenta.monto_total.toLocaleString()}}</span>
+            </div>
+            <div class="col-6 text-end">
+              <small class="text-muted d-block" style="font-size: 0.7rem;">PENDIENTE</small>
+              <span class="fw-bold text-danger">${{cuenta.monto_pendiente.toLocaleString()}}</span>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <small class="text-muted">Vencimiento:</small>
+            <div class="text-end">
+              <span class="d-block fw-semibold small">{{formatearFecha(cuenta.fecha_vencimiento)}}</span>
+              <small [class]="obtenerClaseVencimiento(cuenta)" style="font-size: 0.7rem;">
+                {{obtenerTextoVencimiento(cuenta)}}
+              </small>
+            </div>
+          </div>
+
+          <!-- Progress -->
+          <div class="mt-2">
+            <div class="d-flex justify-content-between small mb-1">
+              <span class="text-muted">Progreso</span>
+              <span class="fw-bold">{{((cuenta.monto_pagado / cuenta.monto_total) * 100).toFixed(0)}}%</span>
+            </div>
+            <div class="progress" style="height: 6px;">
+              <div class="progress-bar" role="progressbar"
+                [style.width.%]="(cuenta.monto_pagado / cuenta.monto_total) * 100"
+                [class.bg-success]="cuenta.monto_pagado === cuenta.monto_total"
+                [class.bg-primary]="cuenta.monto_pagado < cuenta.monto_total">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-footer bg-white border-top-0 pb-3 pt-0 d-flex gap-2">
+          @if (cuenta.estado !== 'pagada') {
+          <button class="btn btn-outline-success btn-sm w-100 fw-semibold" (click)="marcarComoPagada(cuenta)">
+            <i class="fa-solid fa-check me-1"></i> Abonar/Pagar
+          </button>
+          }
+          <button class="btn btn-outline-primary btn-sm w-100 fw-semibold" (click)="verDetalles(cuenta)">
+            <i class="fa-solid fa-file-invoice me-1"></i> Detalle
+          </button>
+        </div>
+      </div>
+    </div>
+    }
+  </div>
+  }
+
+  <!-- Vista Tabla -->
+  @if (!isLoading && vistaActual === 'tabla') {
+  <div class="card border-0 shadow-sm overflow-hidden">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="bg-light">
+          <tr>
+            <th class="ps-4">Concepto / Categoría</th>
+            <th>Proveedor / Factura</th>
+            <th class="text-end">Monto Total</th>
+            <th class="text-end">Pendiente</th>
+            <th class="text-center">Estado</th>
+            <th class="text-center">Vencimiento</th>
+            <th class="text-end pe-4">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (cuenta of cuentasFiltradas; track cuenta.id) {
+          <tr>
+            <td class="ps-4">
+              <div class="fw-bold text-dark">{{cuenta.concepto}}</div>
+              <small class="text-muted">{{cuenta.categoria}}</small>
+            </td>
+            <td>
+              <div class="text-dark">{{cuenta.proveedor_nombre}}</div>
+              @if (cuenta.numero_factura) {
+              <small class="text-muted"><i class="fa-solid fa-hashtag me-1"></i>{{cuenta.numero_factura}}</small>
+              }
+            </td>
+            <td class="text-end fw-bold">${{cuenta.monto_total.toLocaleString()}}</td>
+            <td class="text-end fw-bold text-danger">${{cuenta.monto_pendiente.toLocaleString()}}</td>
+            <td class="text-center">
+              <div class="d-flex flex-column align-items-center gap-1">
+                <span [class]="obtenerClaseEstado(cuenta.estado)">{{obtenerEtiquetaEstado(cuenta.estado)}}</span>
+                <span [class]="obtenerClasePrioridad(cuenta.prioridad)"
+                  style="font-size: 0.65rem;">{{obtenerEtiquetaPrioridad(cuenta.prioridad)}}</span>
+              </div>
+            </td>
+            <td class="text-center">
+              <div class="d-flex flex-column">
+                <span class="small fw-semibold">{{formatearFecha(cuenta.fecha_vencimiento)}}</span>
+                <small [class]="obtenerClaseVencimiento(cuenta)" style="font-size: 0.7rem;">
+                  {{obtenerTextoVencimiento(cuenta)}}
+                </small>
+              </div>
+            </td>
+            <td class="text-end pe-4">
+              <div class="btn-group btn-group-sm">
+                @if (cuenta.estado !== 'pagada') {
+                <button class="btn btn-outline-success" (click)="marcarComoPagada(cuenta)" title="Abonar/Pagar">
+                  <i class="fa-solid fa-check"></i>
+                </button>
+                }
+                <button class="btn btn-outline-primary" (click)="verDetalles(cuenta)" title="Ver Detalles">
+                  <i class="fa-solid fa-eye"></i>
+                </button>
+                <button class="btn btn-outline-warning" (click)="editarCuenta(cuenta)" title="Editar">
+                  <i class="fa-solid fa-pen"></i>
+                </button>
+                <button class="btn btn-outline-danger" (click)="eliminarCuenta(cuenta)" title="Eliminar">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+  }
+
+  <!-- Empty State -->
+  @if (!isLoading && cuentasFiltradas.length === 0) {
+  <div class="text-center py-5">
+    <div class="mb-3 opacity-50">
+      <i class="fa-solid fa-folder-open fa-3x text-muted"></i>
+    </div>
+    <h5 class="fw-bold text-dark">No se encontraron cuentas</h5>
+    <p class="text-muted">Intenta ajustar los filtros de búsqueda.</p>
+    <button class="btn btn-primary" (click)="irANuevaCuenta()">
+      Nueva Cuenta
+    </button>
+  </div>
+  }
+
+  <!-- Proximos Vencimientos Alert -->
+  @if (resumen.proximos_vencimientos.length > 0) {
+  <div class="alert alert-warning border-warning mt-4 shadow-sm" role="alert">
+    <h5 class="alert-heading fw-bold mb-3"><i class="fa-solid fa-triangle-exclamation me-2"></i>Próximos Vencimientos (7
+      días)</h5>
+    <div class="list-group">
+      @for (cuenta of resumen.proximos_vencimientos; track cuenta.id) {
+      <div
+        class="list-group-item list-group-item-action d-flex justify-content-between align-items-center bg-warning-subtle border-warning-subtle">
+        <div>
+          <span class="fw-bold text-dark">{{cuenta.concepto}}</span>
+          <small class="text-muted d-block">{{cuenta.proveedor_nombre}}</small>
+        </div>
+        <div class="text-end">
+          <span class="fw-bold text-danger">${{cuenta.monto_pendiente.toLocaleString()}}</span>
+          <small class="d-block text-dark">{{formatearFecha(cuenta.fecha_vencimiento)}}</small>
+        </div>
+      </div>
+      }
+    </div>
+  </div>
+  }
+
+</div>

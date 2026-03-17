@@ -1,0 +1,125 @@
+<div class="modal-overlay" (click)="cerrarModal()">
+  <div class="modal-card animate-modal" (click)="$event.stopPropagation()">
+
+    @if (isLoading) {
+    <div class="d-flex flex-column align-items-center justify-content-center py-5">
+      <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+        <span class="visually-hidden">Cargando...</span>
+      </div>
+      <p class="mt-3 text-muted fw-semibold">Consultando historial...</p>
+    </div>
+    } @else if (cuenta) {
+
+    <!-- Header -->
+    <div class="modal-header bg-light p-4 d-flex justify-content-between align-items-start border-bottom">
+      <div>
+        <h5 class="fw-bold text-dark mb-1">
+          <i class="fa-solid fa-clock-rotate-left me-2 text-primary"></i>Historial de Pagos
+        </h5>
+        <div class="text-muted small">
+          Cliente: <span class="fw-bold text-dark">{{cuenta.cliente_nombre}}</span>
+        </div>
+      </div>
+      <div class="d-flex gap-2">
+        <button (click)="imprimirHistorial()" class="btn btn-outline-secondary btn-sm" title="Imprimir">
+          <i class="fa-solid fa-print"></i>
+        </button>
+        <button type="button" class="btn-close" (click)="cerrarModal()"></button>
+      </div>
+    </div>
+
+    <!-- Summary Info -->
+    <div class="bg-body border-bottom p-3">
+      <div class="row g-2 text-center">
+        <div class="col-3">
+          <div class="p-2 bg-light rounded border">
+            <small class="d-block text-muted text-uppercase" style="font-size: 0.65rem;">Total</small>
+            <span class="fw-bold text-dark small">${{cuenta.monto_total.toFixed(2)}}</span>
+          </div>
+        </div>
+        <div class="col-3">
+          <div class="p-2 bg-success-subtle rounded border border-success-subtle">
+            <small class="d-block text-success text-uppercase" style="font-size: 0.65rem;">Pagado</small>
+            <span class="fw-bold text-success small">${{cuenta.monto_pagado.toFixed(2)}}</span>
+          </div>
+        </div>
+        <div class="col-3">
+          <div class="p-2 bg-warning-subtle rounded border border-warning-subtle">
+            <small class="d-block text-warning text-uppercase" style="font-size: 0.65rem;">Pendiente</small>
+            <span class="fw-bold text-warning-emphasis small">${{cuenta.monto_pendiente.toFixed(2)}}</span>
+          </div>
+        </div>
+        <div class="col-3">
+          <div class="p-2 bg-secondary-subtle rounded border border-secondary-subtle">
+            <small class="d-block text-secondary text-uppercase" style="font-size: 0.65rem;">Estado</small>
+            <span class="fw-bold text-secondary small text-uppercase">{{cuenta.estado}}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Body / List -->
+    <div class="modal-body p-0 bg-light">
+
+      <div class="p-3 pb-2">
+        <h6 class="fw-bold text-muted small text-uppercase mb-0">
+          Transacciones ({{cuenta.pagos.length}})
+        </h6>
+      </div>
+
+      @if (cuenta.pagos.length === 0) {
+      <div class="text-center py-5 opacity-50">
+        <i class="fa-solid fa-file-invoice-dollar fa-3x mb-3 text-muted"></i>
+        <p class="mb-0 fw-semibold text-muted">No hay pagos registrados</p>
+      </div>
+      } @else {
+      <div class="list-group list-group-flush border-top border-bottom">
+        @for (pago of cuenta.pagos; track pago.id) {
+        <div class="list-group-item list-group-item-action p-3">
+          <div class="d-flex w-100 justify-content-between align-items-center mb-1">
+            <h6 class="mb-0 fw-bold text-success">
+              <i class="fa-solid fa-plus me-1 small"></i> ${{pago.monto.toFixed(2)}}
+            </h6>
+            <small class="text-muted fw-semibold">
+              {{formatearFecha(pago.fecha_pago)}}
+            </small>
+          </div>
+
+          <div class="d-flex justify-content-between align-items-end mt-2">
+            <div class="small text-muted">
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge bg-light text-dark border">
+                  <i class="fa-regular fa-credit-card me-1 text-secondary"></i> {{pago.metodo_pago}}
+                </span>
+                @if (pago.referencia) {
+                <span class="text-truncate" style="max-width: 150px;">Ref: {{pago.referencia}}</span>
+                }
+              </div>
+              @if (pago.notas) {
+              <div class="fst-italic opacity-75 mt-1 border-start ps-2">
+                <i class="fa-solid fa-quote-left me-1 small"></i> {{pago.notas}}
+              </div>
+              }
+            </div>
+            <!-- Optional: Delete/Edit buttons could go here -->
+          </div>
+        </div>
+        }
+      </div>
+
+      <!-- Summary Footer in list -->
+      <div class="bg-white p-3 text-end text-muted small fw-semibold">
+        Total Pagado: <span class="text-dark">${{totalPagado.toFixed(2)}}</span>
+      </div>
+      }
+    </div>
+
+    <!-- Footer -->
+    <div class="modal-footer bg-light border-top-0 px-4 py-3">
+      <button type="button" class="btn btn-secondary fw-bold px-4" (click)="cerrarModal()">
+        Cerrar
+      </button>
+    </div>
+    }
+  </div>
+</div>

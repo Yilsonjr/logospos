@@ -1,0 +1,52 @@
+<div class="modal-overlay" (click)="cerrarModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+        <header class="modal-header">
+            <div class="modal-header__text">
+                <h2 class="modal-header__title">{{ editando ? 'Editar Unidad' : 'Nueva Unidad' }}</h2>
+                <p class="modal-header__subtitle">{{ editando ? 'Modifica los datos de la unidad de medida' : 'Crea una
+                    nueva unidad de medida' }}</p>
+            </div>
+            <button class="btn-close" (click)="cerrarModal()" type="button"><i class="fa-solid fa-xmark"></i></button>
+        </header>
+
+        <form [formGroup]="unidadForm" class="modal-body" (ngSubmit)="guardarUnidad()">
+            <div class="form-grid">
+                <div class="form-group col-span-2">
+                    <label class="form-label">Nombre de la Unidad *</label>
+                    <input type="text" formControlName="nombre" placeholder="Ej. Litro, Caja, Libra..."
+                        class="form-input" [class.border-red]="tieneError('nombre')">
+                    <div *ngIf="tieneError('nombre')" class="form-error">{{ getMensajeError('nombre') }}</div>
+                </div>
+
+                <div class="form-group col-span-2">
+                    <label class="form-label">Abreviatura (Opcional)</label>
+                    <input type="text" formControlName="abreviatura" placeholder="Ej. L, Cj, Lb..." class="form-input"
+                        [class.border-red]="tieneError('abreviatura')">
+                    <div *ngIf="tieneError('abreviatura')" class="form-error">{{ getMensajeError('abreviatura') }}</div>
+                </div>
+
+                <div class="form-group col-span-2">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="activo" formControlName="activo" class="form-checkbox">
+                        <label for="activo" class="checkbox-label">
+                            <span class="checkbox-text">Unidad activa</span>
+                            <span class="checkbox-help">Las unidades inactivas no aparecerán al crear productos</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-cancel" (click)="cerrarModal()"
+                    [disabled]="isLoading">Cancelar</button>
+                <button type="submit" class="btn-save" [disabled]="isLoading || unidadForm.invalid"
+                    [class.loading]="isLoading">
+                    <i *ngIf="isLoading" class="fa-solid fa-spinner fa-spin"></i>
+                    <i *ngIf="!isLoading && editando" class="fa-solid fa-pen-to-square"></i>
+                    <i *ngIf="!isLoading && !editando" class="fa-solid fa-plus"></i>
+                    <span>{{ isLoading ? 'Guardando...' : (editando ? 'Actualizar' : 'Crear') }} Unidad</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
