@@ -20,6 +20,7 @@ import { ModalPagoComponent } from '../modal.pago/modal.pago';
 import { CajaService } from '../../../services/caja.service';
 import { Caja } from '../../../models/caja.model';
 import { PrintService } from '../../../services/print.service';
+import { SyncService } from '../../../services/offline/sync.service';
 
 @Component({
   selector: 'app-pos',
@@ -83,9 +84,10 @@ export class PosComponent implements OnInit, OnDestroy {
 
   // Fiscal
   configFiscal: ConfiguracionFiscal | null = null;
-  tipoComprobante: string = 'B02'; // Consumidor Final por defecto
+  tipoComprobante: string = 'B02';
   rncCliente: string = '';
   tiposComprobante = TIPOS_COMPROBANTE;
+  isOffline: boolean = false;
 
   // Subscriptions
   private subscriptions: Subscription[] = [];
@@ -100,7 +102,8 @@ export class PosComponent implements OnInit, OnDestroy {
     private cajaService: CajaService, // Inyectar CajaService
     private printService: PrintService,
     private cdr: ChangeDetectorRef,
-    private router: Router
+    private router: Router,
+    private syncService: SyncService
   ) { }
 
   async ngOnInit() {
@@ -142,7 +145,18 @@ export class PosComponent implements OnInit, OnDestroy {
       this.cdr.detectChanges();
     });
 
-    this.subscriptions.push(productosSub, clientesSub, fiscalSub, cajaSub);
+    const onlineSub = this.syncService.isOnline$.subscribe(isOnline => {
+      this.isOffline = !isOnline;
+      if (this.isOffline && this.configFiscal?.modo_fiscal) {
+        // En modo offline fiscal, solo permitimos B02 (Consumidor Final)
+        if (this.tipoComprobante !== 'B02') {
+          this.tipoComprobante = 'B02';
+          this.cdr.detectChanges();
+        }
+      }
+    });
+
+    this.subscriptions.push(productosSub, clientesSub, fiscalSub, cajaSub, onlineSub);
 
     // DESPUÉS: Cargar datos
     await this.cargarDatos();
@@ -436,13 +450,15 @@ export class PosComponent implements OnInit, OnDestroy {
     this.clienteSeleccionado = cliente;
 
     // Auto-detect NCF type if fiscal mode is active
-    if (this.configFiscal?.modo_fiscal) {
+    if (this.configFiscal?.modo_fiscal && !this.isOffline) {
       if (cliente.rnc) {
         this.tipoComprobante = 'B01'; // Crédito Fiscal (tiene RNC)
         this.rncCliente = cliente.rnc;
       } else {
         this.tipoComprobante = 'B02'; // Consumidor Final
       }
+    } else if (this.isOffline) {
+      this.tipoComprobante = 'B02'; // Forzado por offline
     }
 
     // Aplicar descuento del cliente si tiene

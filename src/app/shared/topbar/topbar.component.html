@@ -15,6 +15,24 @@
     <!-- Acciones Derecha -->
     <ul class="navbar-nav ms-auto align-items-center gap-3">
 
+      <!-- Indicador Offline/Sync -->
+      <li class="nav-item d-none d-sm-flex align-items-center me-2">
+        @if (!isOnline) {
+          <span class="badge bg-danger rounded-pill d-flex align-items-center gap-2 px-3 py-2 text-white shadow-sm" title="Sin conexión">
+            <i class="fa-solid fa-wifi"></i> <span class="d-none d-md-inline">Sin Conexión</span>
+          </span>
+        } @else if (pendingCount > 0) {
+          <button class="btn btn-warning rounded-pill btn-sm d-flex align-items-center gap-2 fw-bold shadow-sm" 
+            (click)="forzarSincronizacion()" [disabled]="isSyncing" title="Subir ventas pendientes">
+            @if (isSyncing) {
+              <i class="fa-solid fa-circle-notch fa-spin"></i> <span class="d-none d-md-inline">Sincronizando...</span>
+            } @else {
+              <i class="fa-solid fa-cloud-arrow-up"></i> <span class="d-none d-md-inline px-1">{{ pendingCount }}</span>
+            }
+          </button>
+        }
+      </li>
+
       <!-- Notificaciones -->
       <li class="nav-item dropdown">
         <a class="nav-link position-relative p-2" href="#" role="button" data-bs-toggle="dropdown"

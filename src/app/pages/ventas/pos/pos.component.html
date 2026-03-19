@@ -121,11 +121,19 @@
     <div class="p-2 bg-white border-bottom" *ngIf="configFiscal?.modo_fiscal">
       <label class="form-label small fw-bold text-muted mb-1"><i class="fa-solid fa-file-invoice-dollar me-1"></i>
         COMPROBANTE</label>
-      <select class="form-select form-select-sm border-0 shadow-sm bg-light mb-2" [(ngModel)]="tipoComprobante">
+      <select class="form-select form-select-sm border-0 shadow-sm mb-2" 
+        [class.bg-light]="!isOffline" [class.bg-warning-subtle]="isOffline"
+        [(ngModel)]="tipoComprobante" [disabled]="isOffline">
         <option *ngFor="let tipo of tiposComprobante" [value]="tipo.codigo">
           {{ tipo.descripcion }}
         </option>
       </select>
+
+      <!-- Alerta Offline -->
+      <div *ngIf="isOffline" class="alert alert-warning py-1 px-2 mb-2 d-flex align-items-center" style="font-size: 0.75rem;">
+        <i class="fa-solid fa-wifi-slash me-2"></i>
+        <span>Modo Contingencia: Solo Consumidor Final permitido sin conexión.</span>
+      </div>
 
       <div *ngIf="tipoComprobante === 'B01'" class="mt-2 animate__animated animate__fadeIn">
         <label class="form-label small fw-bold text-muted mb-1">RNC CLIENTE *</label>

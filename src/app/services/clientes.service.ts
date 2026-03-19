@@ -1,8 +1,10 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Injector } from '@angular/core';
 import { SupabaseService } from './supabase.service';
 import { TenantService } from './tenant.service';
 import { Cliente, CrearCliente } from '../models/clientes.model';
 import { BehaviorSubject } from 'rxjs';
+import { DbService } from './offline/db.service';
+import { SyncService } from './offline/sync.service';
 
 @Injectable({
   providedIn: 'root'
@@ -19,13 +21,27 @@ export class ClientesService {
 
   constructor(
     private supabaseService: SupabaseService,
-    private tenantService: TenantService
+    private tenantService: TenantService,
+    private injector: Injector,
+    private dbService: DbService
   ) { }
+
+  private get syncService(): SyncService {
+    return this.injector.get(SyncService);
+  }
 
   // Cargar clientes activos
   async cargarClientes(): Promise<void> {
     try {
       console.log('🔄 Cargando clientes...');
+
+      if (this.syncService.isOffline()) {
+         const tenantId = this.tenantService.getTenantIdOrThrow();
+         const localClientes = await this.dbService.clientes.where({ tenant_id: tenantId }).toArray();
+         const activos = localClientes.filter(c => c.activo !== false);
+         this.clientesSubject.next(activos);
+         return;
+      }
 
       const { data, error } = await this.supabaseService.client
         .from('clientes')
@@ -51,6 +67,12 @@ export class ClientesService {
   async cargarTodosClientes(): Promise<Cliente[]> {
     try {
       console.log('🔄 Cargando todos los clientes...');
+
+      if (this.syncService.isOffline()) {
+         const tenantId = this.tenantService.getTenantIdOrThrow();
+         const localClientes = await this.dbService.clientes.where({ tenant_id: tenantId }).toArray();
+         return localClientes;
+      }
 
       const { data, error } = await this.supabaseService.client
         .from('clientes')
@@ -230,6 +252,12 @@ export class ClientesService {
   // Obtener cliente general (para ventas sin cliente específico)
   async getClienteGeneral(): Promise<Cliente | null> {
     try {
+      if (this.syncService.isOffline()) {
+         const tenantId = this.tenantService.getTenantIdOrThrow();
+         const clientes = await this.dbService.clientes.where({ tenant_id: tenantId }).toArray();
+         return clientes.find(c => c.nombre === 'Cliente General') || null;
+      }
+
       const { data, error } = await this.supabaseService.client
         .from('clientes')
         .select('*')

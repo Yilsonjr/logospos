@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { SupabaseService } from './supabase.service';
 import { TenantService } from './tenant.service';
 import { BehaviorSubject } from 'rxjs';
+import bcrypt from 'bcryptjs';
 
 export interface Tenant {
     id: string;
@@ -187,6 +188,8 @@ export class DevAdminService {
             if (errorRol) throw errorRol;
 
             // 3. Create admin user for this tenant
+            const passwordHasheada = bcrypt.hashSync(payload.admin_password, 10);
+
             const { error: errorUser } = await this.supabaseService.client
                 .from('usuarios')
                 .insert([{
@@ -195,7 +198,7 @@ export class DevAdminService {
                     apellido: payload.admin_apellido,
                     email: payload.admin_email,
                     username: payload.admin_username,
-                    password: payload.admin_password,
+                    password: passwordHasheada,
                     rol_id: rol.id,
                     activo: true
                 }]);

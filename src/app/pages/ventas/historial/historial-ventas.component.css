@@ -70,7 +70,7 @@
     height: 100vh;
     background: rgba(15, 23, 42, 0.55);
     backdrop-filter: blur(6px);
-    z-index: 10000;
+    z-index: 1040;
     display: flex;
     align-items: center;
     justify-content: center;

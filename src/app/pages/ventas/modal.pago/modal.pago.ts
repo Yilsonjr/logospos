@@ -5,6 +5,7 @@ import { METODOS_PAGO } from '../../../models/ventas.model';
 import { Cliente } from '../../../models/clientes.model';
 import { ConfiguracionFiscal, TIPOS_COMPROBANTE } from '../../../models/fiscal.model';
 import { VerifoneService } from '../../../services/verifone.service';
+import { SyncService } from '../../../services/offline/sync.service';
 import Swal from 'sweetalert2';
 
 // Bancos principales de RD
@@ -49,7 +50,9 @@ export class ModalPagoComponent implements OnInit, OnChanges {
     @Output() cancelar = new EventEmitter<void>();
 
     private verifoneService = inject(VerifoneService);
+    private syncService = inject(SyncService);
     procesandoTarjeta: boolean = false;
+    isOffline: boolean = false;
 
     metodoPago: MetodoPago = 'efectivo';
     montoEfectivo: number | null = null;
@@ -67,13 +70,20 @@ export class ModalPagoComponent implements OnInit, OnChanges {
 
     ngOnInit() {
         this.cambiarMetodoPago('efectivo');
+        this.syncService.isOnline$.subscribe(online => {
+            this.isOffline = !online;
+            if (this.isOffline && this.configFiscal?.modo_fiscal && this.tipoComprobante !== 'B02') {
+                this.tipoComprobante = 'B02';
+                this.tipoComprobanteChange.emit('B02');
+            }
+        });
     }
 
     ngOnChanges(changes: SimpleChanges) {
-        // Si cambia el cliente y tiene RNC, auto-switch a B01
+        // Si cambia el cliente y tiene RNC, auto-switch a B01 (solo online)
         if (changes['clienteSeleccionado'] && this.configFiscal?.modo_fiscal) {
             const rnc = (this.clienteSeleccionado as any)?.rnc;
-            if (rnc) {
+            if (rnc && !this.isOffline) {
                 this.tipoComprobante = 'B01';
                 this.rncCliente = rnc;
                 this.tipoComprobanteChange.emit(this.tipoComprobante);

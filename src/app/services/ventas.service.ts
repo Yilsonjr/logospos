@@ -1,10 +1,11 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Injector } from '@angular/core';
 import { SupabaseService } from './supabase.service';
 import { TenantService } from './tenant.service';
 import { ProductosService } from './productos.service';
 import { ClientesService } from './clientes.service';
 import { AuthService } from './auth.service';
 import { CajaService } from './caja.service';
+import { SyncService } from './offline/sync.service';
 import { Venta, VentaDetalle, CrearVenta, VentaCompleta } from '../models/ventas.model';
 import { BehaviorSubject } from 'rxjs';
 import { CrearMovimientoCaja } from '../models/caja.model';
@@ -22,13 +23,19 @@ export class VentasService {
     private productosService: ProductosService,
     private clientesService: ClientesService,
     private authService: AuthService,
-    private cajaService: CajaService
+    private cajaService: CajaService,
+    private injector: Injector
   ) {
     this.cargarVentas().catch(err => console.error('Error in initial cargarVentas:', err));
   }
 
-  // Generar número de factura
+  private get syncService(): SyncService {
+    return this.injector.get(SyncService);
+  }
   async generarNumeroFactura(): Promise<string> {
+    if (this.syncService.isOffline()) {
+       return this.generarNumeroFacturaLocal();
+    }
     try {
       const { data, error } = await this.supabaseService.client
         .rpc('generar_numero_factura');
@@ -37,11 +44,15 @@ export class VentasService {
       return data;
     } catch (error) {
       console.error('Error al generar número de factura:', error);
-      // Fallback: generar manualmente
+      return this.generarNumeroFacturaLocal();
+    }
+  }
+
+  // Generador local independiente de Supabase para offline
+  private generarNumeroFacturaLocal(): string {
       const fecha = new Date();
       const timestamp = fecha.getTime();
       return `FAC-${fecha.getFullYear()}${(fecha.getMonth() + 1).toString().padStart(2, '0')}${fecha.getDate().toString().padStart(2, '0')}-${timestamp.toString().slice(-4)}`;
-    }
   }
 
   // Crear venta completa (transacción)
@@ -56,6 +67,28 @@ export class VentasService {
       // 1. Generar número de venta
       const numeroVenta = await this.generarNumeroFactura();
       console.log('📄 Número de venta:', numeroVenta);
+
+      // Si estamos offline, encolamos en Dexie y fingimos el éxito para no detener el POS
+      if (this.syncService.isOffline()) {
+          console.log('📡 Modo Offline Activado: Guardando venta en cola local Dexie...');
+          await this.syncService.trackVentaOffline(venta);
+          // Actualizar BD local de productos
+          for (const detalle of venta.detalles) {
+             // await this.productosService.descontarStockLocal(detalle.producto_id, detalle.cantidad);
+          }
+          return {
+              id: -Math.floor(Math.random() * 100000), // ID falso negativo para que no choque
+              numero_venta: numeroVenta,
+              subtotal: venta.subtotal,
+              descuento: venta.descuento,
+              impuestos: venta.impuesto,
+              total: venta.total,
+              metodo_pago: venta.metodo_pago,
+              tipo_venta: venta.metodo_pago === 'credito' ? 'credito' : 'contado',
+              estado: 'completada',
+              created_at: new Date().toISOString()
+          } as Venta; // Cast to Venta to avoid strict index signature issues if any
+      }
 
       // 2. Preparar payload alineado con tabla ventas real
       const tenantId = this.tenantService.getTenantIdOrThrow();

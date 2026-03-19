@@ -5,6 +5,7 @@ import { Subscription } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { SidebarService } from '../../services/sidebar.service';
 import { NotificacionesService } from '../../services/notificaciones.service';
+import { SyncService } from '../../services/offline/sync.service';
 import { Usuario } from '../../models/usuario.model';
 import { Notificacion, Mensaje } from '../../models/notificacion.model';
 
@@ -20,6 +21,11 @@ export class TopbarComponent implements OnInit, OnDestroy {
   sidebarCollapsed = false;
 
   mostrarNotificaciones = false;
+  
+  // Offline state
+  isOnline = true;
+  pendingCount = 0;
+  isSyncing = false;
 
   subscriptions: Subscription[] = [];
 
@@ -27,6 +33,7 @@ export class TopbarComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private sidebarService: SidebarService,
     private notificacionesService: NotificacionesService,
+    private syncService: SyncService,
     private router: Router
   ) { }
 
@@ -48,6 +55,12 @@ export class TopbarComponent implements OnInit, OnDestroy {
       this.notificaciones = notificaciones;
     });
     this.subscriptions.push(notifSub);
+
+    // Suscribirse a sync events
+    const onlineSub = this.syncService.isOnline$.subscribe(online => this.isOnline = online);
+    const pendingSub = this.syncService.pendingCount$.subscribe(count => this.pendingCount = count);
+    const syncingSub = this.syncService.isSyncing$.subscribe(syncing => this.isSyncing = syncing);
+    this.subscriptions.push(onlineSub, pendingSub, syncingSub);
   }
 
   ngOnDestroy() {
@@ -57,6 +70,13 @@ export class TopbarComponent implements OnInit, OnDestroy {
   // ==================== SIDEBAR ====================
   toggleSidebar() {
     this.sidebarService.toggleSidebar();
+  }
+
+  // ==================== OFFLINE ====================
+  forzarSincronizacion() {
+    if (this.isOnline) {
+      this.syncService.sincronizarVentasPendientes();
+    }
   }
 
   // ==================== NOTIFICACIONES ====================

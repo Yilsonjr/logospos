@@ -4,6 +4,7 @@ import { SupabaseService } from './supabase.service';
 import { TenantService } from './tenant.service';
 import { Usuario, Rol, LoginCredentials, LoginResponse, AuthState, Sesion } from '../models/usuario.model';
 import { Router } from '@angular/router';
+import bcrypt from 'bcryptjs';
 import Swal from 'sweetalert2';
 
 @Injectable({
@@ -121,8 +122,46 @@ export class AuthService {
         usuario.rol = rol;
       }
 
-      // Verificar contraseña (en producción usar bcrypt)
-      if (usuario.password !== credentials.password) {
+      // Verificar contraseña (implementación con Bcrypt y Migración Lazy)
+      let esValida = false;
+      let esHashVálido = false;
+
+      try {
+        // Intentar comparar como Hash primero
+        esValida = bcrypt.compareSync(credentials.password, usuario.password);
+        esHashVálido = true;
+      } catch (e) {
+        // Si falla compareSync, el valor en BD no es un hash válido (es texto plano)
+        esHashVálido = false;
+      }
+
+      // Si no es válida vía hash O el formato no era de hash, intentamos texto plano (Migración)
+      if (!esValida) {
+        const esTextoPlanoIgual = usuario.password === credentials.password;
+
+        if (esTextoPlanoIgual) {
+          esValida = true;
+          // Si el formato no era hash, migramos a uno seguro ahora mismo
+          if (!esHashVálido) {
+            console.log('🔄 Migrando contraseña de texto plano a Hash para:', usuario.username);
+            try {
+              const passwordHasheada = bcrypt.hashSync(credentials.password, 10);
+              await this.supabaseService.client
+                .from('usuarios')
+                .update({
+                  password: passwordHasheada,
+                  updated_at: new Date().toISOString()
+                })
+                .eq('id', usuario.id);
+            } catch (err) {
+              console.error('⚠️ Error al migrar contraseña:', err);
+              // No bloqueamos el login aunque falle la actualización del hash
+            }
+          }
+        }
+      }
+
+      if (!esValida) {
         throw new Error('Contraseña incorrecta');
       }
 
@@ -362,15 +401,32 @@ export class AuthService {
         .eq('id', usuario.id)
         .single();
 
-      if (error || usuarioData.password !== contrasenaActual) {
+      if (error || !usuarioData) {
         throw new Error('Contraseña actual incorrecta');
       }
+
+      const passwordActualDB = usuarioData.password as string; // Ensure it's treated as a string
+
+      let actualValida = false;
+      try {
+        actualValida = bcrypt.compareSync(contrasenaActual, passwordActualDB);
+      } catch (e) {
+        // Caso borde: Si aún es texto plano
+        actualValida = passwordActualDB === contrasenaActual;
+      }
+
+      if (!actualValida) {
+        throw new Error('Contraseña actual incorrecta');
+      }
+
+      // Hashear nueva contraseña
+      const nuevaHash = bcrypt.hashSync(contrasenaNueva, 10);
 
       // Actualizar contraseña
       await this.supabaseService.client
         .from('usuarios')
         .update({
-          password: contrasenaNueva,
+          password: nuevaHash,
           updated_at: new Date().toISOString()
         })
         .eq('id', usuario.id);

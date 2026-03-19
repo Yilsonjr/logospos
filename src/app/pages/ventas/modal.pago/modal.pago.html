@@ -191,10 +191,17 @@
                     </div>
 
                     <!-- Selector Tipo Comprobante -->
+                    <div class="alert alert-danger py-2 mb-3 d-flex align-items-center" *ngIf="isOffline">
+                        <i class="fa-solid fa-wifi text-danger me-2"></i>
+                        <small>Sin conexión. Solo emisión de ticket interno provisional (B02).</small>
+                    </div>
+
                     <div class="row g-2 mb-3">
                         @for (tipo of tiposComprobante; track tipo.codigo) {
                         <div class="col-6">
                             <button type="button" class="btn w-100 text-start p-2 rounded-3 border"
+                                [disabled]="isOffline && tipo.codigo !== 'B02'"
+                                [style.opacity]="(isOffline && tipo.codigo !== 'B02') ? '0.5' : '1'"
                                 [style.background]="tipoComprobante === tipo.codigo ? '#fef3c7' : '#fff'"
                                 [style.border-color]="tipoComprobante === tipo.codigo ? '#d97706' : '#dee2e6'"
                                 [style.color]="tipoComprobante === tipo.codigo ? '#92400e' : '#6b7280'"

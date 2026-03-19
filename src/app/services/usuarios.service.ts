@@ -3,6 +3,7 @@ import { BehaviorSubject } from 'rxjs';
 import { SupabaseService } from './supabase.service';
 import { TenantService } from './tenant.service';
 import { Usuario, Rol, CrearUsuario, ActualizarUsuario, CrearRol, ROLES_PREDEFINIDOS } from '../models/usuario.model';
+import bcrypt from 'bcryptjs';
 
 @Injectable({
   providedIn: 'root'
@@ -62,9 +63,15 @@ export class UsuariosService {
         throw new Error('El nombre de usuario o email ya existe');
       }
 
+      const passwordPlana = usuario.password as string;
+
+      // Hashear contraseña antes de insertar
+      const passwordHasheada = bcrypt.hashSync(passwordPlana, 10);
+
       // Inject tenant_id if not present
       const usuarioConTenant = {
         ...usuario,
+        password: passwordHasheada,
         tenant_id: (usuario as any).tenant_id || this.tenantService.getTenantIdOrThrow()
       };
 
@@ -176,10 +183,13 @@ export class UsuariosService {
   // Resetear contraseña
   async resetearContrasena(id: number, nuevaContrasena: string): Promise<void> {
     try {
+      // Hashear nueva contraseña
+      const passwordHasheada = bcrypt.hashSync(nuevaContrasena, 10);
+
       const { error } = await this.supabaseService.client
         .from('usuarios')
         .update({
-          password: nuevaContrasena,
+          password: passwordHasheada,
           updated_at: new Date().toISOString()
         })
         .eq('id', id);

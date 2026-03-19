@@ -69,38 +69,47 @@ export class PrintService {
     /**
      *  Abre una ventana de impresión con el ticket formateado.
      */
-    imprimirTicket(venta: VentaCompleta, cambio?: number, formato: '80mm' | '58mm' | 'A4' = '80mm') {
-        this.cargarDatosNegocio().then(negocio => {
-            let html = '';
-            let windowFeatures = '';
+    async imprimirTicket(venta: VentaCompleta, cambio?: number, formato: '80mm' | '58mm' | 'A4' = '80mm') {
+        const negocio = await this.cargarDatosNegocio();
+        let html = '';
+        let windowFeatures = '';
 
-            if (formato === '80mm') {
-                html = this.generarHTMLTicket80mm(venta, negocio, cambio);
-                windowFeatures = 'width=320,height=600';
-            } else if (formato === '58mm') {
-                html = this.generarHTMLTicket58mm(venta, negocio, cambio);
-                windowFeatures = 'width=240,height=500';
-            } else if (formato === 'A4') {
-                html = this.generarHTMLFacturaA4(venta, negocio, cambio);
-                windowFeatures = 'width=800,height=900';
+        if (formato === '80mm') {
+            html = this.generarHTMLTicket80mm(venta, negocio, cambio);
+            windowFeatures = 'width=320,height=600';
+        } else if (formato === '58mm') {
+            html = this.generarHTMLTicket58mm(venta, negocio, cambio);
+            windowFeatures = 'width=240,height=500';
+        } else if (formato === 'A4') {
+            html = this.generarHTMLFacturaA4(venta, negocio, cambio);
+            windowFeatures = 'width=800,height=900';
+        }
+
+        const ventana = window.open('', '_blank', windowFeatures);
+        if (!ventana) {
+            console.error('No se pudo abrir ventana de impresión');
+            alert('El navegador bloqueó la ventana de impresión. Por favor, permite ventanas emergentes para este sitio.');
+            return;
+        }
+
+        ventana.document.write(html);
+        ventana.document.close();
+
+        // Esperar a que se renderice, luego imprimir
+        ventana.onload = () => {
+            setTimeout(() => {
+                ventana.print();
+                ventana.onafterprint = () => ventana.close();
+            }, 300);
+        };
+
+        // Fallback si onload no dispara (algunos navegadores con document.write)
+        setTimeout(() => {
+            if (ventana.document.readyState === 'complete') {
+                ventana.focus();
+                // ventana.print(); // Ya manejado en onload, pero preventivo
             }
-
-            const ventana = window.open('', '_blank', windowFeatures);
-            if (!ventana) {
-                console.error('No se pudo abrir ventana de impresión');
-                return;
-            }
-            ventana.document.write(html);
-            ventana.document.close();
-
-            // Esperar a que se renderice, luego imprimir
-            ventana.onload = () => {
-                setTimeout(() => {
-                    ventana.print();
-                    ventana.onafterprint = () => ventana.close();
-                }, 200);
-            };
-        });
+        }, 500);
     }
 
     /**

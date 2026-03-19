@@ -1,8 +1,10 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Injector } from '@angular/core';
 import { SupabaseService } from './supabase.service';
 import { TenantService } from './tenant.service';
 import { Productos } from '../models/productos.model';
 import { Observable, from, BehaviorSubject } from 'rxjs';
+import { DbService } from './offline/db.service';
+import { SyncService } from './offline/sync.service';
 
 @Injectable({
   providedIn: 'root'
@@ -13,14 +15,26 @@ export class ProductosService {
 
   constructor(
     private supabaseService: SupabaseService,
-    private tenantService: TenantService
+    private tenantService: TenantService,
+    private injector: Injector,
+    private dbService: DbService
   ) {
     this.cargarProductos().catch(err => console.error('Error in initial cargarProductos:', err));
+  }
+
+  private get syncService(): SyncService {
+    return this.injector.get(SyncService);
   }
 
   // Obtener todos los productos
   async cargarProductos(): Promise<void> {
     try {
+      if (this.syncService.isOffline()) {
+        const tenantId = this.tenantService.getTenantIdOrThrow();
+        const localProds = await this.dbService.productos.where({ tenant_id: tenantId }).toArray();
+        this.productosSubject.next(localProds);
+        return;
+      }
       const { data, error } = await this.supabaseService.client
         .from('productos')
         .select(`
@@ -234,6 +248,26 @@ export class ProductosService {
     } catch (error) {
       console.error('Error en getProductosPorCategoria:', error);
       throw error;
+    }
+  }
+
+  // Actualizar stock localmente (offline o UX rapida)
+  async descontarStockLocal(productoId: number, cantidad: number): Promise<void> {
+    try {
+      const prod = await this.dbService.productos.get(productoId);
+      if (prod) {
+          prod.stock = Math.max(0, (prod.stock || 0) - cantidad);
+          await this.dbService.productos.put(prod);
+      }
+      
+      const actuales = this.productosSubject.getValue();
+      const index = actuales.findIndex(p => p.id === productoId);
+      if (index !== -1) {
+          actuales[index].stock = Math.max(0, (actuales[index].stock || 0) - cantidad);
+          this.productosSubject.next([...actuales]);
+      }
+    } catch(e) {
+      console.error('Error descontando stock local:', e);
     }
   }
 }
