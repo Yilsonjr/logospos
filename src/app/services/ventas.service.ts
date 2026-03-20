@@ -20,7 +20,6 @@ export class VentasService {
   constructor(
     private supabaseService: SupabaseService,
     private tenantService: TenantService,
-    private productosService: ProductosService,
     private clientesService: ClientesService,
     private authService: AuthService,
     private cajaService: CajaService,
@@ -31,6 +30,10 @@ export class VentasService {
 
   private get syncService(): SyncService {
     return this.injector.get(SyncService);
+  }
+
+  private get productosService(): ProductosService {
+    return this.injector.get(ProductosService);
   }
   async generarNumeroFactura(): Promise<string> {
     if (this.syncService.isOffline()) {

@@ -3,6 +3,7 @@ import { BehaviorSubject, interval, Subscription } from 'rxjs';
 import { SupabaseService } from '../supabase.service';
 import { TenantService } from '../tenant.service';
 import { DbService, VentaPendiente } from './db.service';
+import { Injector } from '@angular/core';
 import { VentasService } from '../ventas.service';
 
 @Injectable({
@@ -24,7 +25,7 @@ export class SyncService {
     private supabaseService: SupabaseService,
     private tenantService: TenantService,
     private db: DbService,
-    private ventasService: VentasService,
+    private injector: Injector,
     private ngZone: NgZone
   ) {
     this.iniciarListenersRed();
@@ -36,6 +37,10 @@ export class SyncService {
         this.descargarCatalogos().catch(e => console.error('Error downloading initial catalogs:', e));
       }
     });
+  }
+  
+  private get ventasService(): VentasService {
+    return this.injector.get(VentasService);
   }
 
   // Detecta cambios en la conectividad del navegador
