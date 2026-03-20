@@ -21,6 +21,7 @@ export class TopbarComponent implements OnInit, OnDestroy {
   sidebarCollapsed = false;
 
   mostrarNotificaciones = false;
+  mostrarPerfil = false;
   
   // Offline state
   isOnline = true;
@@ -86,7 +87,13 @@ export class TopbarComponent implements OnInit, OnDestroy {
   }
 
   toggleNotificaciones() {
+    this.mostrarPerfil = false;
     this.mostrarNotificaciones = !this.mostrarNotificaciones;
+  }
+
+  togglePerfil() {
+    this.mostrarNotificaciones = false;
+    this.mostrarPerfil = !this.mostrarPerfil;
   }
 
   marcarNotificacionLeida(notificacion: Notificacion, event: Event) {
@@ -141,6 +148,7 @@ export class TopbarComponent implements OnInit, OnDestroy {
 
   cerrarDropdowns() {
     this.mostrarNotificaciones = false;
+    this.mostrarPerfil = false;
   }
 
   // Ir al perfil

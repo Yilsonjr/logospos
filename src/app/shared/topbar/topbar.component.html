@@ -90,10 +90,9 @@
         </div>
       </li>
 
-      <!-- Perfil Usuario -->
       <li class="nav-item dropdown">
         <a class="nav-link d-flex align-items-center gap-2 p-1 rounded hover-bg-light dropdown-toggle" href="#"
-          role="button" data-bs-toggle="dropdown" aria-expanded="false">
+          role="button" (click)="togglePerfil(); $event.preventDefault()" [class.show]="mostrarPerfil">
           <div
             class="avatar rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-sm"
             [style.width.px]="38" [style.height.px]="38" [style.background-color]="obtenerColorRol()">
@@ -104,7 +103,7 @@
             <small class="text-muted" style="font-size: 0.75rem;">{{ usuario?.rol?.nombre }}</small>
           </div>
         </a>
-        <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 mt-2">
+        <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 mt-2" [class.show]="mostrarPerfil">
           <li>
             <a class="dropdown-item d-flex align-items-center py-2" href="javascript:void(0)" (click)="irAPerfil()">
               <i class="fa-solid fa-user me-3 text-secondary"></i> Mi Perfil
@@ -127,7 +126,7 @@
 </nav>
 
 <!-- Overlay para cerrar al hacer click fuera -->
-@if (mostrarNotificaciones) {
-<div class="position-fixed top-0 start-0 w-100 h-100" style="z-index: 1020;" (click)="mostrarNotificaciones = false">
+@if (mostrarNotificaciones || mostrarPerfil) {
+<div class="position-fixed top-0 start-0 w-100 h-100" style="z-index: 1020;" (click)="cerrarDropdowns()">
 </div>
 }
