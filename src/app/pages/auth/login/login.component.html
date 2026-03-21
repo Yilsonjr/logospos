@@ -66,8 +66,8 @@
               Recordarme
             </label>
           </div>
-          <a href="#" class="text-decoration-none small fw-semibold link-primary"
-            (click)="$event.preventDefault()">¿Olvidaste tu contraseña?</a>
+          <a href="javascript:void(0)" class="text-decoration-none small fw-semibold link-primary"
+            (click)="forgotPassword($event)">¿Olvidaste tu contraseña?</a>
         </div>
 
         <button type="submit"
@@ -84,8 +84,8 @@
       </form>
 
       <div class="text-center mt-5">
-        <p class="text-muted small mb-0">¿Necesitas ayuda? <a href="#"
-            class="text-dark fw-bold text-decoration-none">Contactar Soporte</a></p>
+        <p class="text-muted small mb-0">¿Necesitas ayuda? <a href="javascript:void(0)"
+            (click)="contactSupport()" class="text-dark fw-bold text-decoration-none">Contactar Soporte</a></p>
       </div>
 
     </div>

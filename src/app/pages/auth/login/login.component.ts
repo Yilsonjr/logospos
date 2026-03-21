@@ -109,4 +109,27 @@ export class LoginComponent implements OnInit {
   togglePasswordVisibility() {
     this.showPassword = !this.showPassword;
   }
+
+  async forgotPassword(event: Event) {
+    event.preventDefault();
+    await Swal.fire({
+      title: '¿Olvidaste tu contraseña?',
+      text: 'Por seguridad, debes contactar al administrador de tu negocio o a nuestro soporte técnico para restablecer tu acceso.',
+      icon: 'info',
+      showCancelButton: true,
+      confirmButtonText: 'Contactar Soporte',
+      cancelButtonText: 'Entendido',
+      confirmButtonColor: '#3b82f6'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.contactSupport();
+      }
+    });
+  }
+
+  contactSupport() {
+    const message = encodeURIComponent('Hola, necesito soporte con mi acceso a LogosPOS.');
+    const whatsappUrl = `https://wa.me/18293888840?text=${message}`;
+    window.open(whatsappUrl, '_blank');
+  }
 }
