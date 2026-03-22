@@ -32,6 +32,7 @@ export class PosComponent implements OnInit, OnDestroy {
   @ViewChild('searchInput') searchInput!: ElementRef<HTMLInputElement>;
   private sidebarWasExpanded = false; // Estado previo del sidebar
   public isSidebarCollapsed = false; // Estado actual para la vista
+  activeMobileTab: 'products' | 'cart' = 'products';
 
   // Datos
   productos: Productos[] = [];
@@ -184,6 +185,10 @@ export class PosComponent implements OnInit, OnDestroy {
 
   toggleSidebar() {
     this.sidebarService.toggleSidebar();
+  }
+
+  setMobileTab(tab: 'products' | 'cart') {
+    this.activeMobileTab = tab;
   }
 
   // Listener global para cerrar autocomplete al hacer click fuera

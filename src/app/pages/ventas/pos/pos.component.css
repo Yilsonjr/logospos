@@ -15,6 +15,7 @@
   /* Hasta el fondo de la pantalla */
   width: auto !important;
   height: auto !important;
+  overflow-x: hidden;
 
   /* Layout Interno Flex */
   display: flex;
@@ -115,6 +116,11 @@
   background: white;
 }
 
+/* Ocultar por defecto (solo móvil) */
+.mobile-tabs, .mobile-cart-summary {
+    display: none;
+}
+
 /* =========================================
    UTILIDADES & COMPONENTES
    ========================================= */
@@ -167,14 +173,69 @@
   /* En móvil, apilar vertical o usar tabs/modal */
   .pos-layout {
     flex-direction: column;
+    left: 0 !important; /* FIJAR: Elimina el margen lateral del sidebar en móvil */
   }
 
-  .cart-area {
+  /* Mostrar Tabs en móvil */
+  .mobile-tabs {
+    display: flex !important;
+    flex-shrink: 0;
+    height: 60px;
+    background: white;
+    border-bottom: 2px solid #e5e7eb;
+    z-index: 100;
+  }
+
+  .mobile-tab-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #9ca3af;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+  }
+
+  .mobile-tab-item i {
+    font-size: 1.2rem;
+    margin-bottom: 2px;
+  }
+
+  .mobile-tab-item.active {
+    color: #3b82f6;
+    border-bottom-color: #3b82f6;
+    background-color: #eff6ff;
+  }
+
+  /* Visibilidad basada en Tabs */
+  .d-none-mobile {
+    display: none !important;
+  }
+
+  .products-area, .cart-area {
+    width: 100% !important;
+    height: calc(100vh - 124px) !important; /* Altura total - Topbar - Tabs */
+    border: none !important;
+  }
+
+  /* Flotante móvil para entrar al carrito */
+  .mobile-cart-summary {
+    display: flex !important;
+    position: fixed;
+    bottom: 0;
+    left: 0;
     width: 100%;
-    height: auto;
-    max-height: 40vh;
-    /* Carrito abajo */
-    border-left: none;
-    border-top: 1px solid #e5e7eb;
+    padding: 12px 20px;
+    background: #2563eb;
+    color: white;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.1);
+    z-index: 105;
+    border-radius: 20px 20px 0 0;
   }
 }

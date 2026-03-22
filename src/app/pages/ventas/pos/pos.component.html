@@ -1,9 +1,26 @@
 <div class="pos-layout" [class.pos-layout--collapsed]="isSidebarCollapsed">
 
+  <!-- Tabs para móvil (Solo se ven en móvil) -->
+  <div class="mobile-tabs">
+    <div class="mobile-tab-item" [class.active]="activeMobileTab === 'products'" (click)="setMobileTab('products')">
+      <i class="fa-solid fa-box"></i>
+      <span>Productos</span>
+    </div>
+    <div class="mobile-tab-item" [class.active]="activeMobileTab === 'cart'" (click)="setMobileTab('cart')">
+      <div class="position-relative">
+        <i class="fa-solid fa-shopping-cart"></i>
+        <span *ngIf="carrito.length > 0" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem; padding: 0.2rem 0.4rem;">
+          {{ carrito.length }}
+        </span>
+      </div>
+      <span>Mi Orden</span>
+    </div>
+  </div>
+
   <!-- ========================================= -->
   <!-- ZONA IZQUIERDA: PRODUCTOS (Flexible)      -->
   <!-- ========================================= -->
-  <div class="products-area">
+  <div class="products-area" [class.d-none-mobile]="activeMobileTab !== 'products'">
 
     <!-- 1. Header de Productos y Búsqueda -->
     <div class="products-header">
@@ -95,7 +112,7 @@
   <!-- ========================================= -->
   <!-- ZONA DERECHA: CARRITO (Fijo 380px)        -->
   <!-- ========================================= -->
-  <div class="cart-area">
+  <div class="cart-area" [class.d-none-mobile]="activeMobileTab !== 'cart'">
 
     <!-- 1. Header Carrito -->
     <div class="cart-header d-flex justify-content-between align-items-center bg-white">
@@ -217,6 +234,22 @@
         <i class="fa-regular fa-credit-card me-2"></i> COBRAR
       </button>
     </div>
+  </div>
+
+  <!-- Resumen flotante móvil (Solo productos) -->
+  <div class="mobile-cart-summary animate__animated animate__slideInUp" 
+       *ngIf="activeMobileTab === 'products' && carrito.length > 0"
+       (click)="setMobileTab('cart')">
+    <div class="d-flex align-items-center">
+      <div class="bg-white text-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 35px; height: 35px; font-weight: bold;">
+        {{ carrito.length }}
+      </div>
+      <div class="lh-1">
+        <div class="small opacity-75">Ver mi orden</div>
+        <div class="fw-bold fs-5">{{ formatearMoneda(total) }}</div>
+      </div>
+    </div>
+    <i class="fa-solid fa-arrow-right fs-4"></i>
   </div>
 
 </div>
