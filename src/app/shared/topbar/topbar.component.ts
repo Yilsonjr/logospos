@@ -161,7 +161,7 @@ export class TopbarComponent implements OnInit, OnDestroy {
   async cerrarSesion() {
     this.cerrarDropdowns();
     await this.authService.logout();
-    this.router.navigate(['/auth/login']);
+    this.router.navigate(['/login']);
   }
 
   // Obtener iniciales del usuario

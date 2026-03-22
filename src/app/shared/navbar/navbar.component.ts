@@ -258,6 +258,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
   // Cerrar sesión
   async cerrarSesion() {
     await this.authService.logout();
+    this.router.navigate(['/login']);
   }
 
   // Obtener iniciales del usuario
