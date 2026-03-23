@@ -35,6 +35,10 @@ export class VentasService {
   private get productosService(): ProductosService {
     return this.injector.get(ProductosService);
   }
+
+  private get fiscalService(): FiscalService {
+    return this.injector.get(FiscalService);
+  }
   async generarNumeroFactura(): Promise<string> {
     if (this.syncService.isOffline()) {
        return this.generarNumeroFacturaLocal();
@@ -95,6 +99,20 @@ export class VentasService {
 
       // 2. Preparar payload alineado con tabla ventas real
       const tenantId = this.tenantService.getTenantIdOrThrow();
+
+      // Resilience: Si venimos de un sync offline y el NCF es un marcador, generamos uno real ahora que estamos online
+      let ncfFinal = venta.ncf || null;
+      const config = this.fiscalService.currentConfig; // Acceso al valor actual de config
+      
+      if (config?.modo_fiscal && (ncfFinal === 'PENDIENTE_OFFLINE' || !ncfFinal)) {
+          console.log('🔄 Re-generando NCF real para venta sincronizada...');
+          try {
+              ncfFinal = await this.fiscalService.generarNCF(venta.tipo_ncf || 'B02');
+          } catch (e) {
+              console.warn('⚠️ No se pudo generar NCF real en sync:', e);
+          }
+      }
+
       const payload = {
         tenant_id: tenantId,
         numero_venta: numeroVenta,
@@ -109,7 +127,7 @@ export class VentasService {
         tipo_venta: venta.metodo_pago === 'credito' ? 'credito' : 'contado',
         estado: 'completada',
         notas: venta.notas || null,
-        ncf: venta.ncf || null,
+        ncf: ncfFinal,
         tipo_ncf: venta.tipo_ncf || null,
         rnc_cliente: venta.rnc_cliente || null,
         nombre_cliente_fiscal: venta.nombre_cliente_fiscal || null

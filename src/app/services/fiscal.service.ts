@@ -11,6 +11,10 @@ export class FiscalService {
     private configSubject = new BehaviorSubject<ConfiguracionFiscal | null>(null);
     public config$ = this.configSubject.asObservable();
 
+    get currentConfig(): ConfiguracionFiscal | null {
+        return this.configSubject.value;
+    }
+
     constructor(
         private supabaseService: SupabaseService,
         private tenantService: TenantService
@@ -96,9 +100,15 @@ export class FiscalService {
 
     // Generar siguiente NCF (Llamada a función DB)
     async generarNCF(tipo: string): Promise<string> {
-        // Si no está en modo fiscal, retornar vacío o generar ID interno
+        // Si no está en modo fiscal, retornar vacío
         if (!this.configSubject.value?.modo_fiscal) {
             return '';
+        }
+
+        // Si estamos realmente offline, no intentar el RPC para no bloquear el POS
+        if (typeof navigator !== 'undefined' && !navigator.onLine) {
+            console.warn('📡 Offline: Usando marcador temporal para NCF');
+            return 'PENDIENTE_OFFLINE';
         }
 
         try {
