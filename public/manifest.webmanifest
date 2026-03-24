@@ -2,6 +2,8 @@
   "name": "logosPOS",
   "short_name": "logosPOS",
   "display": "standalone",
+  "theme_color": "#2563eb",
+  "background_color": "#ffffff",
   "scope": "./",
   "start_url": "./",
   "icons": [
