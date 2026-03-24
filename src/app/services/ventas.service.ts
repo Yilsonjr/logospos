@@ -6,6 +6,7 @@ import { ClientesService } from './clientes.service';
 import { AuthService } from './auth.service';
 import { CajaService } from './caja.service';
 import { SyncService } from './offline/sync.service';
+import { FiscalService } from './fiscal.service';
 import { Venta, VentaDetalle, CrearVenta, VentaCompleta } from '../models/ventas.model';
 import { BehaviorSubject } from 'rxjs';
 import { CrearMovimientoCaja } from '../models/caja.model';
