@@ -1,0 +1,32 @@
+.transfer-row {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.transfer-row:hover {
+  background-color: #f8fafc !important;
+  transform: translateX(4px);
+}
+
+.badge {
+  padding: 0.5em 1em;
+  font-size: 0.75rem;
+  letter-spacing: 0.5px;
+}
+
+.shadow-xs {
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.modal-fullscreen {
+  width: 100vw;
+  max-width: none;
+  height: 100%;
+  margin: 0;
+}
+
+.modal-fullscreen .modal-content {
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+}

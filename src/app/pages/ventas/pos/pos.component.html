@@ -70,6 +70,25 @@
       </div>
     </div>
 
+    <!-- Tabs de Categorías (Dinámicas desde BD) -->
+    @if (categorias.length > 1) {
+    <div class="category-tabs-container mb-2 mt-3">
+      <div class="d-flex gap-2 overflow-x-auto pb-1" style="scrollbar-width: none; -ms-overflow-style: none;">
+        @for (cat of categorias; track cat.id) {
+        <button class="btn btn-sm fw-semibold flex-shrink-0 category-tab-btn"
+          [class.active]="categoriaSeleccionada === cat.id"
+          [style.border-color]="categoriaSeleccionada === cat.id ? cat.color : 'transparent'"
+          [style.background-color]="categoriaSeleccionada === cat.id ? cat.color + '20' : 'transparent'"
+          [style.color]="categoriaSeleccionada === cat.id ? cat.color : '#6b7280'"
+          (click)="seleccionarCategoria(cat.id)"
+          style="border: 2px solid; border-radius: 20px; padding: 4px 14px; white-space: nowrap; transition: all 0.2s;">
+          <i [class]="cat.icono" class="me-1" style="font-size: 0.75rem;"></i>{{ cat.nombre }}
+        </button>
+        }
+      </div>
+    </div>
+    }
+
     <!-- 2. Grid de Productos (Scrollable) -->
     <div class="products-grid-container bg-light">
       <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-3 row-products">

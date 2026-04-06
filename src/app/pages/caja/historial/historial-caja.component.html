@@ -103,10 +103,17 @@
                 }
               </td>
               <td class="pe-4 py-3 text-end">
-                <button class="btn btn-sm btn-light text-primary border shadow-sm" (click)="verDetalles(caja)"
-                  title="Ver Detalles">
-                  <i class="fa-solid fa-eye me-1"></i>Detalles
-                </button>
+                <div class="d-flex gap-2 justify-content-end">
+                  <button class="btn btn-sm btn-light text-primary border shadow-sm" (click)="verDetalles(caja)"
+                    title="Ver Detalles">
+                    <i class="fa-solid fa-eye me-1"></i>Detalles
+                  </button>
+                  @if (caja.estado === 'cerrada') {
+                  <button class="btn btn-sm btn-outline-primary border shadow-sm" (click)="verDetalles(caja)" title="Reimprimir cierre de caja">
+                    <i class="fa-solid fa-print me-1"></i><span class="d-none d-md-inline">Reimprimir</span>
+                  </button>
+                  }
+                </div>
               </td>
             </tr>
             }
@@ -337,6 +344,12 @@
 
     <!-- Footer Actions -->
     <div class="modal-footer-custom">
+      @if (cajaSeleccionada?.caja?.fecha_cierre) {
+      <button type="button" class="btn btn-outline-primary px-4 py-2 fw-bold rounded-xl me-2"
+        (click)="reimprimirCierreCaja()">
+        <i class="fa-solid fa-print me-2"></i>Imprimir Cierre
+      </button>
+      }
       <button type="button" class="btn btn-light px-5 py-2 fw-800 text-slate-500 border rounded-xl"
         (click)="cerrarDetalles()">
         Cerrar Detalle

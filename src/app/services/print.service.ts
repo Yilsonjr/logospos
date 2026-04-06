@@ -123,7 +123,7 @@ export class PrintService {
 
         const metodoPagoLabel: Record<string, string> = {
             efectivo: 'Efectivo', tarjeta: 'Tarjeta', credito: 'Crédito',
-            transferencia: 'Transferencia', mixto: 'Mixto'
+            transferencia: 'Transferencia', crypto: 'Cripto', mixto: 'Mixto'
         };
 
         // Items HTML
@@ -145,6 +145,16 @@ export class PrintService {
             }
             if (venta.monto_transferencia && venta.monto_transferencia > 0) {
                 pagoDetalle += `<tr><td>Transferencia:</td><td style="text-align:right">${this.fmt(venta.monto_transferencia)}</td></tr>`;
+            }
+        }
+        
+        if (venta.metodo_pago === 'crypto' && venta.crypto_moneda) {
+            const label = venta.crypto_moneda === 'BTC' ? 'BTC' : (venta.crypto_moneda === 'SOL' ? 'SOL' : 'USDT');
+            pagoDetalle += `<tr><td>Monto Cripto:</td><td style="text-align:right">${venta.crypto_monto} ${label}</td></tr>`;
+            pagoDetalle += `<tr><td>Tasa:</td><td style="text-align:right">${this.fmt(venta.crypto_tasa_dop || 0)} / ${label}</td></tr>`;
+            if (venta.crypto_hash) {
+                 const shortHash = venta.crypto_hash.substring(0, 8) + '...';
+                 pagoDetalle += `<tr><td>Hash:</td><td style="text-align:right">${shortHash}</td></tr>`;
             }
         }
 
@@ -263,7 +273,7 @@ export class PrintService {
 
         const metodoPagoLabel: Record<string, string> = {
             efectivo: 'Efectivo', tarjeta: 'Tarjeta', credito: 'Crédito',
-            transferencia: 'Transf', mixto: 'Mixto'
+            transferencia: 'Transf', crypto: 'Cripto', mixto: 'Mixto'
         };
 
         const itemsHtml = venta.detalles.map(d => `
@@ -279,6 +289,13 @@ export class PrintService {
             if (venta.monto_tarjeta && venta.monto_tarjeta > 0) pagoDetalle += `<tr><td>TAR:</td><td style="text-align:right">${this.fmt(venta.monto_tarjeta)}</td></tr>`;
             if (venta.monto_transferencia && venta.monto_transferencia > 0) pagoDetalle += `<tr><td>TRA:</td><td style="text-align:right">${this.fmt(venta.monto_transferencia)}</td></tr>`;
         }
+        
+        if (venta.metodo_pago === 'crypto' && venta.crypto_moneda) {
+            const label = venta.crypto_moneda === 'BTC' ? 'BTC' : (venta.crypto_moneda === 'SOL' ? 'SOL' : 'USDT');
+            pagoDetalle += `<tr><td>Cripto:</td><td style="text-align:right">${venta.crypto_monto} ${label}</td></tr>`;
+            pagoDetalle += `<tr><td>Tasa:</td><td style="text-align:right">${this.fmt(venta.crypto_tasa_dop || 0)}</td></tr>`;
+        }
+
         const cambioHtml = cambio != null && cambio > 0 ? `<tr><td><strong>Cambio:</strong></td><td style="text-align:right"><strong>${this.fmt(cambio)}</strong></td></tr>` : '';
 
         return `<!DOCTYPE html>
@@ -347,6 +364,159 @@ export class PrintService {
     /**
      *  Genera el HTML completo del ticket con estilos para A4.
      */
+    // ==================== CIERRE DE CAJA ====================
+
+    /**
+     * Datos necesarios para imprimir el ticket de cierre de caja.
+     */
+    async imprimirCierreCaja(datos: {
+        cajero: string;
+        fechaApertura: string;
+        fechaCierre: string;
+        montoInicial: number;
+        ventasEfectivo: number;
+        ventasTarjeta: number;
+        totalEntradas: number;
+        totalSalidas: number;
+        montoEsperado: number;
+        montoContado: number;
+        diferencia: number;
+        notas?: string;
+    }) {
+        const negocio = await this.cargarDatosNegocio();
+        const html = this.generarHTMLCierreCaja(datos, negocio);
+
+        const ventana = window.open('', '_blank', 'width=320,height=700');
+        if (!ventana) {
+            alert('El navegador bloqueó la ventana de impresión. Por favor, permite ventanas emergentes para este sitio.');
+            return;
+        }
+
+        ventana.document.write(html);
+        ventana.document.close();
+
+        ventana.onload = () => {
+            setTimeout(() => {
+                ventana.print();
+                ventana.onafterprint = () => ventana.close();
+            }, 300);
+        };
+    }
+
+    private generarHTMLCierreCaja(datos: any, negocio: DatosNegocio): string {
+        const fApertura = new Date(datos.fechaApertura).toLocaleString('es-DO', {
+            day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+        });
+        const fCierre = new Date(datos.fechaCierre).toLocaleString('es-DO', {
+            day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+        });
+
+        const totalVentas = datos.ventasEfectivo + datos.ventasTarjeta;
+        const difClass = datos.diferencia === 0 ? '' : (datos.diferencia > 0 ? 'color:#d97706;' : 'color:#dc2626;');
+        const difLabel = datos.diferencia === 0 ? '✓ CUADRADO' : (datos.diferencia > 0 ? '▲ SOBRANTE' : '▼ FALTANTE');
+
+        return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Cierre de Caja</title>
+  <style>
+    @page { margin: 0; size: 80mm auto; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 12px;
+      width: 80mm;
+      padding: 8px;
+      color: #000;
+    }
+    .center { text-align: center; }
+    .bold { font-weight: bold; }
+    .sep { border-top: 1px dashed #000; margin: 6px 0; }
+    .sep-double { border-top: 2px solid #000; margin: 6px 0; }
+    table { width: 100%; border-collapse: collapse; }
+    td { vertical-align: top; padding: 2px 0; }
+    .big { font-size: 16px; font-weight: bold; }
+    .section-title { font-weight: bold; font-size: 11px; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 1px; }
+    @media print { body { width: 80mm; } }
+  </style>
+</head>
+<body>
+  <!-- HEADER -->
+  <div class="center">
+    <div class="bold" style="font-size:16px;margin-bottom:2px;">${negocio.nombre}</div>
+    ${negocio.direccion ? `<div>${negocio.direccion}</div>` : ''}
+    ${negocio.telefono ? `<div>Tel: ${negocio.telefono}</div>` : ''}
+    ${negocio.rnc ? `<div>RNC: ${negocio.rnc}</div>` : ''}
+  </div>
+
+  <div class="sep-double"></div>
+
+  <div class="center bold" style="font-size:14px;margin:4px 0;">CIERRE DE CAJA</div>
+
+  <div class="sep"></div>
+
+  <!-- TURNO -->
+  <div class="section-title">Información del Turno</div>
+  <table>
+    <tr><td>Cajero:</td><td style="text-align:right" class="bold">${datos.cajero}</td></tr>
+    <tr><td>Apertura:</td><td style="text-align:right">${fApertura}</td></tr>
+    <tr><td>Cierre:</td><td style="text-align:right">${fCierre}</td></tr>
+  </table>
+
+  <div class="sep"></div>
+
+  <!-- VENTAS -->
+  <div class="section-title">Resumen de Ventas</div>
+  <table>
+    <tr><td>Ventas Efectivo:</td><td style="text-align:right">${this.fmt(datos.ventasEfectivo)}</td></tr>
+    <tr><td>Ventas Tarjeta:</td><td style="text-align:right">${this.fmt(datos.ventasTarjeta)}</td></tr>
+    <tr style="font-weight:bold;"><td>Total Ventas:</td><td style="text-align:right">${this.fmt(totalVentas)}</td></tr>
+  </table>
+
+  <div class="sep"></div>
+
+  <!-- MOVIMIENTOS -->
+  <div class="section-title">Movimientos</div>
+  <table>
+    <tr><td>Monto Inicial:</td><td style="text-align:right">${this.fmt(datos.montoInicial)}</td></tr>
+    <tr><td>+ Entradas:</td><td style="text-align:right">${this.fmt(datos.totalEntradas)}</td></tr>
+    <tr><td>- Salidas:</td><td style="text-align:right">${this.fmt(datos.totalSalidas)}</td></tr>
+  </table>
+
+  <div class="sep-double"></div>
+
+  <!-- CUADRE -->
+  <div class="section-title">Cuadre de Caja</div>
+  <table>
+    <tr><td>Esperado:</td><td style="text-align:right" class="bold">${this.fmt(datos.montoEsperado)}</td></tr>
+    <tr><td>Contado:</td><td style="text-align:right" class="bold">${this.fmt(datos.montoContado)}</td></tr>
+  </table>
+
+  <div class="sep"></div>
+
+  <div class="center" style="margin:6px 0;">
+    <div class="big" style="${difClass}">${datos.diferencia > 0 ? '+' : ''}${this.fmt(datos.diferencia)}</div>
+    <div class="bold" style="font-size:11px;${difClass}">${difLabel}</div>
+  </div>
+
+  ${datos.notas ? `
+  <div class="sep"></div>
+  <div class="section-title">Notas</div>
+  <div style="font-size:11px;">${datos.notas}</div>
+  ` : ''}
+
+  <div class="sep-double"></div>
+
+  <div class="center" style="font-size:10px;margin-top:6px;">
+    <div>Documento no fiscal</div>
+    <div>Generado por LogosPOS</div>
+  </div>
+
+</body>
+</html>`;
+    }
+
     private generarHTMLFacturaA4(venta: VentaCompleta, negocio: DatosNegocio, cambio?: number): string {
         const fecha = new Date(venta.created_at || new Date()).toLocaleString('es-DO', {
             day: '2-digit', month: 'long', year: 'numeric',
@@ -355,7 +525,7 @@ export class PrintService {
 
         const metodoPagoLabel: Record<string, string> = {
             efectivo: 'Efectivo', tarjeta: 'Tarjeta', credito: 'Crédito',
-            transferencia: 'Transferencia', mixto: 'Mixto'
+            transferencia: 'Transferencia', crypto: 'Criptomoneda', mixto: 'Mixto'
         };
 
         const itemsHtml = venta.detalles.map(d => `
@@ -438,6 +608,12 @@ export class PrintService {
         <p><strong>Método de Pago:</strong> ${metodoPagoLabel[venta.metodo_pago] || venta.metodo_pago}</p>
         ${venta.referencia_transferencia ? `<p><strong>Referencia:</strong> ${venta.referencia_transferencia}</p>` : ''}
         ${venta.banco_destino ? `<p><strong>Banco:</strong> ${venta.banco_destino}</p>` : ''}
+        ${venta.metodo_pago === 'crypto' && venta.crypto_moneda ? `
+            <p><strong>Moneda:</strong> ${venta.crypto_moneda === 'BTC' ? 'Bitcoin (BTC)' : (venta.crypto_moneda === 'SOL' ? 'Solana (SOL)' : 'USDT TRC-20')}</p>
+            <p><strong>Monto Cripto:</strong> ${venta.crypto_monto} ${venta.crypto_moneda === 'BTC' ? 'BTC' : (venta.crypto_moneda === 'SOL' ? 'SOL' : 'USDT')}</p>
+            <p><strong>Tasa de Cambio:</strong> ${this.fmt(venta.crypto_tasa_dop || 0)}</p>
+            ${venta.crypto_hash ? `<p><strong>Hash (Txid):</strong> ${venta.crypto_hash}</p>` : ''}
+        ` : ''}
       </div>
 
       <div class="totals">

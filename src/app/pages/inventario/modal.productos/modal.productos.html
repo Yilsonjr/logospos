@@ -4,123 +4,139 @@
     <header class="modal-header">
       <div class="modal-header__text">
         <h2 class="modal-header__title">{{ modoEdicion ? 'Editar Producto' : 'Añadir Nuevo Producto' }}</h2>
-        <p class="modal-header__subtitle">{{ modoEdicion ? 'Actualice la información del producto.' : 'Complete la
-          información para registrar un nuevo artículo.' }}</p>
+        <p class="modal-header__subtitle">{{ modoEdicion ? 'Actualice la información del producto.' : 'Complete la información para registrar un nuevo artículo.' }}</p>
       </div>
       <button class="btn-close" (click)="cerrarModal()">
         <i class="fa-solid fa-xmark"></i>
       </button>
     </header>
 
-    <form [formGroup]="productoForm" class="modal-body">
-      <div class="form-grid">
+    <!-- Pestañas de Navegación -->
+    <nav class="modal-tabs" *ngIf="modoEdicion">
+      <button type="button" class="tab-item" [class.active]="activeTab === 'details'" (click)="setTab('details')">
+        <i class="fa-solid fa-circle-info"></i> Detalles
+      </button>
+      <button type="button" class="tab-item" [class.active]="activeTab === 'kardex'" (click)="setTab('kardex')">
+        <i class="fa-solid fa-clock-rotate-left"></i> Historial (Kardex)
+      </button>
+    </nav>
 
-        <!-- Fila 1: Código Barras y SKU -->
-        <div class="form-group">
-          <label class="form-label">Código de Barras</label>
-          <div class="input-wrapper">
-            <input type="text" formControlName="codigo_barras" placeholder="Escanear..." class="form-input">
-            <i class="fa-solid fa-qrcode input-suffix-icon text-blue"></i>
-          </div>
-        </div>
+    <div class="modal-body-container">
+      <!-- Pestaña 1: Detalles (Formulario Actual) -->
+      <form [formGroup]="productoForm" class="modal-body" *ngIf="activeTab === 'details'">
+        <div class="form-grid">
 
-        <div class="form-group">
-          <label class="form-label">SKU / Código Interno (Opcional)</label>
-          <input type="text" formControlName="sku" placeholder="Ej. CER-001" class="form-input">
-        </div>
-
-        <!-- Fila 2: Nombre (Ancho completo) -->
-        <div class="form-group col-span-3">
-          <label class="form-label">Nombre del Producto</label>
-          <input type="text" formControlName="nombre" placeholder="Ej. Whisky Gold Label 750ml" class="form-input">
-        </div>
-
-        <!-- Fila 3: Categoría y Unidad -->
-        <div class="form-group">
-          <label class="form-label">Categoría</label>
-          <select formControlName="categoria" class="form-select">
-            <option value="">Seleccione...</option>
-            <option *ngFor="let cat of categorias" [value]="cat.nombre">{{cat.nombre}}</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Unidad de Venta</label>
-          <select formControlName="unidad" class="form-select">
-            <option *ngFor="let u of unidades" [value]="u.nombre">{{u.nombre}} {{u.abreviatura ? '(' + u.abreviatura +
-              ')' : ''}}</option>
-          </select>
-        </div>
-
-        <!-- Fila 4: Precios -->
-        <div class="form-group">
-          <label class="form-label">Precio Compra</label>
-          <div class="input-wrapper">
-            <span class="input-prefix">$</span>
-            <input type="number" formControlName="precio_compra" placeholder="0.00" class="form-input pl-8">
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Precio Venta</label>
-          <div class="input-wrapper">
-            <span class="input-prefix">$</span>
-            <input type="number" formControlName="precio_venta" placeholder="0.00" class="form-input pl-8">
-          </div>
-        </div>
-
-        <!-- Fila 5: Stock -->
-        <div class="form-group">
-          <label class="form-label">Stock Actual *</label>
-          <input type="number" formControlName="stock" placeholder="0" class="form-input"
-            [class.border-red]="f['stock'].invalid && f['stock'].touched">
-        </div>
-
-        <div class="form-group">
-          <label class="form-label text-red">Stock Mínimo (Alerta)</label>
-          <div class="input-wrapper">
-            <input type="number" formControlName="stock_minimo" placeholder="5" class="form-input border-red">
-            <i class="fa-solid fa-bell input-suffix-icon text-red"></i>
-          </div>
-        </div>
-
-        <!-- Fila 6: Imagen (Compacta al final) -->
-        <div class="form-group col-span-3">
-          <label class="form-label">Imagen (Opcional)</label>
-          <div class="image-upload-container compact-upload">
-            <!-- Vista previa de imagen -->
-            <div class="image-preview compact-preview" *ngIf="imagenPreview || producto?.imagen_url">
-              <img [src]="imagenPreview || producto?.imagen_url" alt="Vista previa" class="preview-image">
-              <button type="button" class="remove-image-btn" (click)="eliminarImagen()" title="Eliminar">
-                <i class="fa-solid fa-times"></i>
-              </button>
+          <!-- Fila 1: Código Barras y SKU -->
+          <div class="form-group">
+            <label class="form-label">Código de Barras</label>
+            <div class="input-wrapper">
+              <input type="text" formControlName="codigo_barras" placeholder="Escanear..." class="form-input">
+              <i class="fa-solid fa-qrcode input-suffix-icon text-blue"></i>
             </div>
+          </div>
 
-            <!-- Área de subida -->
-            <div class="upload-area compact-area" *ngIf="!imagenPreview && !producto?.imagen_url"
-              (click)="inputImagen.click()" (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)"
-              (drop)="onDrop($event)" [class.drag-over]="isDragOver">
-              <div class="d-flex flex-column align-items-center">
-                <i class="fa-solid fa-cloud-upload-alt upload-icon fs-3 mb-1"></i>
-                <span class="upload-text small">Subir imagen</span>
+          <div class="form-group">
+            <label class="form-label">SKU / Código Interno (Opcional)</label>
+            <input type="text" formControlName="sku" placeholder="Ej. CER-001" class="form-input">
+          </div>
+
+          <!-- Fila 2: Nombre (Ancho completo) -->
+          <div class="form-group col-span-3">
+            <label class="form-label">Nombre del Producto</label>
+            <input type="text" formControlName="nombre" placeholder="Ej. Whisky Gold Label 750ml" class="form-input">
+          </div>
+
+          <!-- Fila 3: Categoría y Unidad -->
+          <div class="form-group">
+            <label class="form-label">Categoría</label>
+            <select formControlName="categoria" class="form-select">
+              <option value="">Seleccione...</option>
+              <option *ngFor="let cat of categorias" [value]="cat.nombre">{{cat.nombre}}</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Unidad de Venta</label>
+            <select formControlName="unidad" class="form-select">
+              <option *ngFor="let u of unidades" [value]="u.nombre">{{u.nombre}} {{u.abreviatura ? '(' + u.abreviatura + ')' : ''}}</option>
+            </select>
+          </div>
+
+          <!-- Fila 4: Precios -->
+          <div class="form-group">
+            <label class="form-label">Precio Compra</label>
+            <div class="input-wrapper">
+              <span class="input-prefix">$</span>
+              <input type="number" formControlName="precio_compra" placeholder="0.00" class="form-input pl-8">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Precio Venta</label>
+            <div class="input-wrapper">
+              <span class="input-prefix">$</span>
+              <input type="number" formControlName="precio_venta" placeholder="0.00" class="form-input pl-8">
+            </div>
+          </div>
+
+          <!-- Fila 5: Stock -->
+          <div class="form-group">
+            <label class="form-label">Stock Actual *</label>
+            <input type="number" formControlName="stock" placeholder="0" class="form-input"
+              [class.border-red]="f['stock'].invalid && f['stock'].touched">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label text-red">Stock Mínimo (Alerta)</label>
+            <div class="input-wrapper">
+              <input type="number" formControlName="stock_minimo" placeholder="5" class="form-input border-red">
+              <i class="fa-solid fa-bell input-suffix-icon text-red"></i>
+            </div>
+          </div>
+
+          <!-- Fila 6: Imagen (Compacta al final) -->
+          <div class="form-group col-span-3">
+            <label class="form-label">Imagen (Opcional)</label>
+            <div class="image-upload-container compact-upload">
+              <div class="image-preview compact-preview" *ngIf="imagenPreview || producto?.imagen_url">
+                <img [src]="imagenPreview || producto?.imagen_url" alt="Vista previa" class="preview-image">
+                <button type="button" class="remove-image-btn" (click)="eliminarImagen()" title="Eliminar">
+                  <i class="fa-solid fa-times"></i>
+                </button>
               </div>
-            </div>
 
-            <input #inputImagen type="file" accept="image/*" (change)="onImagenSeleccionada($event)"
-              style="display: none">
+              <div class="upload-area compact-area" *ngIf="!imagenPreview && !producto?.imagen_url"
+                (click)="inputImagen.click()" (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)"
+                (drop)="onDrop($event)" [class.drag-over]="isDragOver">
+                <div class="d-flex flex-column align-items-center">
+                  <i class="fa-solid fa-cloud-upload-alt upload-icon fs-3 mb-1"></i>
+                  <span class="upload-text small">Subir imagen</span>
+                </div>
+              </div>
+
+              <input #inputImagen type="file" accept="image/*" (change)="onImagenSeleccionada($event)" style="display: none">
+            </div>
           </div>
+
         </div>
 
-      </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-cancel" (click)="cerrarModal()">Cancelar</button>
+          <button type="submit" class="btn-save" (click)="guardarProducto()" [disabled]="isLoading">
+            <i class="fa-solid fa-spinner fa-spin" *ngIf="isLoading"></i>
+            <i class="fa-solid fa-floppy-disk" *ngIf="!isLoading"></i>
+            {{ isLoading ? 'Guardando...' : 'Guardar Producto' }}
+          </button>
+        </div>
+      </form>
 
-      <div class="modal-footer">
-        <button type="button" class="btn-cancel" (click)="cerrarModal()">Cancelar</button>
-        <button type="submit" class="btn-save" (click)="guardarProducto()" [disabled]="isLoading">
-          <i class="fa-solid fa-spinner fa-spin" *ngIf="isLoading"></i>
-          <i class="fa-solid fa-floppy-disk" *ngIf="!isLoading"></i>
-          {{ isLoading ? 'Guardando...' : 'Guardar Producto' }}
-        </button>
+      <!-- Pestaña 2: Kardex -->
+      <div class="modal-body kardex-tab-body" *ngIf="activeTab === 'kardex' && productoEditar?.id">
+        <app-kardex-table 
+          [productoId]="productoEditar!.id!" 
+          [sucursalId]="sucursalService.sucursalActiva?.id!">
+        </app-kardex-table>
       </div>
-    </form>
+    </div>
   </div>
 </div>

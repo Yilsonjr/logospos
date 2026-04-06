@@ -1,0 +1,48 @@
+.kardex-container {
+  min-height: 300px;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.kardex-row {
+  transition: background-color 0.2s ease;
+}
+
+.kardex-row:hover {
+  background-color: #f8fafc;
+}
+
+.avatar-circle-sm {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+}
+
+.badge {
+  font-weight: 500;
+  font-size: 0.72rem;
+}
+
+.sticky-top {
+  z-index: 10;
+  background: white !important;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #e2e8f0;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #cbd5e1;
+}

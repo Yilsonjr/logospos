@@ -31,9 +31,53 @@
                     <div class="col-md-7">
                         <div class="card border-0 shadow-sm mb-4">
                             <div class="card-body bg-white rounded">
+                                <!-- Subtotal original -->
                                 <div class="d-flex justify-content-between mb-2">
+                                    <span class="text-muted small">Subtotal:</span>
+                                    <span class="text-muted">{{ formatearMoneda(total) }}</span>
+                                </div>
+
+                                <!-- Descuento Global -->
+                                <div class="border-top border-bottom py-2 mb-2">
+                                    <label class="form-label fw-bold small text-muted mb-1">
+                                        <i class="fa-solid fa-tag text-success me-1"></i> DESCUENTO GLOBAL
+                                    </label>
+                                    <div class="input-group input-group-sm">
+                                        <!-- Toggle tipo descuento -->
+                                        <button class="btn btn-sm fw-bold"
+                                            [class.btn-success]="tipodescuento === 'fijo'"
+                                            [class.btn-outline-secondary]="tipodescuento !== 'fijo'"
+                                            (click)="tipodescuento = 'fijo'; calcularCambio()"
+                                            title="Descuento en pesos RD$"
+                                            style="min-width: 42px;">RD$</button>
+                                        <button class="btn btn-sm fw-bold"
+                                            [class.btn-success]="tipodescuento === 'porcentaje'"
+                                            [class.btn-outline-secondary]="tipodescuento !== 'porcentaje'"
+                                            (click)="tipodescuento = 'porcentaje'; calcularCambio()"
+                                            title="Descuento en porcentaje"
+                                            style="min-width: 42px;">%</button>
+                                        <input type="number" class="form-control"
+                                            [(ngModel)]="descuentoValor"
+                                            (input)="calcularCambio()"
+                                            [placeholder]="tipodescuento === 'porcentaje' ? '0 %' : '0.00'"
+                                            [max]="tipodescuento === 'porcentaje' ? 100 : total"
+                                            min="0" step="0.01">
+                                    </div>
+                                    @if (descuentoCalculado > 0) {
+                                    <div class="d-flex justify-content-between mt-1">
+                                        <small class="text-success">
+                                            <i class="fa-solid fa-circle-minus me-1"></i>
+                                            Descuento {{ tipodescuento === 'porcentaje' ? '(' + descuentoValor + '%)' : '' }}:
+                                        </small>
+                                        <small class="text-success fw-bold">- {{ formatearMoneda(descuentoCalculado) }}</small>
+                                    </div>
+                                    }
+                                </div>
+
+                                <!-- Total Final -->
+                                <div class="d-flex justify-content-between">
                                     <span class="text-muted">Total a Pagar:</span>
-                                    <span class="fs-4 fw-bold text-primary">{{ formatearMoneda(total) }}</span>
+                                    <span class="fs-4 fw-bold text-primary">{{ formatearMoneda(totalConDescuento) }}</span>
                                 </div>
                             </div>
                         </div>
@@ -162,6 +206,124 @@
                                     </div>
                                 </div>
                             </div>
+                        </div>
+
+                        <!-- === CRIPTO === -->
+                        <div *ngIf="metodoPago === 'crypto'">
+
+                          <!-- Sin wallet configurada -->
+                          <div *ngIf="!cryptoConfig.wallet_usdt_trc20 && !cryptoConfig.wallet_btc && !cryptoConfig.wallet_solana"
+                               class="alert alert-warning d-flex align-items-center rounded-3 border-warning">
+                            <i class="fa-solid fa-triangle-exclamation me-2 fs-5"></i>
+                            <div>
+                               <strong>Billeteras no configuradas</strong><br>
+                               <small>Configura tus direcciones en <strong>Admin → Configuración Fiscal</strong> para recibir pagos cripto.</small>
+                            </div>
+                          </div>
+
+                          <div *ngIf="cryptoConfig.wallet_usdt_trc20 || cryptoConfig.wallet_btc || cryptoConfig.wallet_solana">
+                            <!-- Selector de moneda -->
+                            <div class="d-flex gap-2 mb-3">
+                              <button class="btn flex-fill fw-bold d-flex align-items-center justify-content-center gap-2 py-2"
+                                *ngIf="cryptoConfig.wallet_usdt_trc20"
+                                [class.btn-success]="cryptoMoneda === 'USDT_TRC20'"
+                                [class.btn-outline-secondary]="cryptoMoneda !== 'USDT_TRC20'"
+                                (click)="cambiarMonedaCrypto('USDT_TRC20')">
+                                <i class="fa-solid fa-dollar-sign"></i> USDT <small class="opacity-75">(TRC-20)</small>
+                              </button>
+                              <button class="btn flex-fill fw-bold d-flex align-items-center justify-content-center gap-2 py-2"
+                                *ngIf="cryptoConfig.wallet_btc"
+                                [class.btn-warning]="cryptoMoneda === 'BTC'"
+                                [class.btn-outline-secondary]="cryptoMoneda !== 'BTC'"
+                                (click)="cambiarMonedaCrypto('BTC')">
+                                <i class="fa-brands fa-bitcoin"></i> Bitcoin
+                              </button>
+                              <button class="btn flex-fill fw-bold d-flex align-items-center justify-content-center gap-2 py-2"
+                                *ngIf="cryptoConfig.wallet_solana"
+                                [style.background-color]="cryptoMoneda === 'SOL' ? '#9945FF' : 'transparent'"
+                                [style.color]="cryptoMoneda === 'SOL' ? '#fff' : '#6b7280'"
+                                [style.border-color]="cryptoMoneda === 'SOL' ? '#9945FF' : '#d1d5db'"
+                                [class.btn-outline-secondary]="cryptoMoneda !== 'SOL'"
+                                (click)="cambiarMonedaCrypto('SOL')">
+                                <i class="fa-solid fa-bolt"></i> Solana
+                              </button>
+                            </div>
+
+                            <!-- Panel principal crypto -->
+                            <div class="rounded-4 overflow-hidden border"
+                                 style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #fff;">
+
+                              <!-- Cabecera con tasa -->
+                              <div class="p-3 border-bottom border-secondary">
+                                <div class="d-flex justify-content-between align-items-center">
+                                  <span class="opacity-75 small text-uppercase fw-bold" style="letter-spacing: 1px;">
+                                    <i class="fa-solid fa-rotate me-1"></i>Tasa Live
+                                  </span>
+                                  <button class="btn btn-sm btn-outline-light py-0 px-2" (click)="cargarTasaCrypto()" title="Actualizar tasa">
+                                    <i class="fa-solid fa-sync" [class.fa-spin]="cargandoCrypto" style="font-size: 0.75rem;"></i>
+                                  </button>
+                                </div>
+                                <div class="mt-1" *ngIf="!cargandoCrypto && cryptoTasaDOP > 0">
+                                  <span class="fs-5 fw-bold">1 {{ cryptoSymbol }} ≈ {{ formatearMoneda(cryptoTasaDOP) }}</span>
+                                </div>
+                                <div class="mt-1" *ngIf="cargandoCrypto">
+                                  <div class="spinner-border spinner-border-sm text-light" role="status"></div>
+                                  <small class="ms-2 opacity-75">Obteniendo tasa...</small>
+                                </div>
+                              </div>
+
+                              <!-- Monto a pagar en crypto -->
+                              <div class="p-3 text-center border-bottom border-secondary">
+                                <small class="opacity-75 text-uppercase" style="font-size: 0.7rem; letter-spacing: 1px;">El cliente debe enviar exactamente</small>
+                                <div class="my-2" style="font-size: 2.2rem; font-weight: 800; font-family: monospace; color: #fbbf24;">
+                                  {{ cryptoMonto }} <span style="font-size: 1rem; opacity: 0.8;">{{ cryptoSymbol }}</span>
+                                </div>
+                                <small class="opacity-60">≈ {{ formatearMoneda(totalConDescuento) }}</small>
+                              </div>
+
+                              <!-- QR Code + dirección -->
+                              <div class="p-3 d-flex flex-column align-items-center gap-2">
+                                <div class="bg-white rounded-3 p-2" *ngIf="cryptoQrUrl">
+                                  <img [src]="cryptoQrUrl" width="160" height="160" alt="QR Wallet" class="d-block">
+                                </div>
+                                <div class="w-100 mt-1">
+                                  <small class="opacity-75 d-block text-center mb-1" style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px;">Dirección {{ cryptoSymbol }}</small>
+                                  <div class="d-flex gap-1">
+                                    <code class="flex-grow-1 bg-dark text-success rounded px-2 py-1 small text-truncate"
+                                          style="font-size: 0.75rem; border: 1px solid #374151;">
+                                      {{ walletActiva }}
+                                    </code>
+                                    <button class="btn btn-sm btn-outline-light px-2" (click)="copiarWallet()" title="Copiar dirección">
+                                      <i class="fa-solid fa-copy"></i>
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            <!-- Hash opcional -->
+                            <div class="mt-3">
+                              <label class="form-label fw-bold small text-muted mb-1">
+                                <i class="fa-solid fa-hashtag me-1"></i>HASH DE TRANSACCIÓN (OPCIONAL)
+                              </label>
+                              <input type="text" class="form-control form-control-sm font-monospace"
+                                     [(ngModel)]="cryptoHash"
+                                     placeholder="Ej: a1b2c3d4e5f6... (el cliente puede mostrarlo)">
+                            </div>
+
+                            <!-- Botón de confirmación -->
+                            <div class="mt-3">
+                              <button type="button" class="btn w-100 fw-bold py-3"
+                                      [class.btn-outline-success]="!cryptoConfirmado"
+                                      [class.btn-success]="cryptoConfirmado"
+                                      (click)="cryptoConfirmado = !cryptoConfirmado">
+                                <i class="fa-solid me-2"
+                                   [class.fa-circle]="!cryptoConfirmado"
+                                   [class.fa-circle-check]="cryptoConfirmado"></i>
+                                {{ cryptoConfirmado ? '✅ PAGO VERIFICADO — Listo para confirmar' : 'Confirmar que el cliente envió el pago' }}
+                              </button>
+                            </div>
+                          </div>
                         </div>
 
                         <!-- Alerta Crédito: Cliente requerido -->

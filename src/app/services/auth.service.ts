@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { SupabaseService } from './supabase.service';
 import { TenantService } from './tenant.service';
+import { SucursalService } from './sucursal.service';
 import { Usuario, Rol, LoginCredentials, LoginResponse, AuthState, Sesion } from '../models/usuario.model';
 import { Router } from '@angular/router';
 import bcrypt from 'bcryptjs';
@@ -23,6 +24,7 @@ export class AuthService {
   constructor(
     private supabaseService: SupabaseService,
     private tenantService: TenantService,
+    private sucursalService: SucursalService,
     private router: Router
   ) {
     this.initializeAuth();
@@ -41,6 +43,7 @@ export class AuthService {
         // Restore tenant context
         if (usuario.tenant_id) {
           this.tenantService.setTenantId(usuario.tenant_id);
+          this.sucursalService.cargarSucursalesUsuario(usuario.id);
         }
 
         // 1. Actualización Optimista: Asumir que es válido mientras verificamos
@@ -209,6 +212,9 @@ export class AuthService {
         sessionStorage.setItem('dolvin_usuario', JSON.stringify(usuario));
       }
 
+      // Load branch assignments for this user
+      await this.sucursalService.cargarSucursalesUsuario(usuario.id);
+
       // Actualizar estado
       this.authStateSubject.next({
         isAuthenticated: true,
@@ -250,8 +256,9 @@ export class AuthService {
       sessionStorage.removeItem('dolvin_token');
       sessionStorage.removeItem('dolvin_usuario');
 
-      // Clear tenant context
+      // Clear tenant and branch context
       this.tenantService.clear();
+      this.sucursalService.limpiarSucursal();
 
       // Actualizar estado
       this.authStateSubject.next({

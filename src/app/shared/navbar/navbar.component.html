@@ -5,7 +5,7 @@
   style="top: 0; left: 0; z-index: 9999;" [class.collapsed]="isCollapsed" [class.show]="!isCollapsed">
 
   <!-- Header: Logo y Toggle -->
-  <div class="sidebar-header d-flex align-items-center mb-4 pb-3">
+  <div class="sidebar-header d-flex align-items-center mb-3 pb-2 border-bottom border-light">
     <div class="d-flex align-items-center justify-content-center rounded-3 flex-shrink-0 gradient-logo shadow-sm"
       style="width: 42px; height: 42px; background: linear-gradient(135deg, #3699ff 0%, #007bff 100%);">
       <i class="fa-solid fa-store text-white fs-5"></i>
@@ -14,7 +14,19 @@
     @if (!isCollapsed) {
     <div class="ms-3 lh-1 overflow-hidden" style="white-space: nowrap;">
       <h5 class="mb-0 fw-bold brand-text" style="font-size: 1.1rem;">LogosPOS</h5>
-      <small class="text-muted" style="font-size: 0.75rem; opacity: 0.7;">Sistema de Ventas</small>
+      
+      @if (sucursalesAsignadas.length > 1) {
+        <select class="form-select form-select-sm mt-1 border-0 bg-light py-0 fw-medium text-primary shadow-none" 
+            style="font-size: 0.75rem; height: 22px; cursor: pointer;" 
+            (change)="cambiarSucursal($any($event.target).value)" 
+            [disabled]="cambiandoSucursal">
+          @for (suc of sucursalesAsignadas; track suc.id) {
+            <option [value]="suc.id" [selected]="sucursalActiva?.id === suc.id">{{ suc.nombre }}</option>
+          }
+        </select>
+      } @else {
+        <small class="text-primary fw-medium" style="font-size: 0.75rem;"><i class="fa-solid fa-location-dot me-1"></i>{{ sucursalActiva?.nombre || 'Principal' }}</small>
+      }
     </div>
     }
 
@@ -43,11 +55,23 @@
         @if (!isCollapsed) {
         <span class="ms-3 flex-grow-1 text-truncate" style="font-size: 0.95rem;">{{ item.label }}</span>
 
+        @if (item.label === 'Inventario' && productosStockBajo > 0) {
+        <span class="badge bg-danger rounded-pill ms-1" style="font-size: 0.65rem; padding: 3px 6px;"
+          title="{{ productosStockBajo }} productos con stock bajo">{{ productosStockBajo }}</span>
+        }
+
         @if (item.submenu) {
         <i class="fa-solid fa-chevron-down ms-auto transition-transform"
           [style.transform]="item.expanded ? 'rotate(180deg)' : 'rotate(0deg)'"
           style="font-size: 0.7rem; opacity: 0.7;"></i>
         }
+        }
+
+        @if (isCollapsed && item.label === 'Inventario' && productosStockBajo > 0) {
+        <span class="badge bg-danger rounded-circle position-absolute" 
+          style="font-size: 0.55rem; padding: 2px 4px; top: 4px; right: 4px; min-width: 16px; height: 16px; display: flex; align-items: center; justify-content: center;">
+          {{ productosStockBajo }}
+        </span>
         }
       </a>
 

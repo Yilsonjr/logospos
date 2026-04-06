@@ -4,7 +4,10 @@ import { RouterModule, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { SidebarService } from '../../services/sidebar.service';
+import { ProductosService } from '../../services/productos.service';
+import { SucursalService } from '../../services/sucursal.service';
 import { Usuario } from '../../models/usuario.model';
+import { Sucursal } from '../../models/sucursal.model';
 
 @Component({
   selector: 'app-navbar',
@@ -17,10 +20,17 @@ export class NavbarComponent implements OnInit, OnDestroy {
   isCollapsed = false;
   usuario: Usuario | null = null;
   subscriptions: Subscription[] = [];
+  productosStockBajo: number = 0;
+  
+  sucursalesAsignadas: Sucursal[] = [];
+  sucursalActiva: Sucursal | null = null;
+  cambiandoSucursal = false;
 
   constructor(
     private authService: AuthService,
     private sidebarService: SidebarService,
+    private productosService: ProductosService,
+    private sucursalService: SucursalService,
     private router: Router
   ) {
     // Cargar estado inicial del sidebar
@@ -39,7 +49,22 @@ export class NavbarComponent implements OnInit, OnDestroy {
       this.filtrarMenuPorPermisos();
     });
 
-    this.subscriptions.push(sidebarSub, authSub);
+    // Suscribirse a productos para detectar stock bajo
+    const productosSub = this.productosService.productos$.subscribe(productos => {
+      this.productosStockBajo = productos.filter(p =>
+        p.stock_minimo && p.stock_minimo > 0 && p.stock < p.stock_minimo
+      ).length;
+    });
+
+    const sucursalActivaSub = this.sucursalService.sucursalActiva$.subscribe(sucursal => {
+      this.sucursalActiva = sucursal;
+    });
+
+    const sucursalesSub = this.sucursalService.sucursalesAsignadas$.subscribe(sucursales => {
+      this.sucursalesAsignadas = sucursales;
+    });
+
+    this.subscriptions.push(sidebarSub, authSub, productosSub, sucursalActivaSub, sucursalesSub);
   }
 
   ngOnDestroy() {
@@ -147,6 +172,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
       submenu: [
         { label: 'Usuarios', link: '/admin/usuarios', icon: 'fa-solid fa-users', permissions: ['usuarios.ver'] },
         { label: 'Roles', link: '/admin/roles', icon: 'fa-solid fa-user-tag', permissions: ['roles.ver'] },
+        { label: 'Sucursales', link: '/admin/sucursales', icon: 'fa-solid fa-building', permissions: ['config.general'] },
         { label: 'Sistema', link: '/admin/sistema', icon: 'fa-solid fa-cogs', permissions: ['config.general'], devAdminOnly: true },
         { label: 'Fiscal (DGII)', link: '/admin/fiscal', icon: 'fa-solid fa-file-invoice', permissions: ['config.general'] }
       ],
@@ -274,5 +300,20 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
   obtenerPrimerNombre(): string {
     return this.usuario?.nombre ? this.usuario.nombre.split(' ')[0] : 'Usuario';
+  }
+
+  // Cambiar sucursal
+  cambiarSucursal(sucursalId: string | number) {
+    if (this.cambiandoSucursal) return;
+    this.cambiandoSucursal = true;
+    
+    setTimeout(() => {
+      const encontrada = this.sucursalesAsignadas.find(s => s.id?.toString() === sucursalId.toString());
+      if (encontrada) {
+        this.sucursalService.setSucursalActiva(encontrada, true);
+        window.location.reload(); // Hard reload to refresh all context across the app
+      }
+      this.cambiandoSucursal = false;
+    }, 150);
   }
 }

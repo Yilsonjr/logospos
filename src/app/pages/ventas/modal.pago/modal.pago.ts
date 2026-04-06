@@ -6,6 +6,7 @@ import { Cliente } from '../../../models/clientes.model';
 import { ConfiguracionFiscal, TIPOS_COMPROBANTE } from '../../../models/fiscal.model';
 import { VerifoneService } from '../../../services/verifone.service';
 import { SyncService } from '../../../services/offline/sync.service';
+import { CryptoService, CryptoMoneda, CryptoConfig } from '../../../services/crypto.service';
 import Swal from 'sweetalert2';
 
 // Bancos principales de RD
@@ -25,7 +26,7 @@ export const BANCOS_RD = [
     { id: 'otro', nombre: 'Otro' }
 ];
 
-type MetodoPago = 'efectivo' | 'tarjeta' | 'credito' | 'transferencia' | 'mixto';
+type MetodoPago = 'efectivo' | 'tarjeta' | 'credito' | 'transferencia' | 'mixto' | 'crypto';
 
 @Component({
     selector: 'app-modal-pago',
@@ -62,13 +63,43 @@ export class ModalPagoComponent implements OnInit, OnChanges {
     referenciaTransferencia: string = '';
     cambio: number = 0;
     bancosRD = BANCOS_RD;
+
+    // === CRIPTO ===
+    private cryptoService = inject(CryptoService);
+    cryptoMoneda: CryptoMoneda = 'USDT_TRC20';
+    cryptoTasaDOP: number = 0;
+    cryptoMonto: number = 0;
+    cryptoHash: string = '';
+    cryptoQrUrl: string = '';
+    cryptoConfig: CryptoConfig = { wallet_usdt_trc20: null, wallet_btc: null, wallet_solana: null };
+    cargandoCrypto: boolean = false;
+    cryptoConfirmado: boolean = false;
+    // ==============
+
+    // === DESCUENTO GLOBAL ===
+    descuentoValor: number = 0;
+    tipodescuento: 'porcentaje' | 'fijo' = 'fijo';
+
+    get descuentoCalculado(): number {
+        if (this.tipodescuento === 'porcentaje') {
+            const pct = Math.min(this.descuentoValor || 0, 100);
+            return (this.total * pct) / 100;
+        }
+        return Math.min(this.descuentoValor || 0, this.total);
+    }
+
+    get totalConDescuento(): number {
+        return Math.max(this.total - this.descuentoCalculado, 0);
+    }
+    // ========================
+
     metodosPago = METODOS_PAGO.map(m => ({
         valor: m.valor as MetodoPago,
         etiqueta: m.etiqueta,
         icono: m.icono
     }));
 
-    ngOnInit() {
+    async ngOnInit() {
         this.cambiarMetodoPago('efectivo');
         this.syncService.isOnline$.subscribe(online => {
             this.isOffline = !online;
@@ -77,6 +108,8 @@ export class ModalPagoComponent implements OnInit, OnChanges {
                 this.tipoComprobanteChange.emit('B02');
             }
         });
+        // Pre-load crypto wallet config for instant display
+        this.cryptoConfig = await this.cryptoService.getCryptoConfig();
     }
 
     ngOnChanges(changes: SimpleChanges) {
@@ -102,21 +135,80 @@ export class ModalPagoComponent implements OnInit, OnChanges {
         this.montoTransferencia = 0;
         this.bancoDestino = '';
         this.referenciaTransferencia = '';
-        this.cambio = -this.total;
+        this.cambio = -this.totalConDescuento;
+        this.cryptoConfirmado = false;
+        this.cryptoHash = '';
 
         if (metodo === 'tarjeta') {
-            this.montoTarjeta = this.total;
+            this.montoTarjeta = this.totalConDescuento;
             this.cambio = 0;
         } else if (metodo === 'transferencia') {
-            this.montoTransferencia = this.total;
+            this.montoTransferencia = this.totalConDescuento;
             this.cambio = 0;
+        } else if (metodo === 'crypto') {
+            this.cargarTasaCrypto();
+        }
+    }
+
+    async cargarTasaCrypto() {
+        this.cargandoCrypto = true;
+        this.cryptoMonto = 0;
+        this.cryptoQrUrl = '';
+        try {
+            if (this.cryptoMoneda === 'USDT_TRC20') {
+                this.cryptoTasaDOP = await this.cryptoService.getTasaUSDT_DOP();
+            } else if (this.cryptoMoneda === 'BTC') {
+                this.cryptoTasaDOP = await this.cryptoService.getTasaBTC_DOP();
+            } else {
+                this.cryptoTasaDOP = await this.cryptoService.getTasaSOL_DOP();
+            }
+            this.calcularMontoCrypto();
+        } finally {
+            this.cargandoCrypto = false;
+        }
+    }
+
+    calcularMontoCrypto() {
+        if (!this.cryptoTasaDOP) return;
+        this.cryptoMonto = parseFloat(
+            (this.totalConDescuento / this.cryptoTasaDOP).toFixed(
+                this.cryptoService.decimalPlacesFor(this.cryptoMoneda)
+            )
+        );
+        const wallet = this.walletActiva;
+        if (wallet) {
+            this.cryptoQrUrl = this.cryptoService.buildQrUrl(wallet, this.cryptoMonto, this.cryptoMoneda);
+        }
+    }
+
+    async cambiarMonedaCrypto(moneda: CryptoMoneda) {
+        this.cryptoMoneda = moneda;
+        this.cryptoConfirmado = false;
+        await this.cargarTasaCrypto();
+    }
+
+    get walletActiva(): string | null {
+        if (this.cryptoMoneda === 'USDT_TRC20') return this.cryptoConfig.wallet_usdt_trc20;
+        if (this.cryptoMoneda === 'BTC') return this.cryptoConfig.wallet_btc;
+        return this.cryptoConfig.wallet_solana;
+    }
+
+    get cryptoSymbol(): string {
+        return this.cryptoService.symbolFor(this.cryptoMoneda);
+    }
+
+    copiarWallet() {
+        if (this.walletActiva) {
+            navigator.clipboard.writeText(this.walletActiva).then(() =>
+                Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Dirección copiada', timer: 1500, showConfirmButton: false })
+            );
         }
     }
 
     calcularCambio() {
         const efectivo = this.montoEfectivo || 0;
         if (this.metodoPago === 'efectivo') {
-            this.cambio = efectivo - this.total;
+            this.cambio = efectivo - this.totalConDescuento;
         } else if (this.metodoPago === 'mixto') {
             this.calcularMixto();
         }
@@ -125,7 +217,7 @@ export class ModalPagoComponent implements OnInit, OnChanges {
     calcularMixto() {
         const efectivo = this.montoEfectivo || 0;
         const totalPagado = efectivo + this.montoTarjeta + this.montoTransferencia;
-        this.cambio = totalPagado - this.total;
+        this.cambio = totalPagado - this.totalConDescuento;
     }
 
     formatearMoneda(valor: number): string {
@@ -149,9 +241,11 @@ export class ModalPagoComponent implements OnInit, OnChanges {
     // Puede confirmar?
     get puedeConfirmar(): boolean {
         if (this.metodoPago === 'credito' && !this.clienteSeleccionado) return false;
-        if (this.metodoPago === 'efectivo' && (this.montoEfectivo || 0) < this.total) return false;
-        if (this.metodoPago === 'mixto' && this.totalPagadoMixto < this.total) return false;
+        if (this.metodoPago === 'efectivo' && (this.montoEfectivo || 0) < this.totalConDescuento) return false;
+        if (this.metodoPago === 'mixto' && this.totalPagadoMixto < this.totalConDescuento) return false;
         if (this.necesitaBanco() && !this.bancoDestino) return false;
+        if (this.metodoPago === 'crypto' && !this.cryptoConfirmado) return false;
+        if (this.metodoPago === 'crypto' && !this.walletActiva) return false;
         return true;
     }
 
@@ -184,6 +278,12 @@ export class ModalPagoComponent implements OnInit, OnChanges {
             bancoDestino: this.bancoDestino || null,
             referenciaTransferencia: this.referenciaTransferencia || null,
             cambio: this.cambio,
+            descuento: this.descuentoCalculado,
+            // Cripto
+            crypto_moneda: this.metodoPago === 'crypto' ? this.cryptoMoneda : null,
+            crypto_monto: this.metodoPago === 'crypto' ? this.cryptoMonto : null,
+            crypto_tasa_dop: this.metodoPago === 'crypto' ? this.cryptoTasaDOP : null,
+            crypto_hash: this.cryptoHash || null,
             // Fiscal
             tipoComprobante: this.configFiscal?.modo_fiscal ? this.tipoComprobante : undefined,
             rncCliente: this.configFiscal?.modo_fiscal ? this.rncCliente : undefined

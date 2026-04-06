@@ -1,5 +1,7 @@
 export interface Caja {
   id?: number;
+  tenant_id?: string;
+  sucursal_id?: number;
   fecha_apertura: string;
   fecha_cierre?: string;
   monto_inicial: number;
@@ -23,6 +25,7 @@ export interface Caja {
 export interface MovimientoCaja {
   id?: number;
   caja_id: number;
+  sucursal_id?: number;
   tipo: 'entrada' | 'salida' | 'venta';
   concepto: string;
   monto: number;

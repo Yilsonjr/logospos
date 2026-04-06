@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FiscalService } from '../../../services/fiscal.service';
 import { ConfiguracionFiscal, SecuenciaNCF, TipoComprobante, TIPOS_COMPROBANTE } from '../../../models/fiscal.model';
+import { CryptoService, CryptoConfig } from '../../../services/crypto.service';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -26,8 +27,13 @@ export class ConfiguracionFiscalComponent implements OnInit {
     mostrandoFormulario = false;
     secuenciaEnEdicion: Partial<SecuenciaNCF> = {};
 
+    // Crypto wallets
+    cryptoConfig: CryptoConfig = { wallet_usdt_trc20: null, wallet_btc: null, wallet_solana: null };
+    guardandoCrypto = false;
+
     constructor(
         private fiscalService: FiscalService,
+        private cryptoService: CryptoService,
         private cdr: ChangeDetectorRef
     ) { }
 
@@ -45,8 +51,12 @@ export class ConfiguracionFiscalComponent implements OnInit {
                 }
             });
 
-            // Cargar datos iniciales
-            await this.fiscalService.cargarConfiguracion();
+            // Cargar datos iniciales en paralelo
+            const [, wallets] = await Promise.all([
+                this.fiscalService.cargarConfiguracion(),
+                this.cryptoService.getCryptoConfig()
+            ]);
+            this.cryptoConfig = wallets;
             this.secuencias = await this.fiscalService.obtenerSecuencias();
             this.cdr.detectChanges();
         } catch (error) {
@@ -114,5 +124,19 @@ export class ConfiguracionFiscalComponent implements OnInit {
 
     getDescripcionTipo(codigo: string): string {
         return this.tiposComprobante.find(t => t.codigo === codigo)?.descripcion || codigo;
+    }
+
+    async guardarWallets() {
+        this.guardandoCrypto = true;
+        this.cdr.detectChanges();
+        try {
+            await this.cryptoService.saveCryptoConfig(this.cryptoConfig);
+            await Swal.fire({ icon: 'success', title: 'Wallets guardadas', text: 'Las direcciones de criptomonedas han sido actualizadas.', timer: 2000, showConfirmButton: false });
+        } catch (e) {
+            await Swal.fire('Error', 'No se pudieron guardar las wallets.', 'error');
+        } finally {
+            this.guardandoCrypto = false;
+            this.cdr.detectChanges();
+        }
     }
 }

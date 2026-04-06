@@ -1,0 +1,10 @@
+/* Sucursales Component Styles */
+
+.empty-state {
+  padding: 2rem 0;
+}
+
+.avatar-sm {
+  width: 32px;
+  height: 32px;
+}

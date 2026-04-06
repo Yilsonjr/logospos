@@ -76,41 +76,18 @@
               <div
                 class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold me-2"
                 style="width: 24px; height: 24px; font-size: 0.8rem;">1</div>
-              <h6 class="fw-bold text-primary mb-0">INFORMACIÓN DEL SISTEMA</h6>
+              <h6 class="fw-bold text-primary mb-0">INFORMACIÓN DE APERTURA</h6>
             </div>
 
             <div class="card bg-primary bg-opacity-10 border-0">
               <div class="card-body">
-                <div class="row g-2 mb-3">
-                  <div class="col-md-6">
-                    <div class="bg-white p-2 rounded border d-flex justify-content-between">
-                      <span class="text-muted small fw-bold">Inicial:</span>
-                      <span class="fw-bold text-dark">{{ formatearMoneda(cajaActual.monto_inicial) }}</span>
+                <div class="row g-2">
+                  <div class="col-md-12">
+                    <div class="bg-white p-3 rounded border d-flex justify-content-between">
+                      <span class="text-muted fw-bold">Monto Inicial en Caja:</span>
+                      <span class="fw-bold text-dark fs-5">{{ formatearMoneda(cajaActual.monto_inicial) }}</span>
                     </div>
                   </div>
-                  <div class="col-md-6">
-                    <div class="bg-white p-2 rounded border d-flex justify-content-between">
-                      <span class="text-muted small fw-bold">Ventas Efec.:</span>
-                      <span class="fw-bold text-dark">{{ formatearMoneda(ventasEfectivo) }}</span>
-                    </div>
-                  </div>
-                  <div class="col-md-6">
-                    <div class="bg-white p-2 rounded border d-flex justify-content-between">
-                      <span class="text-muted small fw-bold">Entradas:</span>
-                      <span class="fw-bold text-success">+{{ formatearMoneda(totalEntradas) }}</span>
-                    </div>
-                  </div>
-                  <div class="col-md-6">
-                    <div class="bg-white p-2 rounded border d-flex justify-content-between">
-                      <span class="text-muted small fw-bold">Salidas:</span>
-                      <span class="fw-bold text-danger">-{{ formatearMoneda(totalSalidas) }}</span>
-                    </div>
-                  </div>
-                </div>
-                <div
-                  class="d-flex justify-content-between align-items-center pt-2 border-top border-primary border-opacity-25">
-                  <span class="fw-bold text-primary small text-uppercase">Efectivo Esperado</span>
-                  <span class="h5 fw-bold text-primary mb-0">{{ formatearMoneda(montoEsperado) }}</span>
                 </div>
               </div>
             </div>
@@ -122,10 +99,10 @@
               <div
                 class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center fw-bold me-2"
                 style="width: 24px; height: 24px; font-size: 0.8rem;">2</div>
-              <h6 class="fw-bold text-success mb-0">CONTEO FÍSICO</h6>
+              <h6 class="fw-bold text-success mb-0">CONTEO FÍSICO <span class="text-danger">*</span></h6>
             </div>
 
-            <div class="card border-success border-2 shadow-sm">
+            <div class="card shadow-sm" [ngClass]="totalContado > 0 ? 'border-success border-2' : 'border-danger border-2'">
               <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                   <label class="form-label fw-bold text-dark mb-0">¿Cuánto efectivo hay en caja?</label>
@@ -134,41 +111,14 @@
                   </button>
                 </div>
                 <div class="input-group input-group-lg">
-                  <span class="input-group-text bg-light text-success fw-bold">RD$</span>
+                  <span class="input-group-text bg-light fw-bold" [ngClass]="totalContado > 0 ? 'text-success' : 'text-danger'">RD$</span>
                   <input type="number" [(ngModel)]="totalContado" (input)="calcularDiferencia()"
-                    class="form-control fw-bold text-success text-end fs-2" placeholder="0.00">
+                    class="form-control fw-bold text-end fs-2" placeholder="0.00"
+                    [ngClass]="totalContado > 0 ? 'text-success' : 'text-danger'">
                 </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Paso 3: Resultado -->
-          <div class="mb-4">
-            <div class="d-flex align-items-center mb-3">
-              <div
-                class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center fw-bold me-2"
-                style="width: 24px; height: 24px; font-size: 0.8rem;">3</div>
-              <h6 class="fw-bold text-secondary mb-0">RESULTADO DEL CUADRE</h6>
-            </div>
-
-            <div class="card border-0"
-              [ngClass]="diferencia === 0 ? 'bg-success-subtle' : (diferencia > 0 ? 'bg-warning-subtle' : 'bg-danger-subtle')">
-              <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                  <span class="fw-bold text-dark">Diferencia:</span>
-                  <div class="text-end">
-                    <h2 class="fw-bold mb-0"
-                      [ngClass]="diferencia === 0 ? 'text-success' : (diferencia > 0 ? 'text-warning' : 'text-danger')">
-                      {{ diferencia > 0 ? '+' : ''}}{{ formatearMoneda(diferencia) }}
-                    </h2>
-                    <small class="fw-bold"
-                      [ngClass]="diferencia === 0 ? 'text-success' : (diferencia > 0 ? 'text-warning' : 'text-danger')">
-                      <i class="fa-solid me-1"
-                        [ngClass]="diferencia === 0 ? 'fa-check-circle' : 'fa-triangle-exclamation'"></i>
-                      {{ diferencia === 0 ? 'Cuadrado Perfecto' : (diferencia > 0 ? 'Sobrante' : 'Faltante') }}
-                    </small>
-                  </div>
-                </div>
+                @if (!totalContado || totalContado <= 0) {
+                  <small class="text-danger mt-2 d-block"><i class="fa-solid fa-circle-exclamation me-1"></i>Debes ingresar el monto contado para poder cerrar la caja</small>
+                }
               </div>
             </div>
           </div>
@@ -178,11 +128,10 @@
           <!-- Notas -->
           <div class="mb-3">
             <label class="form-label fw-bold text-muted small text-uppercase">
-              <i class="fa-solid fa-note-sticky me-1"></i>Notas de Cierre
-              @if (diferencia !== 0) { <span class="text-danger fw-bold ms-2">* OBLIGATORIO</span> }
+              <i class="fa-solid fa-note-sticky me-1"></i>Notas de Cierre (Opcional)
             </label>
             <textarea [(ngModel)]="notasCierre" class="form-control" rows="3"
-              [placeholder]="diferencia !== 0 ? 'Explica la diferencia encontrada...' : 'Observaciones opcionales...'"></textarea>
+              placeholder="Observaciones adicionales sobre el cierre..."></textarea>
           </div>
 
         </div>
@@ -192,44 +141,30 @@
     <!-- Columna Derecha: Resumen -->
     <div class="col-xl-3 col-lg-4">
       <div class="card border-0 shadow-sm sticky-top" style="top: 2rem;">
-        <div class="card-header bg-primary text-white py-3">
-          <h6 class="mb-0 fw-bold"><i class="fa-solid fa-chart-pie me-2"></i>Resumen del Turno</h6>
+        <div class="card-header bg-dark text-white py-3">
+          <h6 class="mb-0 fw-bold"><i class="fa-solid fa-shield-halved me-2"></i>Instrucciones</h6>
         </div>
         <div class="card-body p-4">
-          <div class="d-flex justify-content-between mb-2 small">
-            <span class="text-muted">Total Ventas:</span>
-            <span class="fw-bold text-dark">{{ formatearMoneda(ventasEfectivo + ventasTarjeta) }}</span>
-          </div>
-          <div class="d-flex justify-content-between mb-2 small">
-            <span class="text-muted">Impuestos (18%):</span>
-            <span class="fw-bold text-danger">-{{ formatearMoneda((ventasEfectivo + ventasTarjeta) * 0.18) }}</span>
-          </div>
-          <!-- Linea -->
-          <div class="border-top my-3"></div>
-          <div class="d-flex justify-content-between mb-3">
-            <span class="fw-bold text-dark">Ventas Netas:</span>
-            <span class="fw-bold text-dark">{{ formatearMoneda((ventasEfectivo + ventasTarjeta) * 0.82) }}</span>
-          </div>
-
-          <div class="bg-success text-white rounded p-3 text-center mb-4 shadow-sm">
-            <div class="small opacity-75 text-uppercase fw-bold mb-1">Ganancia Estimada</div>
-            <div class="h3 fw-bold mb-0">{{ formatearMoneda((ventasEfectivo + ventasTarjeta) * 0.82) }}</div>
+          <div class="text-center mb-4">
+            <i class="fa-solid fa-eye-slash text-muted fa-3x mb-3"></i>
+            <h5 class="fw-bold text-dark">Cierre Ciego Activo</h5>
+            <p class="text-muted small">Este sistema opera bajo política de cierre ciego para garantizar la máxima transparencia.</p>
           </div>
 
           <div class="alert alert-light border small text-muted">
-            <div class="fw-bold mb-2 text-dark"><i class="fa-solid fa-list-check me-2"></i>Verificaciones</div>
-            <div class="d-flex align-items-center mb-1">
-              <i class="fa-solid fa-check text-success me-2"></i>Ventas registradas
+            <div class="fw-bold mb-2 text-dark"><i class="fa-solid fa-list-check me-2"></i>Pasos a seguir:</div>
+            <div class="d-flex align-items-start mb-2">
+              <i class="fa-solid fa-1 text-primary mt-1 me-2"></i>
+              <span>Cuente físicamente <strong>todo</strong> el dinero en gaveta.</span>
             </div>
-            @if (diferencia === 0) {
-            <div class="d-flex align-items-center">
-              <i class="fa-solid fa-check text-success me-2"></i>Efectivo Cuadrado
+            <div class="d-flex align-items-start mb-2">
+              <i class="fa-solid fa-2 text-primary mt-1 me-2"></i>
+              <span>Ingrese los valores en el módulo de Conteo usando el botón "Contar Billetes".</span>
             </div>
-            } @else {
-            <div class="d-flex align-items-center text-danger">
-              <i class="fa-solid fa-xmark me-2"></i>Diferencia en Caja
+            <div class="d-flex align-items-start">
+              <i class="fa-solid fa-3 text-primary mt-1 me-2"></i>
+              <span>Finalice el turno. El área gerencial auditará las diferencias.</span>
             </div>
-            }
           </div>
         </div>
       </div>
@@ -243,24 +178,13 @@
         <div class="col-xl-10 d-flex justify-content-between align-items-center">
           <div class="d-flex align-items-center gap-4 d-none d-md-flex">
             <div>
-              <small class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.65rem;">Esperado</small>
-              <span class="fw-bold text-dark fs-5">{{ formatearMoneda(montoEsperado) }}</span>
-            </div>
-            <div>
-              <small class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.65rem;">Contado</small>
+              <small class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.65rem;">Total Contado</small>
               <span class="fw-bold text-dark fs-5">{{ formatearMoneda(totalContado) }}</span>
-            </div>
-            <div class="px-3 py-1 rounded"
-              [ngClass]="diferencia === 0 ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger'">
-              <small class="d-block text-uppercase fw-bold" style="font-size: 0.65rem;">
-                {{ diferencia === 0 ? 'Perfecto' : 'Diferencia' }}
-              </small>
-              <span class="fw-bold fs-5">{{ diferencia > 0 ? '+' : '' }}{{ formatearMoneda(diferencia) }}</span>
             </div>
           </div>
 
           <button class="btn btn-lg btn-danger shadow fw-bold px-5" (click)="confirmarCierre()"
-            [disabled]="diferencia !== 0 && !notasCierre">
+            [disabled]="!totalContado || totalContado <= 0">
             <div class="d-flex align-items-center">
               <i class="fa-solid fa-lock me-3"></i>
               <div class="text-start lh-1">
@@ -381,22 +305,9 @@
         <p class="text-muted mb-4">Esta acción finalizará el turno actual y registrará el cuadre. No podrás deshacer
           esta acción.</p>
 
-        <div class="bg-light p-3 rounded mb-4 text-start">
-          <div class="d-flex justify-content-between mb-2">
-            <span class="text-muted">Esperado:</span>
-            <span class="fw-bold">{{ formatearMoneda(montoEsperado) }}</span>
-          </div>
-          <div class="d-flex justify-content-between">
-            <span class="text-muted">Real:</span>
-            <span class="fw-bold">{{ formatearMoneda(totalContado) }}</span>
-          </div>
-          <div class="border-top my-2"></div>
-          <div class="d-flex justify-content-between">
-            <span class="fw-bold text-dark">Diferencia:</span>
-            <span class="fw-bold" [ngClass]="diferencia === 0 ? 'text-success' : 'text-danger'">
-              {{ formatearMoneda(diferencia) }}
-            </span>
-          </div>
+        <div class="bg-light p-3 rounded mb-4 text-center">
+          <span class="text-muted d-block mb-1">Monto Declarado y Contado:</span>
+          <span class="fw-bold fs-2 text-success">{{ formatearMoneda(totalContado) }}</span>
         </div>
 
         <div class="d-flex gap-3 justify-content-center">

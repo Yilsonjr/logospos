@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef, ViewChild, ElementRef, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, ChangeDetectorRef, ViewChild, ElementRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, NavigationEnd } from '@angular/router';
@@ -6,6 +6,7 @@ import { VentasService } from '../../../services/ventas.service';
 import { ProductosService } from '../../../services/productos.service';
 import { ClientesService } from '../../../services/clientes.service';
 import { CuentasCobrarService } from '../../../services/cuentas-cobrar.service';
+import { CategoriasService } from '../../../services/categorias.service';
 import { ItemCarrito, CrearVenta, METODOS_PAGO, VentaCompleta } from '../../../models/ventas.model';
 import { Productos } from '../../../models/productos.model';
 import { Cliente } from '../../../models/clientes.model';
@@ -28,7 +29,7 @@ import { SyncService } from '../../../services/offline/sync.service';
   templateUrl: './pos.component.html',
   styleUrl: './pos.component.css'
 })
-export class PosComponent implements OnInit, OnDestroy {
+export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('searchInput') searchInput!: ElementRef<HTMLInputElement>;
   private sidebarWasExpanded = false; // Estado previo del sidebar
   public isSidebarCollapsed = false; // Estado actual para la vista
@@ -45,15 +46,10 @@ export class PosComponent implements OnInit, OnDestroy {
   mostrarAutocomplete: boolean = false;
   selectedAutocompleteIndex: number = 0;
 
-  // Categorías y filtros
+  // Categorías y filtros (dinámicas desde BD)
   categoriaSeleccionada: string = 'all';
-  categorias = [
-    { id: 'all', nombre: 'All Items', icono: 'fa-solid fa-grid-2', color: '#2563eb' },
-    { id: 'bebidas', nombre: 'Bebidas', icono: 'fa-solid fa-wine-bottle', color: '#7c3aed' },
-    { id: 'snacks', nombre: 'Snacks', icono: 'fa-solid fa-cookie-bite', color: '#f59e0b' },
-    { id: 'lacteos', nombre: 'Lácteos', icono: 'fa-solid fa-cheese', color: '#10b981' },
-    { id: 'panaderia', nombre: 'Panadería', icono: 'fa-solid fa-bread-slice', color: '#d97706' },
-    { id: 'carnes', nombre: 'Carnes', icono: 'fa-solid fa-drumstick-bite', color: '#dc2626' }
+  categorias: Array<{ id: string; nombre: string; icono: string; color: string }> = [
+    { id: 'all', nombre: 'Todos', icono: 'fa-solid fa-grid-2', color: '#2563eb' }
   ];
 
   // Cliente seleccionado
@@ -69,7 +65,7 @@ export class PosComponent implements OnInit, OnDestroy {
   cajaActual: Caja | null = null;
 
   // Pago
-  metodoPago: 'efectivo' | 'tarjeta' | 'credito' | 'transferencia' | 'mixto' = 'efectivo';
+  metodoPago: 'efectivo' | 'tarjeta' | 'credito' | 'transferencia' | 'mixto' | 'crypto' = 'efectivo';
   montoEfectivo: number = 0;
   montoTarjeta: number = 0;
   montoTransferencia: number = 0;
@@ -100,8 +96,9 @@ export class PosComponent implements OnInit, OnDestroy {
     private cuentasCobrarService: CuentasCobrarService,
     private sidebarService: SidebarService,
     private fiscalService: FiscalService,
-    private cajaService: CajaService, // Inyectar CajaService
+    private cajaService: CajaService,
     private printService: PrintService,
+    private categoriasService: CategoriasService,
     private cdr: ChangeDetectorRef,
     private router: Router,
     private syncService: SyncService
@@ -124,7 +121,7 @@ export class PosComponent implements OnInit, OnDestroy {
     // PRIMERO: Suscribirse a los observables
     const productosSub = this.productosService.productos$.subscribe(productos => {
       this.productos = productos;
-      this.productosFiltrados = productos;
+      this.aplicarFiltroCategorias(); // Aplicar filtro activo al recargar
       this.cdr.detectChanges();
     });
 
@@ -157,7 +154,21 @@ export class PosComponent implements OnInit, OnDestroy {
       }
     });
 
-    this.subscriptions.push(productosSub, clientesSub, fiscalSub, cajaSub, onlineSub);
+    // Suscribirse a categorías para filtros del POS
+    const categoriasSub = this.categoriasService.categorias$.subscribe(cats => {
+      this.categorias = [
+        { id: 'all', nombre: 'Todos', icono: 'fa-solid fa-grid-2', color: '#2563eb' },
+        ...cats.map(c => ({
+          id: c.nombre.toLowerCase().replace(/\s+/g, '-'),
+          nombre: c.nombre,
+          icono: 'fa-solid fa-tag',
+          color: c.color || '#6b7280'
+        }))
+      ];
+      this.cdr.detectChanges();
+    });
+
+    this.subscriptions.push(productosSub, clientesSub, fiscalSub, cajaSub, onlineSub, categoriasSub);
 
     // DESPUÉS: Cargar datos
     await this.cargarDatos();
@@ -181,6 +192,11 @@ export class PosComponent implements OnInit, OnDestroy {
     if (this.sidebarWasExpanded) {
       this.sidebarService.setCollapsed(false, false);
     }
+  }
+
+  ngAfterViewInit() {
+    // Autofocus en el buscador al cargar el POS
+    setTimeout(() => this.focusBusqueda(), 300);
   }
 
   toggleSidebar() {
@@ -270,7 +286,11 @@ export class PosComponent implements OnInit, OnDestroy {
     }
 
     const busqueda = this.busquedaProducto.toLowerCase();
-    this.productosFiltrados = this.productos.filter(p =>
+    const base = this.categoriaSeleccionada === 'all'
+      ? this.productos
+      : this.productos.filter(p => p.categoria?.toLowerCase().replace(/\s+/g, '-') === this.categoriaSeleccionada);
+
+    this.productosFiltrados = base.filter(p =>
       p.nombre.toLowerCase().includes(busqueda) ||
       p.sku?.toLowerCase().includes(busqueda) ||
       p.codigo_barras?.toLowerCase().includes(busqueda)
@@ -278,6 +298,24 @@ export class PosComponent implements OnInit, OnDestroy {
 
     this.selectedAutocompleteIndex = 0;
     this.mostrarAutocomplete = true;
+  }
+
+  // Aplicar filtro de categoría al grid de productos
+  seleccionarCategoria(id: string) {
+    this.categoriaSeleccionada = id;
+    this.limpiarBusqueda();
+    this.aplicarFiltroCategorias();
+  }
+
+  aplicarFiltroCategorias() {
+    if (this.categoriaSeleccionada === 'all') {
+      this.productosFiltrados = this.productos;
+    } else {
+      this.productosFiltrados = this.productos.filter(p =>
+        p.categoria?.toLowerCase().replace(/\s+/g, '-') === this.categoriaSeleccionada
+      );
+    }
+    this.cdr.detectChanges();
   }
 
   // Manejar teclas en búsqueda
@@ -510,9 +548,25 @@ export class PosComponent implements OnInit, OnDestroy {
     this.bancoDestino = datos.bancoDestino || '';
     this.referenciaTransferencia = datos.referenciaTransferencia || '';
     this.cambio = datos.cambio;
+    // Almacenar datos cripto para pasarlos a procesarVenta
+    this._cryptoDatosPago = {
+      crypto_moneda: datos.crypto_moneda || null,
+      crypto_monto: datos.crypto_monto || null,
+      crypto_tasa_dop: datos.crypto_tasa_dop || null,
+      crypto_hash: datos.crypto_hash || null,
+    };
+
+    // Aplicar descuento global al total si se ingresó en el modal
+    if (datos.descuento && datos.descuento > 0) {
+      this.descuentoTotal = (this.descuentoTotal || 0) + datos.descuento;
+      this.total = Math.max(this.total - datos.descuento, 0);
+    }
 
     this.procesarVenta();
   }
+
+  // Almacen temporal de datos cripto entre el modal y procesarVenta
+  private _cryptoDatosPago: any = {};
 
   // Validar pago
   async validarPago(): Promise<boolean> {
@@ -631,7 +685,9 @@ export class PosComponent implements OnInit, OnDestroy {
           precio_unitario: item.precio_unitario,
           descuento: item.descuento,
           subtotal: item.subtotal
-        }))
+        })),
+        // Datos cripto (solo si el pago fue en crypto)
+        ...(this.metodoPago === 'crypto' ? this._cryptoDatosPago : {})
       };
 
       const ventaCreada = await this.ventasService.crearVenta(venta);

@@ -4,12 +4,14 @@ import { TenantService } from './tenant.service';
 import { ProductosService } from './productos.service';
 import { ClientesService } from './clientes.service';
 import { AuthService } from './auth.service';
+import { SucursalService } from './sucursal.service';
 import { CajaService } from './caja.service';
 import { SyncService } from './offline/sync.service';
 import { FiscalService } from './fiscal.service';
 import { Venta, VentaDetalle, CrearVenta, VentaCompleta } from '../models/ventas.model';
 import { BehaviorSubject } from 'rxjs';
 import { CrearMovimientoCaja } from '../models/caja.model';
+import { AuditoriaService } from './auditoria.service';
 
 @Injectable({
   providedIn: 'root'
@@ -23,8 +25,10 @@ export class VentasService {
     private tenantService: TenantService,
     private clientesService: ClientesService,
     private authService: AuthService,
+    private sucursalService: SucursalService,
     private cajaService: CajaService,
-    private injector: Injector
+    private injector: Injector,
+    private auditoriaService: AuditoriaService
   ) {
     this.cargarVentas().catch(err => console.error('Error in initial cargarVentas:', err));
   }
@@ -116,6 +120,7 @@ export class VentasService {
 
       const payload = {
         tenant_id: tenantId,
+        sucursal_id: this.sucursalService.sucursalActiva?.id,
         numero_venta: numeroVenta,
         cliente_id: venta.cliente_id || null,
         caja_id: venta.caja_id || null,
@@ -191,28 +196,32 @@ export class VentasService {
     }
   }
 
-  // Actualizar stock del producto (usa 'stock_actual' que es el campo real)
+  // Actualizar stock del producto (en la sucursal activa)
   private async actualizarStockProducto(productoId: number, cantidadVendida: number): Promise<void> {
     try {
-      // Obtener stock actual
-      const { data: producto, error: errorGet } = await this.supabaseService.client
-        .from('productos')
-        .select('stock_actual')
-        .eq('id', productoId)
+      const sucursalId = this.sucursalService.getSucursalActivaIdOrThrow();
+
+      // Obtener stock actual en la sucursal
+      const { data: stockRef, error: errorGet } = await this.supabaseService.client
+        .from('stock_sucursales')
+        .select('cantidad')
+        .eq('producto_id', productoId)
+        .eq('sucursal_id', sucursalId)
         .maybeSingle();
 
       if (errorGet) throw errorGet;
-      if (!producto) {
-        console.warn(`⚠️ No se pudo actualizar stock: El producto con ID ${productoId} no existe.`);
+      if (!stockRef) {
+        console.warn(`⚠️ No se pudo actualizar stock: El producto con ID ${productoId} no tiene stock en esta sucursal.`);
         return;
       }
 
       // Calcular nuevo stock y actualizar
-      const nuevoStock = (producto.stock_actual ?? 0) - cantidadVendida;
+      const nuevoStock = (stockRef.cantidad ?? 0) - cantidadVendida;
       const { error: errorUpdate } = await this.supabaseService.client
-        .from('productos')
-        .update({ stock_actual: nuevoStock })
-        .eq('id', productoId);
+        .from('stock_sucursales')
+        .update({ cantidad: nuevoStock })
+        .eq('producto_id', productoId)
+        .eq('sucursal_id', sucursalId);
 
       if (errorUpdate) throw errorUpdate;
       console.log(`📦 Stock actualizado: producto ${productoId} → ${nuevoStock} unidades`);
@@ -254,10 +263,12 @@ export class VentasService {
   async cargarVentas(limite: number = 100): Promise<void> {
     try {
       console.log('🔄 Cargando ventas...');
+      const sucursalId = this.sucursalService.getSucursalActivaIdOrThrow();
 
       const { data, error } = await this.supabaseService.client
         .from('ventas')
         .select('*')
+        .eq('sucursal_id', sucursalId)
         .order('created_at', { ascending: false })
         .limit(limite);
 
@@ -356,6 +367,12 @@ export class VentasService {
         await this.registrarCancelacionCaja(ventaCompleta);
       }
 
+      this.auditoriaService.registrarTraza(
+        'VENTA_ANULADA',
+        `Se anuló la venta/factura #${ventaCompleta.numero_venta} por un total de ${ventaCompleta.total}`,
+        { id_venta: ventaId, cliente: ventaCompleta.cliente_nombre }
+      );
+
       console.log('✅ Venta cancelada');
       await this.cargarVentas();
 
@@ -365,26 +382,30 @@ export class VentasService {
     }
   }
 
-  // Revertir stock del producto
+  // Revertir stock del producto en la sucursal activa
   private async revertirStockProducto(productoId: number, cantidad: number): Promise<void> {
     try {
-      const { data: producto, error: errorGet } = await this.supabaseService.client
-        .from('productos')
-        .select('stock_actual')
-        .eq('id', productoId)
-        .maybeSingle(); // Usar maybeSingle por si el producto fue borrado
+      const sucursalId = this.sucursalService.getSucursalActivaIdOrThrow();
+
+      const { data: stockRef, error: errorGet } = await this.supabaseService.client
+        .from('stock_sucursales')
+        .select('cantidad')
+        .eq('producto_id', productoId)
+        .eq('sucursal_id', sucursalId)
+        .maybeSingle();
 
       if (errorGet) throw errorGet;
-      if (!producto) {
-        console.warn(`⚠️ No se pudo revertir stock: El producto con ID ${productoId} ya no existe.`);
+      if (!stockRef) {
+        console.warn(`⚠️ No se pudo revertir stock: El producto con ID ${productoId} no está asignado a la sucursal.`);
         return;
       }
 
-      const nuevoStock = (producto.stock_actual || 0) + cantidad;
+      const nuevoStock = (stockRef.cantidad || 0) + cantidad;
       const { error: errorUpdate } = await this.supabaseService.client
-        .from('productos')
-        .update({ stock_actual: nuevoStock })
-        .eq('id', productoId);
+        .from('stock_sucursales')
+        .update({ cantidad: nuevoStock })
+        .eq('producto_id', productoId)
+        .eq('sucursal_id', sucursalId);
 
       if (errorUpdate) throw errorUpdate;
 
@@ -422,9 +443,12 @@ export class VentasService {
   // Obtener ventas por rango de fechas
   async obtenerVentasPorFecha(fechaInicio: string, fechaFin: string): Promise<Venta[]> {
     try {
+      const sucursalId = this.sucursalService.getSucursalActivaIdOrThrow();
+
       const { data, error } = await this.supabaseService.client
         .from('ventas')
         .select('*')
+        .eq('sucursal_id', sucursalId)
         .gte('created_at', fechaInicio)
         .lte('created_at', fechaFin)
         .order('created_at', { ascending: false });
@@ -442,10 +466,12 @@ export class VentasService {
   async obtenerTotalVentasHoy(): Promise<number> {
     try {
       const hoy = new Date().toISOString().split('T')[0];
+      const sucursalId = this.sucursalService.getSucursalActivaIdOrThrow();
 
       const { data, error } = await this.supabaseService.client
         .from('ventas')
         .select('total')
+        .eq('sucursal_id', sucursalId)
         .gte('created_at', `${hoy}T00:00:00`)
         .lte('created_at', `${hoy}T23:59:59`)
         .eq('estado', 'completada');

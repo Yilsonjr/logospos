@@ -23,6 +23,10 @@
         class="btn btn-sm btn-outline-success d-flex align-items-center gap-2 fw-semibold px-3">
         <i class="fa-solid fa-layer-group"></i> Categorías
       </button>
+      <button (click)="abrirModalTransferencias()"
+        class="btn btn-sm btn-outline-primary d-flex align-items-center gap-2 fw-semibold px-3">
+        <i class="fa-solid fa-truck-ramp-box"></i> Transferencias
+      </button>
       <button (click)="abrirModalUnidades()"
         class="btn btn-sm btn-outline-info d-flex align-items-center gap-2 fw-semibold px-3">
         <i class="fa-solid fa-scale-balanced"></i> Unidades
@@ -260,3 +264,18 @@
 <app-modal-gestion-unidades (close)="handleCerrarModalUnidades()">
 </app-modal-gestion-unidades>
 }
+
+<!-- Modal de Transferencias -->
+<div class="modal fade show" tabindex="-1" style="display: block; z-index: 1050;" *ngIf="isModalTransferenciasOpen">
+  <div class="modal-dialog modal-fullscreen shadow-lg">
+    <div class="modal-content border-0">
+      <div class="modal-header bg-dark text-white py-2">
+        <h6 class="modal-title fw-bold mb-0">Gestión de Transferencias entre Sucursales</h6>
+        <button type="button" class="btn-close btn-close-white" (click)="handleCerrarModalTransferencias()"></button>
+      </div>
+      <div class="modal-body p-0 bg-light">
+        <app-transferencias-stock></app-transferencias-stock>
+      </div>
+    </div>
+  </div>
+</div>

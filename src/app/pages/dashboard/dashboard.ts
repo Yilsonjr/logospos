@@ -9,6 +9,9 @@ import { ProductosService } from '../../services/productos.service';
 import { FiscalService } from '../../services/fiscal.service';
 import { SupabaseService } from '../../services/supabase.service';
 import { TenantService } from '../../services/tenant.service';
+import { SucursalService } from '../../services/sucursal.service';
+import { AuthService } from '../../services/auth.service';
+import { Sucursal } from '../../models/sucursal.model';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import Swal from 'sweetalert2';
@@ -46,6 +49,28 @@ interface ChartData {
   percentage: number;
 }
 
+interface SucursalStat {
+  id: number;
+  nombre: string;
+  ventasHoy: number;
+  ventasSemana: number;
+  cajaAbierta: boolean;
+  color: string;
+  chartData: { label: string; value: number; percentage: number }[];
+}
+
+// Paleta de colores para las sucursales en la gráfica comparativa
+const BRANCH_COLORS = [
+  'linear-gradient(to top, #3b82f6, #93c5fd)',  // Azul
+  'linear-gradient(to top, #10b981, #6ee7b7)',  // Verde
+  'linear-gradient(to top, #f59e0b, #fcd34d)',  // Ámbar
+  'linear-gradient(to top, #8b5cf6, #c4b5fd)',  // Violeta
+  'linear-gradient(to top, #ef4444, #fca5a5)',  // Rojo
+  'linear-gradient(to top, #ec4899, #f9a8d4)',  // Rosa
+];
+
+const BRANCH_SOLID_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#ec4899'];
+
 @Component({
   selector: 'app-dashboard',
   imports: [CommonModule, RouterModule],
@@ -54,14 +79,22 @@ interface ChartData {
 })
 export class Dashboard implements OnInit, OnDestroy {
   selectedPeriod: 'weekly' | 'monthly' | 'yearly' = 'weekly';
-  activeTab: 'products' | 'transactions' = 'products';
+  activeTab: 'products' | 'transactions' | 'sucursales' = 'products';
   isLoading = true;
+  isAdminView = false; // true if user has permission to see all branches
 
   stats: StatCard[] = [];
   topProducts: TopProduct[] = [];
   transactions: Transaction[] = [];
   chartData: ChartData[] = [];
   modoFiscalActivo = false;
+
+  // Multi-Branch state
+  todasSucursales: Sucursal[] = [];
+  selectedSucursalId: number | 'global' = 'global';
+  sucursalesStats: SucursalStat[] = [];
+  isLoadingComparativo = false;
+  diasSemana = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 
   private subscriptions: Subscription[] = [];
 
@@ -74,6 +107,8 @@ export class Dashboard implements OnInit, OnDestroy {
     private fiscalService: FiscalService,
     private supabaseService: SupabaseService,
     private tenantService: TenantService,
+    private sucursalService: SucursalService,
+    private authService: AuthService,
     private router: Router,
     private cdr: ChangeDetectorRef
   ) { }
@@ -81,6 +116,12 @@ export class Dashboard implements OnInit, OnDestroy {
   async ngOnInit() {
     console.log('🔄 Iniciando dashboard reactivo...');
     this.isLoading = true;
+
+    // Check admin permissions (take first emitted value synchronously from BehaviorSubject-backed observable)
+    let permisos: string[] = [];
+    const authSub = this.authService.authState$.subscribe(s => { permisos = s.permisos || []; });
+    authSub.unsubscribe();
+    this.isAdminView = permisos.includes('reportes.ventas') || permisos.includes('config.general');
 
     // 1. Suscribirse al estado fiscal
     const fiscalSub = this.fiscalService.config$.subscribe(cfg => {
@@ -110,6 +151,12 @@ export class Dashboard implements OnInit, OnDestroy {
     // 4. Datos de Caja y Cuentas (Carga inicial y manual)
     await this.cargarDatosManuales();
 
+    // 5. Cargar datos multisucursal para admins
+    if (this.isAdminView) {
+      this.todasSucursales = await this.sucursalService.obtenerTodasSucursales();
+      await this.cargarDatosComparativos();
+    }
+
     // Recargar cuando se navega al dashboard
     const navSub = this.router.events
       .pipe(filter(event => event instanceof NavigationEnd))
@@ -122,6 +169,7 @@ export class Dashboard implements OnInit, OnDestroy {
             this.comprasService.cargarCompras(),
             this.cargarDatosManuales()
           ]);
+          if (this.isAdminView) await this.cargarDatosComparativos();
         }
       });
     this.subscriptions.push(navSub);
@@ -146,30 +194,42 @@ export class Dashboard implements OnInit, OnDestroy {
 
   actualizarVentasStats(ventas: any[]) {
     const hoy = new Date().toISOString().split('T')[0];
-    const totalVentasHoy = ventas
-      .filter(v => v.created_at.startsWith(hoy) && v.estado === 'completada')
-      .reduce((sum, v) => sum + v.total, 0);
+    const ventasHoy = ventas.filter(v => v.created_at.startsWith(hoy) && v.estado === 'completada');
+    
+    const totalVentasHoy = ventasHoy.reduce((sum, v) => sum + v.total, 0);
+    const totalCryptoHoy = ventasHoy.filter(v => v.metodo_pago === 'crypto').reduce((sum, v) => sum + v.total, 0);
 
-    const sIndex = this.stats.findIndex(s => s.title === 'Ventas de Hoy');
-    const newStat = {
-      title: 'Ventas de Hoy',
-      value: this.formatearMoneda(totalVentasHoy),
-      change: 'Calculado',
-      isPositive: true,
-      icon: 'fa-money-bill-wave',
-      iconBg: 'bg-primary-subtle text-primary'
-    };
-
-    if (sIndex > -1) this.stats[sIndex] = newStat;
-    else this.stats.push(newStat);
+    this.actualizarTarjetaStat('Ventas de Hoy', this.formatearMoneda(totalVentasHoy), 'Hoy', 'fa-money-bill-wave', 'bg-primary-subtle text-primary');
+    
+    if (totalCryptoHoy > 0) {
+      this.actualizarTarjetaStat('Cobros Cripto (Hoy)', this.formatearMoneda(totalCryptoHoy), 'Digital', 'fa-brands fa-bitcoin', 'bg-warning-subtle text-warning');
+    }
 
     // Asegurar que existan las otras tarjetas si no están
     this.inicializarTarjetaSiFalta('Efectivo en Caja', 'fa-wallet', 'bg-success-subtle text-success');
     this.inicializarTarjetaSiFalta('Cuentas por Cobrar', 'fa-file-invoice-dollar', 'bg-warning-subtle text-warning');
   }
 
+  private actualizarTarjetaStat(title: string, value: string, change: string, icon: string, iconBg: string) {
+    const sIndex = this.stats.findIndex(s => s.title === title);
+    const newStat = {
+      title,
+      value,
+      change,
+      isPositive: true,
+      icon,
+      iconBg
+    };
+
+    if (sIndex > -1) this.stats[sIndex] = newStat;
+    else this.stats.push(newStat);
+  }
+
   actualizarProductosStats(productos: any[]) {
-    const stockCritico = productos.filter(p => (p.stock_actual || 0) < (p.stock_minimo || 5)).length;
+    // Solo cuenta productos que tienen stock_minimo configurado y están por debajo de él
+    const stockCritico = productos.filter(p =>
+      p.stock_minimo && p.stock_minimo > 0 && (p.stock || p.stock_actual || 0) < p.stock_minimo
+    ).length;
 
     const sIndex = this.stats.findIndex(s => s.title === 'Stock Crítico');
     const newStat = {
@@ -454,10 +514,12 @@ export class Dashboard implements OnInit, OnDestroy {
         .from('productos')
         .select('id, stock_actual, stock_minimo')
         .eq('tenant_id', tenantId)
-        .lt('stock_actual', 20);
+        .not('stock_minimo', 'is', null)
+        .gt('stock_minimo', 0);
 
       if (error) throw error;
-      return data?.length || 0;
+      // Filtrar los que están por debajo de su stock mínimo
+      return data?.filter(p => (p.stock_actual || 0) < p.stock_minimo).length || 0;
     } catch (error) {
       console.error('Error al obtener stock crítico:', error);
       return 0;
@@ -596,6 +658,128 @@ export class Dashboard implements OnInit, OnDestroy {
     this.selectedPeriod = period;
     await this.cargarDatosGrafico();
     this.cdr.detectChanges();
+  }
+
+  // =========================================
+  // PANEL MULTISUCURSAL (ADMIN VIEW)
+  // =========================================
+
+  async seleccionarVistaSucursal(sucursalId: number | 'global') {
+    this.selectedSucursalId = sucursalId;
+    this.cdr.detectChanges();
+  }
+
+  getColorSucursal(index: number): string {
+    return BRANCH_SOLID_COLORS[index % BRANCH_SOLID_COLORS.length];
+  }
+
+  getGradientSucursal(index: number): string {
+    return BRANCH_COLORS[index % BRANCH_COLORS.length];
+  }
+
+  getMejorSucursal(): SucursalStat | null {
+    if (!this.sucursalesStats.length) return null;
+    return this.sucursalesStats.reduce((best, s) => s.ventasHoy > best.ventasHoy ? s : best);
+  }
+
+  getTotalGlobalHoy(): number {
+    return this.sucursalesStats.reduce((sum, s) => sum + s.ventasHoy, 0);
+  }
+
+  getTotalGlobalSemana(): number {
+    return this.sucursalesStats.reduce((sum, s) => sum + s.ventasSemana, 0);
+  }
+
+  getSucursalesActivas(): number {
+    return this.sucursalesStats.filter(s => s.cajaAbierta).length;
+  }
+
+  /**
+   * Loads sales data for every branch in parallel and builds the
+   * comparative charts and ranking table.
+   */
+  async cargarDatosComparativos() {
+    this.isLoadingComparativo = true;
+    this.cdr.detectChanges();
+    try {
+      const tenantId = this.tenantService.tenantId;
+      if (!tenantId || !this.todasSucursales.length) return;
+
+      const hoy = new Date().toISOString().split('T')[0];
+      const semanaAtras = new Date();
+      semanaAtras.setDate(semanaAtras.getDate() - 7);
+
+      // Load all sales for this tenant (without branch filter) for last 7 days
+      const { data: todasVentas, error } = await this.supabaseService.client
+        .from('ventas')
+        .select('total, created_at, sucursal_id')
+        .eq('tenant_id', tenantId)
+        .eq('estado', 'completada')
+        .gte('created_at', semanaAtras.toISOString())
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+      const ventas = todasVentas || [];
+
+      // Load open cajas per branch
+      const { data: cajasAbiertas } = await this.supabaseService.client
+        .from('cajas')
+        .select('sucursal_id')
+        .eq('tenant_id', tenantId)
+        .eq('estado', 'abierta');
+
+      const cajasAbIdsSet = new Set((cajasAbiertas || []).map((c: any) => c.sucursal_id));
+
+      // Build per-branch stats
+      this.sucursalesStats = this.todasSucursales.map((suc, idx) => {
+        const ventasSucursal = ventas.filter(v => v.sucursal_id === suc.id);
+
+        const ventasHoy = ventasSucursal
+          .filter(v => v.created_at.startsWith(hoy))
+          .reduce((sum, v) => sum + v.total, 0);
+
+        const ventasSemana = ventasSucursal.reduce((sum, v) => sum + v.total, 0);
+
+        // Build 7-day chart for this branch
+        const ventasPorDia = new Map<string, number>();
+        for (let i = 6; i >= 0; i--) {
+          const d = new Date();
+          d.setDate(d.getDate() - i);
+          ventasPorDia.set(d.toISOString().split('T')[0], 0);
+        }
+        ventasSucursal.forEach(v => {
+          const fecha = v.created_at.split('T')[0];
+          if (ventasPorDia.has(fecha)) {
+            ventasPorDia.set(fecha, (ventasPorDia.get(fecha) || 0) + v.total);
+          }
+        });
+        const maxVal = Math.max(...Array.from(ventasPorDia.values()), 1);
+        const chartData = Array.from(ventasPorDia.entries()).map(([fecha, total]) => ({
+          label: this.formatearDia(fecha),
+          value: total,
+          percentage: (total / maxVal) * 100
+        }));
+
+        return {
+          id: suc.id!,
+          nombre: suc.nombre,
+          ventasHoy,
+          ventasSemana,
+          cajaAbierta: cajasAbIdsSet.has(suc.id),
+          color: BRANCH_SOLID_COLORS[idx % BRANCH_SOLID_COLORS.length],
+          chartData
+        };
+      });
+
+      // Sort ranking by ventasHoy desc
+      this.sucursalesStats.sort((a, b) => b.ventasHoy - a.ventasHoy);
+
+    } catch (e) {
+      console.error('Error cargando datos comparativos multisucursal:', e);
+    } finally {
+      this.isLoadingComparativo = false;
+      this.cdr.detectChanges();
+    }
   }
 
   exportReport() {

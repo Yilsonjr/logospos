@@ -10,6 +10,8 @@ export interface Usuario {
   rol_id: number;
   rol?: Rol; // Para mostrar en UI
   tenant_id?: string;
+  sucursales_asignadas?: any[]; // join table information
+  sucursal_activa_id?: number; // current session active sucursal
   activo: boolean;
   is_dev_admin?: boolean;
   ultimo_acceso?: string;

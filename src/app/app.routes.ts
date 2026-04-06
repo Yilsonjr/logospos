@@ -27,6 +27,8 @@ import { UsuariosComponent } from './pages/admin/usuarios/usuarios.component';
 import { RolesComponent } from './pages/admin/roles/roles.component';
 import { SistemaComponent } from './pages/admin/sistema/sistema.component';
 import { ConfiguracionFiscalComponent } from './pages/admin/configuracion-fiscal/configuracion-fiscal.component';
+import { SucursalesComponent } from './pages/admin/sucursales/sucursales.component';
+import { AuditoriaComponent } from './pages/admin/auditoria/auditoria';
 
 // Componentes de Reportes
 import { ReportesVentasComponent } from './pages/reportes/ventas/reportes-ventas.component';
@@ -257,6 +259,18 @@ export const routes: Routes = [
         component: RolesComponent,
         canActivate: [AuthGuard, PermissionGuard],
         data: { permissions: ['roles.ver'] }
+    },
+    {
+        path: 'admin/sucursales',
+        component: SucursalesComponent,
+        canActivate: [AuthGuard, PermissionGuard],
+        data: { permissions: ['config.general'] }
+    },
+    {
+        path: 'admin/auditoria',
+        component: AuditoriaComponent,
+        canActivate: [AuthGuard, PermissionGuard],
+        data: { permissions: ['config.logs'] }
     },
     {
         path: 'admin/sistema',

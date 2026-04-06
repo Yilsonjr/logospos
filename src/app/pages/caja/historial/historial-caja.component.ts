@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, NavigationEnd } from '@angular/router';
 import { CajaService } from '../../../services/caja.service';
+import { PrintService } from '../../../services/print.service';
 import { Caja, ResumenCaja } from '../../../models/caja.model';
 import { Subscription, filter } from 'rxjs';
 
@@ -28,6 +29,7 @@ export class HistorialCajaComponent implements OnInit, OnDestroy {
 
   constructor(
     private cajaService: CajaService,
+    private printService: PrintService,
     private router: Router,
     private cdr: ChangeDetectorRef
   ) { }
@@ -170,6 +172,26 @@ export class HistorialCajaComponent implements OnInit, OnDestroy {
       year: 'numeric',
       month: 'short',
       day: 'numeric'
+    });
+  }
+
+  async reimprimirCierreCaja() {
+    const resumen = this.cajaSeleccionada;
+    if (!resumen || !resumen.caja.fecha_cierre) return;
+
+    await this.printService.imprimirCierreCaja({
+      cajero: resumen.caja.usuario_apertura || 'Cajero',
+      fechaApertura: resumen.caja.fecha_apertura,
+      fechaCierre: resumen.caja.fecha_cierre,
+      montoInicial: resumen.caja.monto_inicial,
+      ventasEfectivo: resumen.caja.total_ventas_efectivo || 0,
+      ventasTarjeta: resumen.caja.total_ventas_tarjeta || 0,
+      totalEntradas: resumen.total_entradas,
+      totalSalidas: resumen.total_salidas,
+      montoEsperado: resumen.caja.monto_esperado || 0,
+      montoContado: resumen.caja.monto_final || 0,
+      diferencia: resumen.caja.diferencia || 0,
+      notas: resumen.caja.notas_cierre
     });
   }
 

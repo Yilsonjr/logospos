@@ -5,6 +5,8 @@ import { ProductosService } from '../../../services/productos.service';
 import { StorageService } from '../../../services/storage.service';
 import { CategoriasService } from '../../../services/categorias.service';
 import { UnidadesService } from '../../../services/unidades.service';
+import { SucursalService } from '../../../services/sucursal.service';
+import { KardexTableComponent } from '../kardex/kardex-table.component';
 import { Productos } from '../../../models/productos.model';
 import { Categoria } from '../../../models/categorias.model';
 import { Unidad } from '../../../models/unidades.model';
@@ -13,7 +15,7 @@ import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-modal-productos',
-  imports: [ReactiveFormsModule, CommonModule],
+  imports: [ReactiveFormsModule, CommonModule, KardexTableComponent],
   templateUrl: './modal.productos.html',
   styleUrl: './modal.productos.css',
 })
@@ -25,6 +27,7 @@ export class ModalProductosComponent implements OnInit, OnDestroy {
   productoForm: FormGroup;
   isLoading = false;
   modoEdicion = false;
+  activeTab: 'details' | 'kardex' = 'details';
   categorias: Categoria[] = [];
   categoriasSubscription?: Subscription;
 
@@ -42,6 +45,7 @@ export class ModalProductosComponent implements OnInit, OnDestroy {
     private storageService: StorageService,
     private categoriasService: CategoriasService,
     private unidadesService: UnidadesService,
+    public sucursalService: SucursalService,
     private cdr: ChangeDetectorRef
   ) {
     this.productoForm = this.fb.group({
@@ -304,5 +308,9 @@ export class ModalProductosComponent implements OnInit, OnDestroy {
   // Getter para facilitar el acceso a los controles del formulario
   get f() {
     return this.productoForm.controls;
+  }
+
+  setTab(tab: 'details' | 'kardex') {
+    this.activeTab = tab;
   }
 }

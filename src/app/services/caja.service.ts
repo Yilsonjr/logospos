@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { SupabaseService } from './supabase.service';
 import { TenantService } from './tenant.service';
 import { AuthService } from './auth.service';
+import { SucursalService } from './sucursal.service';
 import { Caja, MovimientoCaja, ArqueoCaja, CrearCaja, CrearMovimientoCaja, ResumenCaja } from '../models/caja.model';
 import { BehaviorSubject } from 'rxjs';
 
@@ -21,7 +22,8 @@ export class CajaService {
   constructor(
     private supabaseService: SupabaseService,
     private tenantService: TenantService,
-    private authService: AuthService
+    private authService: AuthService,
+    private sucursalService: SucursalService
   ) {
     this.verificarCajaAbierta().catch(err => console.error('Error inicializando caja:', err));
     this.cargarHistorial().catch(err => console.error('Error cargando historial de caja:', err));
@@ -122,10 +124,11 @@ export class CajaService {
         throw new Error('Ya existe una caja abierta para este usuario. Debe cerrarla primero.');
       }
 
-      // Forzar usuario actual
+      // Forzar usuario actual y sucursal
       const cajaNueva = {
         ...caja,
         tenant_id: this.tenantService.getTenantIdOrThrow(),
+        sucursal_id: this.sucursalService.sucursalActiva?.id,
         usuario_apertura: usuarioActual.username
       };
 
@@ -203,7 +206,8 @@ export class CajaService {
         .from('movimientos_caja')
         .insert([{
           ...movimiento,
-          tenant_id: this.tenantService.getTenantIdOrThrow()
+          tenant_id: this.tenantService.getTenantIdOrThrow(),
+          sucursal_id: this.sucursalService.sucursalActiva?.id
         }])
         .select()
         .single();
@@ -333,10 +337,12 @@ export class CajaService {
   async cargarHistorial(limite: number = 50): Promise<void> {
     try {
       console.log('🔄 Cargando historial de cajas...');
+      const sucursalId = this.sucursalService.getSucursalActivaIdOrThrow();
 
       const { data, error } = await this.supabaseService.client
         .from('cajas')
         .select('*')
+        .eq('sucursal_id', sucursalId)
         .order('fecha_apertura', { ascending: false })
         .limit(limite);
 
@@ -353,9 +359,12 @@ export class CajaService {
   // Obtener cajas por rango de fechas
   async obtenerCajasPorFecha(fechaInicio: string, fechaFin: string): Promise<Caja[]> {
     try {
+      const sucursalId = this.sucursalService.getSucursalActivaIdOrThrow();
+
       const { data, error } = await this.supabaseService.client
         .from('cajas')
         .select('*')
+        .eq('sucursal_id', sucursalId)
         .gte('fecha_apertura', fechaInicio)
         .lte('fecha_apertura', fechaFin)
         .order('fecha_apertura', { ascending: false });

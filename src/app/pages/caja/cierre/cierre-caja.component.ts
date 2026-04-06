@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, NavigationEnd } from '@angular/router';
 import { CajaService } from '../../../services/caja.service';
+import { PrintService } from '../../../services/print.service';
 import { Caja, ArqueoCaja, DENOMINACIONES } from '../../../models/caja.model';
 import Swal from 'sweetalert2';
 import { Subscription } from 'rxjs';
@@ -53,6 +54,7 @@ export class CierreCajaComponent implements OnInit, OnDestroy {
 
   constructor(
     private cajaService: CajaService,
+    private printService: PrintService,
     public router: Router,
     private cdr: ChangeDetectorRef
   ) {}
@@ -184,10 +186,10 @@ export class CierreCajaComponent implements OnInit, OnDestroy {
   }
 
   confirmarCierre() {
-    if (this.diferencia !== 0 && !this.notasCierre) {
+    if (!this.totalContado || this.totalContado < 0) {
       Swal.fire({
-        title: 'Notas Requeridas',
-        text: 'Debes agregar notas explicando la discrepancia antes de cerrar la caja',
+        title: 'Monto Requerido',
+        text: 'Debes ingresar el monto que contaste en caja antes de cerrar.',
         icon: 'warning',
         confirmButtonText: 'Entendido'
       });
@@ -237,12 +239,19 @@ export class CierreCajaComponent implements OnInit, OnDestroy {
 
       this.mostrarConfirmacion = false;
 
-      await Swal.fire({
-        title: '✅ Caja Cerrada',
-        html: `Monto esperado: ${this.formatearMoneda(this.montoEsperado)}<br>Monto contado: ${this.formatearMoneda(this.totalContado)}<br>Diferencia: ${this.formatearMoneda(this.diferencia)}`,
+      const resultado = await Swal.fire({
+        title: '✅ Turno Finalizado',
+        html: `Has declarado un total de <strong>${this.formatearMoneda(this.totalContado)}</strong>.<br><br><small class="text-muted">Las diferencias serán auditadas por administración.</small>`,
         icon: 'success',
-        confirmButtonText: 'Aceptar'
+        showCancelButton: true,
+        confirmButtonText: '<i class="fa-solid fa-print me-2"></i>Imprimir Comprobante Ciego',
+        cancelButtonText: 'Terminar',
+        confirmButtonColor: '#2563eb'
       });
+
+      if (resultado.isConfirmed) {
+        await this.imprimirCierreCaja();
+      }
       
       this.router.navigate(['/dashboard']);
 
@@ -279,6 +288,24 @@ export class CierreCajaComponent implements OnInit, OnDestroy {
       hour: '2-digit',
       minute: '2-digit',
       hour12: true
+    });
+  }
+
+  async imprimirCierreCaja() {
+    if (!this.cajaActual) return;
+    await this.printService.imprimirCierreCaja({
+      cajero: this.cajaActual.usuario_apertura || 'Cajero',
+      fechaApertura: this.cajaActual.fecha_apertura,
+      fechaCierre: new Date().toISOString(),
+      montoInicial: this.cajaActual.monto_inicial,
+      ventasEfectivo: this.ventasEfectivo,
+      ventasTarjeta: this.ventasTarjeta,
+      totalEntradas: this.totalEntradas,
+      totalSalidas: this.totalSalidas,
+      montoEsperado: this.montoEsperado,
+      montoContado: this.totalContado,
+      diferencia: this.diferencia,
+      notas: this.notasCierre || undefined
     });
   }
 }

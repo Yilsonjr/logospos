@@ -1,6 +1,7 @@
 // Modelo para el encabezado de la venta (alineado con tabla ventas en Supabase)
 export interface Venta {
   id?: number;
+  sucursal_id?: number;
   numero_venta: string;          // campo real en BD
   /** @deprecated usar numero_venta */
   numero_factura?: string;       // alias para backward-compat con historial/reportes
@@ -13,7 +14,7 @@ export interface Venta {
   /** @deprecated usar impuestos */
   impuesto?: number;             // alias para backward-compat
   total: number;
-  metodo_pago: 'efectivo' | 'tarjeta' | 'credito' | 'transferencia' | 'mixto';
+  metodo_pago: 'efectivo' | 'tarjeta' | 'credito' | 'transferencia' | 'mixto' | 'crypto';
   tipo_venta: 'contado' | 'credito';
   estado: 'completada' | 'cancelada' | 'pendiente';
   notas?: string | null;
@@ -31,6 +32,11 @@ export interface Venta {
   monto_transferencia?: number;
   banco_destino?: string | null;
   referencia_transferencia?: string | null;
+  // Cripto
+  crypto_moneda?: 'USDT_TRC20' | 'BTC' | 'SOL' | null;
+  crypto_monto?: number | null;
+  crypto_tasa_dop?: number | null;
+  crypto_hash?: string | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -50,19 +56,25 @@ export interface VentaDetalle {
 
 // Modelo para crear una venta completa (con sus detalles)
 export interface CrearVenta {
+  sucursal_id?: number;
   cliente_id?: number;
   caja_id?: number;
   subtotal: number;
   descuento: number;
   impuesto: number;
   total: number;
-  metodo_pago: 'efectivo' | 'tarjeta' | 'credito' | 'transferencia' | 'mixto';
+  metodo_pago: 'efectivo' | 'tarjeta' | 'credito' | 'transferencia' | 'mixto' | 'crypto';
   monto_efectivo: number;
   monto_tarjeta: number;
   monto_transferencia: number;
   banco_destino?: string;
   referencia_transferencia?: string;
   cambio: number;
+  // Cripto
+  crypto_moneda?: 'USDT_TRC20' | 'BTC' | 'SOL' | null;
+  crypto_monto?: number | null;
+  crypto_tasa_dop?: number | null;
+  crypto_hash?: string | null;
   notas?: string;
   ncf?: string;
   tipo_ncf?: string;
@@ -95,6 +107,7 @@ export const METODOS_PAGO = [
   { valor: 'efectivo', etiqueta: 'Efectivo', icono: 'fa-solid fa-money-bill-wave' },
   { valor: 'tarjeta', etiqueta: 'Tarjeta', icono: 'fa-solid fa-credit-card' },
   { valor: 'transferencia', etiqueta: 'Transferencia', icono: 'fa-solid fa-building-columns' },
+  { valor: 'crypto', etiqueta: 'Cripto', icono: 'fa-brands fa-bitcoin' },
   { valor: 'credito', etiqueta: 'Crédito', icono: 'fa-solid fa-file-invoice-dollar' },
   { valor: 'mixto', etiqueta: 'Mixto', icono: 'fa-solid fa-wallet' }
 ] as const;

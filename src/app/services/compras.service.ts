@@ -3,6 +3,7 @@ import { SupabaseService } from './supabase.service';
 import { TenantService } from './tenant.service';
 import { CuentasPagarService } from './cuentas-pagar.service';
 import { AuthService } from './auth.service';
+import { SucursalService } from './sucursal.service';
 import { Compra, DetalleCompra, CompraConDetalles, CrearCompra, CrearDetalleCompra } from '../models/compras.model';
 import { BehaviorSubject } from 'rxjs';
 
@@ -17,7 +18,8 @@ export class ComprasService {
     private supabaseService: SupabaseService,
     private tenantService: TenantService,
     private cuentasPagarService: CuentasPagarService,
-    private authService: AuthService
+    private authService: AuthService,
+    private sucursalService: SucursalService
   ) {
     this.cargarCompras().catch(err => console.error('Error in initial cargarCompras:', err));
   }
@@ -27,12 +29,15 @@ export class ComprasService {
     try {
       console.log('🔄 Cargando compras...');
 
+      const sucursalId = this.sucursalService.getSucursalActivaIdOrThrow();
+
       const { data, error } = await this.supabaseService.client
         .from('compras')
         .select(`
           *,
           proveedores (nombre)
         `)
+        .eq('sucursal_id', sucursalId)
         .order('fecha_compra', { ascending: false });
 
       if (error) {
@@ -123,8 +128,10 @@ export class ComprasService {
 
       // Preparar payload para la DB
       const tenantId = this.tenantService.getTenantIdOrThrow();
+      const sucursalId = this.sucursalService.getSucursalActivaIdOrThrow();
       const compraDb = {
         tenant_id: tenantId,
+        sucursal_id: sucursalId,
         proveedor_id: compra.proveedor_id,
         usuario_id: usuarioId,
         numero_compra: compra.numero_factura || `CMP-${Date.now()}`,
@@ -210,26 +217,30 @@ export class ComprasService {
     }
   }
 
-  // Actualizar stock de producto
+  // Actualizar stock de producto en la sucursal activa
   private async actualizarStockProducto(productoId: number, cantidad: number): Promise<void> {
     try {
+      const sucursalId = this.sucursalService.getSucursalActivaIdOrThrow();
+
       // Obtener el stock actual
-      const { data: producto, error: errorGet } = await this.supabaseService.client
-        .from('productos')
-        .select('stock_actual')
-        .eq('id', productoId)
-        .single();
+      const { data: stockRef, error: errorGet } = await this.supabaseService.client
+        .from('stock_sucursales')
+        .select('cantidad')
+        .eq('producto_id', productoId)
+        .eq('sucursal_id', sucursalId)
+        .maybeSingle();
 
       if (errorGet) throw errorGet;
 
       // Actualizar el stock
       const { error: errorUpdate } = await this.supabaseService.client
-        .from('productos')
+        .from('stock_sucursales')
         .update({
-          stock_actual: (producto.stock_actual || 0) + cantidad,
+          cantidad: (stockRef?.cantidad || 0) + cantidad,
           updated_at: new Date().toISOString()
         })
-        .eq('id', productoId);
+        .eq('producto_id', productoId)
+        .eq('sucursal_id', sucursalId);
 
       if (errorUpdate) throw errorUpdate;
 
@@ -335,10 +346,12 @@ export class ComprasService {
   // Obtener compras por proveedor
   async obtenerComprasPorProveedor(proveedorId: number): Promise<Compra[]> {
     try {
+      const sucursalId = this.sucursalService.getSucursalActivaIdOrThrow();
       const { data, error } = await this.supabaseService.client
         .from('compras')
         .select('*')
         .eq('proveedor_id', proveedorId)
+        .eq('sucursal_id', sucursalId)
         .order('fecha_compra', { ascending: false });
 
       if (error) throw error;
@@ -353,10 +366,12 @@ export class ComprasService {
   // Obtener compras por estado
   async obtenerComprasPorEstado(estado: string): Promise<Compra[]> {
     try {
+      const sucursalId = this.sucursalService.getSucursalActivaIdOrThrow();
       const { data, error } = await this.supabaseService.client
         .from('compras')
         .select('*')
         .eq('estado', estado)
+        .eq('sucursal_id', sucursalId)
         .order('fecha_compra', { ascending: false });
 
       if (error) throw error;

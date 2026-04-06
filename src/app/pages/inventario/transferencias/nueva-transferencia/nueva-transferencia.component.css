@@ -1,0 +1,48 @@
+.product-icon {
+  flex-shrink: 0;
+}
+
+.hover-card {
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+  background-color: #fff;
+}
+
+.hover-card:active {
+  transform: translateY(0);
+}
+
+.hvr-grow {
+  transition: all 0.3s ease;
+}
+
+.hvr-grow:hover {
+  transform: scale(1.02);
+}
+
+.border-dashed {
+  border-style: dashed !important;
+}
+
+/* Custom scrollbar for better UX */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}

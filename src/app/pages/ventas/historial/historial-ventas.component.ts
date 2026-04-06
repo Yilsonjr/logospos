@@ -36,6 +36,7 @@ export class HistorialVentasComponent implements OnInit, OnDestroy {
   totalEfectivo: number = 0;
   totalTarjeta: number = 0;
   totalCredito: number = 0;
+  totalCrypto: number = 0;
   totalITBIS: number = 0;
 
   mostrarDetalles: boolean = false;
@@ -176,6 +177,9 @@ export class HistorialVentasComponent implements OnInit, OnDestroy {
       .reduce((sum, v) => sum + v.total, 0);
     this.totalCredito = ventasCompletadas
       .filter(v => v.metodo_pago === 'credito')
+      .reduce((sum, v) => sum + v.total, 0);
+    this.totalCrypto = ventasCompletadas
+      .filter(v => v.metodo_pago === 'crypto')
       .reduce((sum, v) => sum + v.total, 0);
     this.totalITBIS = ventasCompletadas
       .reduce((sum, v) => sum + (v.impuestos || 0), 0);

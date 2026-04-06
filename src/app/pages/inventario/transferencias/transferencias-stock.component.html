@@ -1,0 +1,125 @@
+<div class="container-fluid py-4 h-100">
+  <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+    <!-- Header -->
+    <div class="card-header bg-white border-0 py-3 px-4 d-flex justify-content-between align-items-center">
+      <div>
+        <h4 class="fw-bold text-dark mb-0"><i class="fa-solid fa-truck-moving me-2 text-primary"></i>Transferencias de Stock</h4>
+        <small class="text-muted">Mueve productos entre tus sucursales de forma segura</small>
+      </div>
+      <button class="btn btn-primary rounded-pill px-4" (click)="mostrarNueva = true">
+        <i class="fa-solid fa-plus me-2"></i>Nueva Transferencia
+      </button>
+    </div>
+
+    <!-- Table -->
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="bg-light">
+            <tr>
+              <th class="ps-4 border-0 text-muted small text-uppercase fw-bold">ID / Fecha</th>
+              <th class="border-0 text-muted small text-uppercase fw-bold">Origen</th>
+              <th class="border-0 text-muted small text-uppercase fw-bold"><i class="fa-solid fa-arrow-right mx-1"></i> Destino</th>
+              <th class="border-0 text-muted small text-uppercase fw-bold text-center">Estado</th>
+              <th class="border-0 text-muted small text-uppercase fw-bold text-end pe-4">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let t of transferencias" class="transfer-row" (click)="verDetalle(t)">
+              <td class="ps-4">
+                <div class="fw-bold text-dark">#{{ t.id }}</div>
+                <div class="text-muted" style="font-size: 0.75rem;">{{ t.fecha_envio | date:'short' }}</div>
+              </td>
+              <td>{{ t.sucursal_origen_nombre }}</td>
+              <td>{{ t.sucursal_destino_nombre }}</td>
+              <td class="text-center">
+                <span class="badge rounded-pill fw-bold" [ngClass]="getEstadoClass(t.estado)">
+                  {{ t.estado | uppercase }}
+                </span>
+              </td>
+              <td class="text-end pe-4">
+                <button class="btn btn-sm btn-light border shadow-xs rounded-3 text-secondary" title="Ver detalles">
+                  <i class="fa-solid fa-eye"></i>
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="transferencias.length === 0 && !cargando">
+              <td colspan="5" class="py-5 text-center text-muted">No hay transferencias registradas</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Detalle -->
+<div class="modal-backdrop fade show" *ngIf="mostrarDetalle"></div>
+<div class="modal fade show" tabindex="-1" style="display: block;" *ngIf="mostrarDetalle">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content border-0 shadow rounded-4 overflow-hidden">
+      <div class="modal-header border-0 bg-light p-4">
+        <h5 class="modal-title fw-bold">
+          <i class="fa-solid fa-file-invoice me-2 text-primary"></i>Detalle de Transferencia #{{ transferenciaSeleccionada?.id }}
+        </h5>
+        <button type="button" class="btn-close" (click)="mostrarDetalle = false"></button>
+      </div>
+      <div class="modal-body p-4">
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <label class="text-muted small text-uppercase fw-bold d-block">Origen</label>
+            <span class="fw-bold">{{ transferenciaSeleccionada?.sucursal_origen_nombre }}</span>
+          </div>
+          <div class="col-md-6">
+            <label class="text-muted small text-uppercase fw-bold d-block">Destino</label>
+            <span class="fw-bold text-primary">{{ transferenciaSeleccionada?.sucursal_destino_nombre }}</span>
+          </div>
+          <div class="col-12" *ngIf="transferenciaSeleccionada?.notas">
+            <label class="text-muted small text-uppercase fw-bold d-block">Notas</label>
+            <div class="p-2 bg-light rounded text-muted small border">{{ transferenciaSeleccionada?.notas }}</div>
+          </div>
+        </div>
+
+        <div class="table-responsive rounded-3 border">
+          <table class="table align-middle mb-0 small">
+            <thead class="bg-light">
+              <tr>
+                <th class="ps-3 border-0">Producto</th>
+                <th class="border-0 text-end pe-3">Cantidad Movida</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let d of detallesSeleccionados">
+                <td class="ps-3">{{ d.producto_nombre }}</td>
+                <td class="text-end pe-3 fw-bold">{{ d.cantidad }}</td>
+              </tr>
+              <tr *ngIf="cargandoDetalle">
+                <td colspan="2" class="text-center py-3"><i class="fa-solid fa-spinner fa-spin me-2"></i>Cargando ítems...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer border-0 p-4 bg-light d-flex justify-content-between">
+        <div>
+          <button class="btn btn-outline-danger btn-sm rounded-pill px-3 me-2" 
+                  *ngIf="transferenciaSeleccionada?.estado === 'enviado'"
+                  (click)="cancelarTransferencia(transferenciaSeleccionada!)">
+            <i class="fa-solid fa-trash me-1"></i>Cancelar Envío
+          </button>
+        </div>
+        <div>
+          <button class="btn btn-secondary rounded-pill px-4 btn-sm me-2" (click)="mostrarDetalle = false">Cerrar</button>
+          <button class="btn btn-success rounded-pill px-4 btn-sm fw-bold" 
+                  *ngIf="transferenciaSeleccionada?.estado === 'enviado'"
+                  (click)="confirmarRecepcion(transferenciaSeleccionada!)">
+            <i class="fa-solid fa-check me-1"></i>Confirmar Recepción
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Placeholder for Nueva Transferencia Modal (Next Step) -->
+<app-nueva-transferencia *ngIf="mostrarNueva" (cancelar)="mostrarNueva = false" (confirmada)="mostrarNueva = false; cargarTransferencias()"></app-nueva-transferencia>

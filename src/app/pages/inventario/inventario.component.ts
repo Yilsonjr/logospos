@@ -5,6 +5,7 @@ import { Categoria } from '../../models/categorias.model';
 import { ModalProductosComponent } from './modal.productos/modal.productos';
 import { ModalGestionCategoriasComponent } from './modal.gestion-categorias/modal.gestion-categorias';
 import { ModalGestionUnidadesComponent } from './modal.gestion-unidades/modal.gestion-unidades';
+import { TransferenciasStockComponent } from './transferencias/transferencias-stock.component';
 import { ProductosService } from '../../services/productos.service';
 import { CategoriasService } from '../../services/categorias.service';
 import { CommonModule } from '@angular/common';
@@ -14,7 +15,7 @@ import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-inventario',
-  imports: [ModalProductosComponent, ModalGestionCategoriasComponent, ModalGestionUnidadesComponent, CommonModule],
+  imports: [ModalProductosComponent, ModalGestionCategoriasComponent, ModalGestionUnidadesComponent, TransferenciasStockComponent, CommonModule],
   templateUrl: './inventario.component.html',
   styleUrl: './inventario.component.css',
 })
@@ -22,6 +23,7 @@ export class Inventario implements OnInit, OnDestroy {
   isModalOpen = false;
   isModalGestionCategoriasOpen = false;
   isModalGestionUnidadesOpen = false;
+  isModalTransferenciasOpen = false;
   productos: Productos[] = [];
   categorias: Categoria[] = [];
   isLoading = true;
@@ -147,6 +149,14 @@ export class Inventario implements OnInit, OnDestroy {
 
   handleCerrarModalUnidades() {
     this.isModalGestionUnidadesOpen = false;
+  }
+
+  abrirModalTransferencias() {
+    this.isModalTransferenciasOpen = true;
+  }
+
+  handleCerrarModalTransferencias() {
+    this.isModalTransferenciasOpen = false;
   }
 
   onProductoCreado() {
