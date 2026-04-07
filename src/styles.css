@@ -169,3 +169,40 @@ select:focus {
 ::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(180deg, #94a3b8 0%, #64748b 100%);
 }
+
+/* Print Utilities */
+@media print {
+  /* Hide main app UI elements */
+  app-navbar, 
+  app-topbar,
+  .btn-close,
+  .modal-footer,
+  .header-actions,
+  .loading-screen,
+  button:not(.btn-print-visible) {
+    display: none !important;
+  }
+
+  /* Reset main content for print */
+  .main-content {
+    margin-left: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+    min-height: auto !important;
+  }
+
+  body {
+    background: white !important;
+  }
+
+  /* Utility to hide specific elements */
+  .no-print {
+    display: none !important;
+  }
+  
+  /* Ensure colors are printed */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}

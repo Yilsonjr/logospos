@@ -62,35 +62,63 @@
 /* Print Styles */
 @media print {
   .modal-overlay {
-    position: static;
-    background: white;
-    padding: 0;
-    height: auto;
-    overflow: visible;
+    position: absolute !important;
+    background: white !important;
+    padding: 0 !important;
+    height: auto !important;
+    width: 100% !important;
+    display: block !important;
+    backdrop-filter: none !important;
+    z-index: 1 !important;
+    overflow: visible !important;
   }
 
   .modal-card {
-    max-width: 100%;
-    box-shadow: none;
-    max-height: none;
-    overflow: visible;
+    max-width: 100% !important;
+    width: 100% !important;
+    box-shadow: none !important;
+    max-height: none !important;
+    overflow: visible !important;
+    border: none !important;
+    margin: 0 !important;
   }
 
+  /* Force headers and list items to look clean */
+  .modal-header {
+    background-color: #f1f5f9 !important;
+    border-bottom: 2px solid #334155 !important;
+    padding: 20px !important;
+  }
+
+  .modal-body {
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  .list-group-item {
+    border-bottom: 1px solid #e2e8f0 !important;
+    background: transparent !important;
+    page-break-inside: avoid;
+  }
+
+  /* Stats Grid in Print */
+  .stats-grid {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 10px !important;
+    margin-bottom: 20px !important;
+  }
+
+  .stat-card {
+    border: 1px solid #e2e8f0 !important;
+    background: white !important;
+  }
+
+  /* Hide close button and footer */
   .btn-close,
   .modal-footer,
-  .btn {
+  .btn-sm[title="Imprimir"] {
     display: none !important;
-  }
-
-  .bg-light,
-  .bg-secondary-subtle,
-  .list-group-item {
-    background: white !important;
-    border: none !important;
-  }
-
-  .list-group-item {
-    border-bottom: 1px solid #ddd !important;
   }
 }
 

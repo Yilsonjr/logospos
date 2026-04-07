@@ -602,16 +602,88 @@ tbody tr:hover {
     }
 }
 
-/* Print */
+/* Print Styles */
 @media print {
+    .ec-container {
+        padding: 0 !important;
+        margin: 0 !important;
+        max-width: 100% !important;
+    }
 
     .ec-header .ec-actions,
     .cliente-selector,
-    .btn-ver {
+    .btn-ver,
+    .chip-clear {
         display: none !important;
     }
 
-    .ec-container {
-        padding: 0;
+    .ec-title h1 {
+        font-size: 2rem !important;
+        border-bottom: 2px solid #000 !important;
+        padding-bottom: 10px !important;
+        margin-bottom: 20px !important;
+    }
+
+    .summary-cards {
+        display: grid !important;
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 15px !important;
+        margin-bottom: 30px !important;
+    }
+
+    .scard {
+        border: 1px solid #cbd5e1 !important;
+        background: #fff !important;
+        padding: 12px !important;
+    }
+
+    .aging-bands-card,
+    .invoices-card,
+    .global-table-wrapper {
+        border: 1px solid #cbd5e1 !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin-bottom: 25px !important;
+    }
+
+    .section-title {
+        background: #f1f5f9 !important;
+        padding: 10px !important;
+        border-bottom: 1px solid #cbd5e1 !important;
+        margin-bottom: 0 !important;
+    }
+
+    table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+    }
+
+    th {
+        background: #f8fafc !important;
+        border-bottom: 2px solid #94a3b8 !important;
+    }
+
+    td, th {
+        border: 1px solid #e2e8f0 !important;
+        padding: 8px !important;
+    }
+
+    .row-critico, .row-vencido, .row-riesgo {
+        background: transparent !important;
+    }
+
+    .dias-badge {
+        padding: 0 !important;
+        background: transparent !important;
+        font-weight: bold !important;
+    }
+
+    /* Force print colors */
+    .text-success { color: #16a34a !important; }
+    .text-danger { color: #dc2626 !important; }
+    .text-warning { color: #d97706 !important; }
+
+    .band-fill {
+        -webkit-print-color-adjust: exact !important;
     }
 }
