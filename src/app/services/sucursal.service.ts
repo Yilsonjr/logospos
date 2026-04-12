@@ -72,6 +72,8 @@ export class SucursalService {
     if (!sucursal || !sucursal.id) return;
     
     this.sucursalActivaSubject.next(sucursal);
+    // Save full object so we can restore it instantly on next page load
+    localStorage.setItem('dolvin_sucursal_activa', JSON.stringify(sucursal));
     localStorage.setItem('dolvin_sucursal_id', sucursal.id.toString());
     sessionStorage.setItem('dolvin_sucursal_id', sucursal.id.toString());
   }
@@ -89,11 +91,19 @@ export class SucursalService {
   }
 
   private recuperarSucursalDeCache() {
-    // Only basic ID restoration if needed early, complete object comes from cargarSucursalesUsuario
-    const stored = localStorage.getItem('dolvin_sucursal_id') || sessionStorage.getItem('dolvin_sucursal_id');
+    // Try to restore the full branch object from localStorage so that
+    // getSucursalActivaIdOrThrow() works immediately on startup (avoids race condition).
+    const stored = localStorage.getItem('dolvin_sucursal_activa');
     if (stored) {
-       // We only have the ID, wait for `cargarSucursalesUsuario` to load the full object.
-       // Keep this empty for now so we don't dispatch an incomplete object.
+      try {
+        const sucursal: Sucursal = JSON.parse(stored);
+        if (sucursal && sucursal.id) {
+          this.sucursalActivaSubject.next(sucursal);
+        }
+      } catch (e) {
+        // If parsing fails, just wait for cargarSucursalesUsuario
+        localStorage.removeItem('dolvin_sucursal_activa');
+      }
     }
   }
 
@@ -101,6 +111,7 @@ export class SucursalService {
     this.sucursalActivaSubject.next(null);
     this.sucursalesAsignadasSubject.next([]);
     localStorage.removeItem('dolvin_sucursal_id');
+    localStorage.removeItem('dolvin_sucursal_activa');
     sessionStorage.removeItem('dolvin_sucursal_id');
   }
 

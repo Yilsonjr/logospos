@@ -1,55 +1,61 @@
-<div class="container-fluid p-2 bg-light d-flex flex-column h-100" style="height: 100%;">
+<div class="container-fluid p-3 dashboard-container d-flex flex-column h-100">
 
-  <!-- Header (Fijo altura aprox) -->
-  <header class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2 mb-2">
-    <!-- Búsqueda -->
-    <div class="position-relative w-100" style="max-width: 400px;">
+  <!-- Header Premium -->
+  <header class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3 mb-4">
+    <div class="position-relative w-100" style="max-width: 450px;">
       <span class="position-absolute top-50 start-0 translate-middle-y ms-3 text-muted">
-        <i class="fa-solid fa-search small"></i>
+        <i class="fa-solid fa-search"></i>
       </span>
-      <input type="text" class="form-control ps-5 border-0 shadow-sm" placeholder="Buscar...">
+      <input type="text" class="form-control ps-5 premium-search shadow-sm h-100 py-2" 
+             placeholder="Explorar ventas, productos o clientes...">
     </div>
 
-    <!-- Acciones -->
+    <!-- Acciones Rápidas -->
     <div class="d-flex align-items-center gap-2">
-      <button class="btn btn-white shadow-sm border text-secondary btn-sm" title="Configuración"
-        routerLink="/admin/sistema">
-        <i class="fa-solid fa-cog"></i>
+      <button class="btn btn-white glass-card shadow-sm border-0 d-flex align-items-center justify-content-center p-2" 
+              style="width: 42px; height: 42px;" title="Configuración" routerLink="/admin/sistema">
+        <i class="fa-solid fa-cog text-secondary"></i>
       </button>
-      <button class="btn btn-primary shadow-sm d-flex align-items-center gap-2 fw-bold px-3 btn-sm"
+      <button class="btn btn-primary shadow-lg d-flex align-items-center gap-2 fw-bold px-4 py-2 rounded-pill transition-all"
         routerLink="/ventas/nueva">
-        <i class="fa-solid fa-plus"></i> Nueva Venta
+        <i class="fa-solid fa-plus-circle"></i> <span>Nueva Venta</span>
       </button>
     </div>
   </header>
 
-  <!-- Tarjetas de Estadísticas (Fijo altura aprox) -->
-  <section class="row g-2 mb-2">
+  <!-- Tarjetas de Estadísticas Elevadas -->
+  <section class="row g-3 mb-4">
     @for (stat of stats; track stat.title) {
     <div class="col-md-6 col-lg-3">
-      <div class="card border-0 shadow-sm h-100 stat-card">
-        <div class="card-body p-2">
-          <div class="d-flex justify-content-between align-items-start mb-2">
-            <span class="text-uppercase text-muted fw-bold small tracking-widest"
-              style="font-size: 0.7rem;">{{stat.title}}</span>
-            <div [class]="'p-2 rounded-circle d-flex align-items-center justify-content-center ' + stat.iconBg"
-              style="width: 36px; height: 36px;">
-              <i [class]="'fa-solid ' + stat.icon + ' fs-6'"></i>
-            </div>
+      <div class="glass-card p-3 h-100">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+          <div [class]="'stat-icon-wrapper ' + stat.iconBg">
+            <i [class]="'fa-solid ' + stat.icon + ' fs-5 text-white'"></i>
           </div>
-
-          <h3 class="fw-semibold text-dark mb-1">{{stat.value}}</h3>
-
-          <div class="d-flex align-items-center gap-2 small">
-            @if (stat.isUrgent) {
-            <span class="text-danger fw-bold">{{stat.change}}</span>
-            } @else {
-            <span [class]="stat.isPositive ? 'text-success' : 'text-danger'" class="fw-bold d-flex align-items-center">
-              <i [class]="stat.isPositive ? 'fa-solid fa-arrow-up me-1' : 'fa-solid fa-arrow-down me-1'"></i>
-              {{stat.change}}
+          <div class="text-end">
+            <span class="text-uppercase text-muted fw-bold opacity-75" style="font-size: 0.65rem; letter-spacing: 0.05rem;">
+              {{stat.title}}
             </span>
-            }
+            <h3 class="fw-bold text-dark mt-1 mb-0" style="font-size: 1.5rem;">{{stat.value}}</h3>
           </div>
+        </div>
+
+        <div class="d-flex align-items-center gap-2 mt-2">
+          @if (stat.isUrgent) {
+            <span class="badge rounded-pill bg-danger-subtle text-danger border border-danger-subtle px-3 py-1" style="font-size: 0.7rem;">
+              <i class="fa-solid fa-fire-flame-curved me-1"></i> {{stat.change}}
+            </span>
+          } @else {
+            <div class="d-flex align-items-center gap-1 px-2 py-1 rounded-pill" 
+                 [class.bg-success-subtle]="stat.isPositive" [class.bg-danger-subtle]="!stat.isPositive"
+                 style="font-size: 0.72rem;">
+              <i [class]="stat.isPositive ? 'fa-solid fa-arrow-trend-up text-success' : 'fa-solid fa-arrow-trend-down text-danger'"></i>
+              <span class="fw-bold" [class.text-success]="stat.isPositive" [class.text-danger]="!stat.isPositive">
+                {{stat.change}}
+              </span>
+            </div>
+            <span class="text-muted opacity-50 small">vs ayer</span>
+          }
         </div>
       </div>
     </div>
@@ -57,116 +63,118 @@
   </section>
 
   <!-- ===================================================== -->
-  <!-- PANEL INTEL MULTISUCURSAL (Solo visible para Admins)  -->
+  <!-- PANEL INTEL MULTISUCURSAL (Premium)                   -->
   <!-- ===================================================== -->
   @if (isAdminView && todasSucursales.length > 1) {
-
-  <!-- Selector de Sucursal -->
-  <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
-    <span class="text-muted small fw-bold text-uppercase me-1"
-      style="font-size: 0.7rem;"><i class="fa-solid fa-globe me-1"></i>Vista:</span>
-    <button class="btn btn-sm rounded-pill fw-bold px-3 shadow-sm"
-      [class.btn-dark]="selectedSucursalId === 'global'"
-      [class.btn-outline-secondary]="selectedSucursalId !== 'global'"
-      (click)="seleccionarVistaSucursal('global')">
-      <i class="fa-solid fa-layer-group me-1"></i>Consolidado Global
-    </button>
-    @for (suc of sucursalesStats; track suc.id; let i = $index) {
-      <button class="btn btn-sm rounded-pill fw-bold px-3 shadow-sm d-flex align-items-center gap-1"
-        [class.btn-outline-secondary]="selectedSucursalId !== suc.id"
-        [style.background-color]="selectedSucursalId === suc.id ? suc.color : ''"
-        [style.border-color]="suc.color"
-        [style.color]="selectedSucursalId === suc.id ? '#fff' : suc.color"
-        (click)="seleccionarVistaSucursal(suc.id)">
-        <i class="fa-solid fa-store" style="font-size: 0.75rem;"></i>
-        {{ suc.nombre }}
+  <div class="mb-4">
+    <div class="pill-tabs-container mb-3 shadow-sm">
+      <button class="pill-tab" 
+              [class.active]="selectedSucursalId === 'global'"
+              (click)="seleccionarVistaSucursal('global')">
+        <i class="fa-solid fa-layer-group me-1"></i> Consolidado Global
       </button>
-    }
-    @if (isLoadingComparativo) {
-      <div class="spinner-border spinner-border-sm text-secondary" role="status"></div>
+      @for (suc of sucursalesStats; track suc.id) {
+        <button class="pill-tab d-flex align-items-center gap-1"
+                [class.active]="selectedSucursalId === suc.id"
+                (click)="seleccionarVistaSucursal(suc.id)">
+          <div class="rounded-circle" [style.background-color]="suc.color" style="width: 8px; height: 8px;"></div>
+          {{ suc.nombre }}
+        </button>
+      }
+      @if (isLoadingComparativo) {
+        <div class="px-2 d-flex align-items-center">
+          <div class="spinner-border spinner-border-sm text-primary opacity-50" role="status"></div>
+        </div>
+      }
+    </div>
+
+    @if (selectedSucursalId === 'global') {
+    <div class="row g-3 mb-3">
+      <!-- Indicadores Globales con Gradient Glass -->
+      <div class="col-md-4">
+        <div class="glass-card p-3 border-0 text-white" 
+             style="background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);">
+          <small class="opacity-75 text-uppercase fw-bold" style="font-size: 0.65rem;">Total Global Hoy</small>
+          <div class="d-flex align-items-baseline gap-2 mt-1">
+            <h2 class="fw-bold mb-0">{{ formatearMoneda(getTotalGlobalHoy()) }}</h2>
+            <i class="fa-solid fa-globe opacity-50 fs-4"></i>
+          </div>
+          <p class="mb-0 small opacity-75 mt-2">{{ todasSucursales.length }} sucursales activas</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="glass-card p-3 border-0 text-white" 
+             style="background: linear-gradient(135deg, #064e3b 0%, #10b981 100%);">
+          <small class="opacity-75 text-uppercase fw-bold" style="font-size: 0.65rem;">Ventas de la Semana</small>
+          <div class="d-flex align-items-baseline gap-2 mt-1">
+            <h2 class="fw-bold mb-0">{{ formatearMoneda(getTotalGlobalSemana()) }}</h2>
+            <i class="fa-solid fa-calendar-check opacity-50 fs-4"></i>
+          </div>
+          <p class="mb-0 small opacity-75 mt-2">Promedio: {{ formatearMoneda(getTotalGlobalSemana()/7) }} / día</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="glass-card p-3 border-0 text-white" 
+             style="background: linear-gradient(135deg, #3b0764 0%, #8b5cf6 100%);">
+          <small class="opacity-75 text-uppercase fw-bold" style="font-size: 0.65rem;">Sucursal Líder</small>
+          @if (getMejorSucursal()) {
+            <div class="d-flex align-items-center gap-2 mt-1">
+              <h4 class="fw-bold mb-0 text-truncate">{{ getMejorSucursal()!.nombre }}</h4>
+              <i class="fa-solid fa-trophy text-warning fs-4"></i>
+            </div>
+            <p class="mb-0 small opacity-75 mt-2">Liderando con {{ formatearMoneda(getMejorSucursal()!.ventasHoy) }}</p>
+          } @else {
+            <h4 class="fw-bold mb-0 mt-1">-</h4>
+          }
+        </div>
+      </div>
+    </div>
     }
   </div>
+  }
 
-  <!-- Panel Comparativo Global -->
-  @if (selectedSucursalId === 'global') {
-  <section class="row g-2 mb-2">
-
-    <!-- Tarjetas Globales de Resumen -->
-    <div class="col-12">
-      <div class="row g-2">
-        <div class="col-md-4">
-          <div class="card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);">
-            <div class="card-body p-3 text-white">
-              <small class="opacity-75 text-uppercase fw-bold" style="font-size: 0.7rem;"><i class="fa-solid fa-globe me-1"></i>Total Global Hoy</small>
-              <h3 class="fw-bold mb-0 mt-1">{{ formatearMoneda(getTotalGlobalHoy()) }}</h3>
-              <small class="opacity-75">{{ todasSucursales.length }} sucursales</small>
-            </div>
+  <div class="row g-3 flex-grow-1" style="min-height: 0;">
+    <!-- Tendencias Visuales -->
+    <div class="col-lg-8 h-100 d-flex flex-column">
+      <div class="glass-card flex-grow-1 d-flex flex-column" style="min-height: 350px;">
+        <div class="p-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div>
+            <h5 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+              <i class="fa-solid fa-chart-line text-primary opacity-75"></i>
+              Tendencias de Ingresos
+            </h5>
+            <p class="text-muted small mb-0">Rendimiento comparativo de los últimos 7 días</p>
+          </div>
+          <div class="pill-tabs-container">
+            <button class="pill-tab" [class.active]="selectedPeriod === 'weekly'" (click)="setPeriod('weekly')">Semanal</button>
+            <button class="pill-tab opacity-50" disabled>Mensual</button>
           </div>
         </div>
-        <div class="col-md-4">
-          <div class="card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #064e3b 0%, #10b981 100%);">
-            <div class="card-body p-3 text-white">
-              <small class="opacity-75 text-uppercase fw-bold" style="font-size: 0.7rem;"><i class="fa-solid fa-calendar-week me-1"></i>Total Semana</small>
-              <h3 class="fw-bold mb-0 mt-1">{{ formatearMoneda(getTotalGlobalSemana()) }}</h3>
-              <small class="opacity-75">Últimos 7 días</small>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-4">
-          <div class="card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #3b0764 0%, #8b5cf6 100%);">
-            <div class="card-body p-3 text-white">
-              <small class="opacity-75 text-uppercase fw-bold" style="font-size: 0.7rem;"><i class="fa-solid fa-trophy me-1"></i>Mejor Hoy</small>
-              @if (getMejorSucursal()) {
-                <h5 class="fw-bold mb-0 mt-1 text-truncate">{{ getMejorSucursal()!.nombre }}</h5>
-                <small class="opacity-75">{{ formatearMoneda(getMejorSucursal()!.ventasHoy) }}</small>
-              } @else {
-                <h5 class="fw-bold mb-0 mt-1">-</h5>
-              }
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
 
-    <!-- Gráfica Comparativa de Barras por Sucursal -->
-    <div class="col-lg-8">
-      <div class="card border-0 shadow-sm">
-        <div class="card-header bg-white border-0 pt-3 px-3 pb-0">
-          <h6 class="fw-bold text-dark mb-0"><i class="fa-solid fa-chart-bar text-primary me-2"></i>Comparativa de Ventas por Día</h6>
-          <small class="text-muted">Últimos 7 días por sucursal</small>
-        </div>
-        <div class="card-body px-3 pb-3">
-          @if (isLoadingComparativo) {
-            <div class="d-flex justify-content-center py-4">
-              <div class="spinner-border text-primary"></div>
+        <div class="card-body px-4 pb-4 d-flex flex-column overflow-hidden flex-grow-1">
+          @if (isLoading) {
+            <div class="d-flex justify-content-center align-items-center flex-grow-1">
+              <div class="spinner-grow text-primary" role="status"></div>
             </div>
-          } @else if (sucursalesStats.length === 0) {
-            <p class="text-muted text-center py-3">Sin datos de ventas esta semana</p>
+          } @else if (chartData.length === 0) {
+            <div class="text-center flex-grow-1 d-flex flex-column justify-content-center text-muted opacity-50">
+              <i class="fa-solid fa-chart-bar fa-4x mb-3"></i>
+              <p class="fw-bold">No hay datos suficientes para generar tendencias</p>
+            </div>
           } @else {
-            <div class="d-flex align-items-end justify-content-around gap-1" style="height: 180px;">
-              @for (dia of diasSemana; track dia; let dIdx = $index) {
-                <div class="d-flex flex-column align-items-center gap-1 flex-grow-1">
-                  <div class="d-flex align-items-end gap-1 w-100 justify-content-center" style="height: 150px;">
-                    @for (suc of sucursalesStats; track suc.id; let sIdx = $index) {
-                      <div class="rounded-top flex-grow-1"
-                        style="min-height: 4px; max-width: 20px; transition: height 0.5s ease;"
-                        [style.background-color]="suc.color"
-                        [style.height.%]="suc.chartData[dIdx]?.percentage || 0"
-                        [title]="suc.nombre + ': ' + formatearMoneda(suc.chartData[dIdx]?.value || 0)">
-                      </div>
-                    }
+            <div class="d-flex align-items-end justify-content-around flex-grow-1 mt-3 gap-2 h-100 position-relative">
+              @for (data of chartData; track data.label) {
+              <div class="d-flex flex-column align-items-center gap-3 flex-grow-1 group h-100" style="max-width: 70px;">
+                <div class="bar-container w-100 flex-grow-1 d-flex align-items-end">
+                  <div class="modern-bar w-100"
+                       style="transition: height 0.8s cubic-bezier(0.17, 0.67, 0.83, 0.67);"
+                       [style.height.%]="data.percentage" 
+                       [style.opacity]="0.8 + (data.percentage / 500)">
                   </div>
-                  <small class="text-muted fw-bold" style="font-size: 0.7rem;">{{ dia }}</small>
+                  <div class="bar-tooltip">{{formatearMoneda(data.value)}}</div>
                 </div>
-              }
-            </div>
-            <!-- Leyenda de colores -->
-            <div class="d-flex flex-wrap gap-3 justify-content-center mt-2">
-              @for (suc of sucursalesStats; track suc.id) {
-                <div class="d-flex align-items-center gap-1">
-                  <div class="rounded" [style.background-color]="suc.color" style="width: 12px; height: 12px;"></div>
-                  <small class="text-muted fw-bold" style="font-size: 0.75rem;">{{ suc.nombre }}</small>
-                </div>
+                <span class="text-muted fw-bold" style="font-size: 0.7rem; font-family: 'Inter', sans-serif;">{{data.label}}</span>
+              </div>
               }
             </div>
           }
@@ -174,218 +182,103 @@
       </div>
     </div>
 
-    <!-- Tabla Ranking de Desempeño -->
-    <div class="col-lg-4">
-      <div class="card border-0 shadow-sm h-100">
-        <div class="card-header bg-dark text-white py-2 px-3">
-          <h6 class="mb-0 fw-bold"><i class="fa-solid fa-ranking-star me-2"></i>Ranking de Locales</h6>
+    <!-- Panel de Inteligencia (Top Productos / Recientes) -->
+    <div class="col-lg-4 h-100 d-flex flex-column">
+      <div class="glass-card flex-grow-1 d-flex flex-column overflow-hidden" style="min-height: 0;">
+        <div class="p-3 border-bottom border-light">
+          <div class="pill-tabs-container w-100">
+            <button class="pill-tab flex-grow-1" [class.active]="activeTab === 'products'" (click)="activeTab = 'products'">
+              <i class="fa-solid fa-crown me-1"></i> Top 5
+            </button>
+            <button class="pill-tab flex-grow-1" [class.active]="activeTab === 'transactions'" (click)="activeTab = 'transactions'">
+              <i class="fa-solid fa-history me-1"></i> Recientes
+            </button>
+          </div>
         </div>
-        <div class="list-group list-group-flush overflow-auto" style="max-height: 250px;">
-          @for (suc of sucursalesStats; track suc.id; let i = $index) {
-            <div class="list-group-item border-0 d-flex align-items-center gap-2 py-2">
-              <div class="fw-bold text-white rounded-circle d-flex align-items-center justify-content-center"
-                [style.background-color]="suc.color"
-                style="width: 28px; height: 28px; font-size: 0.8rem; flex-shrink: 0;">{{ i + 1 }}</div>
-              <div class="flex-grow-1 overflow-hidden">
-                <div class="fw-bold text-dark text-truncate small">{{ suc.nombre }}</div>
-                <small class="text-muted" style="font-size: 0.7rem;">Semana: {{ formatearMoneda(suc.ventasSemana) }}</small>
+
+        <div class="p-3 overflow-auto flex-grow-1 custom-scrollbar">
+          @if (activeTab === 'products') {
+            @if (isLoading) {
+              <div class="d-flex justify-content-center py-5">
+                <div class="spinner-border text-primary opacity-25"></div>
               </div>
-              <div class="text-end">
-                <div class="fw-bold text-dark small">{{ formatearMoneda(suc.ventasHoy) }}</div>
-                @if (suc.cajaAbierta) {
-                  <span class="badge bg-success-subtle text-success" style="font-size: 0.65rem;"><i class="fa-solid fa-circle me-1" style="font-size: 0.5rem;"></i>Abierta</span>
-                } @else {
-                  <span class="badge bg-secondary-subtle text-secondary" style="font-size: 0.65rem;">Cerrada</span>
+            } @else {
+              <div class="list-group list-group-flush">
+                @for (product of topProducts; track product.name) {
+                <div class="list-group-item border-0 bg-transparent px-0 py-3 d-flex align-items-center gap-3 transition-all hover-translate-x">
+                  <div class="rounded-pill d-flex align-items-center justify-content-center text-white fw-bold shadow-sm"
+                    style="width: 42px; height: 42px; min-width: 42px; background: linear-gradient(135deg, #6366f1, #3b82f6); font-size: 0.85rem;">
+                    {{product.initials}}
+                  </div>
+                  <div class="flex-grow-1 overflow-hidden">
+                    <h6 class="mb-0 text-truncate fw-bold small text-dark">{{product.name}}</h6>
+                    <small class="text-muted opacity-75">{{product.category}}</small>
+                  </div>
+                  <div class="text-end">
+                    <div class="fw-bold text-dark small">{{product.price}}</div>
+                    <span class="badge bg-success-subtle text-success rounded-pill fw-bold" style="font-size: 0.65rem;">
+                      {{product.sales}} vendidos
+                    </span>
+                  </div>
+                </div>
                 }
               </div>
-            </div>
-          }
-        </div>
-      </div>
-    </div>
-  </section>
-  }
-  }
-
-
-  <section class="row g-2 flex-grow-1" style="min-height: 0;">
-    <!-- min-height:0 permite scroll interno en flex items -->
-
-    <!-- Columna Izquierda: Tendencias de Ventas (8 cols) -->
-    <div class="col-lg-8 h-100 d-flex flex-column">
-      <div class="card border-0 shadow-sm flex-grow-1" style="min-height: 300px;">
-        <div
-          class="card-header bg-white border-0 pt-3 px-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
-          <div>
-            <h5 class="fw-bold text-dark mb-0">Tendencias de ventas</h5>
-            <small class="text-muted">Rendimiento en los últimos 7 días</small>
-          </div>
-          <div class="btn-group btn-group-sm">
-            <button class="btn" [class.btn-primary]="selectedPeriod === 'weekly'"
-              [class.btn-outline-light]="selectedPeriod !== 'weekly'" [class.text-dark]="selectedPeriod !== 'weekly'"
-              (click)="setPeriod('weekly')">Semanal</button>
-            <button class="btn btn-primary-outline text-dark"
-              style="opacity: 0.5; pointer-events: none;">Mensual</button>
-            <button class="btn btn-primary-outline text-dark" style="opacity: 0.5; pointer-events: none;">Anual</button>
-          </div>
-        </div>
-
-        <div class="card-body px-3 pb-3 d-flex flex-column overflow-hidden">
-          @if (isLoading) {
-          <div class="d-flex justify-content-center align-items-center flex-grow-1">
-            <div class="spinner-border text-primary" role="status"></div>
-          </div>
-          } @else if (chartData.length === 0) {
-          <div class="text-center flex-grow-1 d-flex flex-column justify-content-center text-muted">
-            <i class="fa-solid fa-chart-line fa-3x mb-3 opacity-25"></i>
-            <p>No hay datos de ventas</p>
-          </div>
-          } @else {
-          <!-- Gráfico simple con barras CSS (Flex) -->
-          <div class="d-flex align-items-end justify-content-around flex-grow-1 mt-2 border-bottom pb-2 h-100">
-            @for (data of chartData; track data.label) {
-            <div class="d-flex flex-column align-items-center gap-1 flex-grow-1 group"
-              style="max-width: 60px; height: 100%;">
-              <div
-                class="w-100 rounded-top position-relative d-flex justify-content-center bar-container h-100 d-flex align-items-end">
-                <div class="w-100 rounded-top"
-                  style="background: linear-gradient(to top, #3b82f6, #93c5fd); transition: height 0.5s ease; min-height: 4px;"
-                  [style.height.%]="data.percentage" [title]="formatearMoneda(data.value)">
-                </div>
-                <span
-                  class="position-absolute top-0 start-50 translate-middle-x badge bg-dark opacity-0 bar-tooltip mb-2">
-                  {{formatearMoneda(data.value)}}
-                </span>
-              </div>
-              <small class="text-muted fw-bold" style="font-size: 0.75rem;">{{data.label}}</small>
-            </div>
+              <button class="btn btn-light btn-sm w-100 mt-3 border rounded-pill py-2 fw-bold text-primary" (click)="viewAllItems()">
+                Analizar Inventario Completo <i class="fa-solid fa-arrow-right ms-1"></i>
+              </button>
             }
-          </div>
-          }
-        </div>
-      </div>
-    </div>
-
-    <!-- Columna Derecha: Panel de Pestañas (4 cols) -->
-    <div class="col-lg-4 h-100 d-flex flex-column">
-      <div class="card border-0 shadow-sm flex-grow-1" style="min-height: 0;">
-
-        <!-- Header de Pestañas -->
-        <div class="card-header bg-white border-0 pt-2 px-2 pb-0 flex-shrink-0">
-          <ul class="nav nav-tabs card-header-tabs border-bottom-0">
-            <li class="nav-item">
-              <a class="nav-link border-0 fw-bold small text-uppercase py-2" [class.active]="activeTab === 'products'"
-                [class.text-primary]="activeTab === 'products'" [class.text-muted]="activeTab !== 'products'"
-                style="cursor: pointer;" (click)="activeTab = 'products'">
-                <i class="fa-solid fa-star me-1"></i> Top Productos
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link border-0 fw-bold small text-uppercase py-2"
-                [class.active]="activeTab === 'transactions'" [class.text-primary]="activeTab === 'transactions'"
-                [class.text-muted]="activeTab !== 'transactions'" style="cursor: pointer;"
-                (click)="activeTab = 'transactions'">
-                <i class="fa-solid fa-clock-rotate-left me-1"></i> Recientes
-              </a>
-            </li>
-          </ul>
-        </div>
-
-        <!-- Contenido Scrollable Independiente -->
-        <div class="card-body px-3 py-2 overflow-auto flex-grow-1">
-
-          <!-- CONTENIDO TAB 1: PRODUCTOS -->
-          @if (activeTab === 'products') {
-          @if (isLoading) {
-          <div class="d-flex justify-content-center py-4">
-            <div class="spinner-border spinner-border-sm text-primary"></div>
-          </div>
-          } @else if (topProducts.length === 0) {
-          <div class="text-center py-4 text-muted small">No hay datos</div>
-          } @else {
-          <div class="list-group list-group-flush">
-            @for (product of topProducts; track product.name) {
-            <div class="list-group-item border-0 px-0 py-2 d-flex align-items-center gap-2">
-              <div class="rounded-3 d-flex align-items-center justify-content-center text-white fw-bold shadow-sm"
-                style="width: 36px; height: 36px; background: linear-gradient(135deg, #3b82f6, #2563eb); font-size: 0.8rem;">
-                {{product.initials}}
-              </div>
-              <div class="flex-grow-1 overflow-hidden" style="line-height: 1.2;">
-                <h6 class="mb-0 text-truncate fw-semibold small">{{product.name}}</h6>
-                <small class="text-muted" style="font-size: 0.7rem;">{{product.category}}</small>
-              </div>
-              <div class="text-end" style="line-height: 1.2;">
-                <div class="fw-bold text-dark small">{{product.price}}</div>
-                <small class="text-success fw-bold" style="font-size: 0.7rem;">{{product.sales}}</small>
-              </div>
-            </div>
-            }
-          </div>
-          <button class="btn btn-outline-primary btn-sm w-100 mt-2" (click)="viewAllItems()">Ver todo</button>
-          }
           }
 
-          <!-- CONTENIDO TAB 2: TRANSACCIONES -->
           @if (activeTab === 'transactions') {
-          @if (isLoading) {
-          <div class="d-flex justify-content-center py-4">
-            <div class="spinner-border spinner-border-sm text-primary"></div>
-          </div>
-          } @else if (transactions.length === 0) {
-          <div class="text-center py-4 text-muted small">No hay transacciones</div>
-          } @else {
-          <div class="list-group list-group-flush">
             @for (t of transactions; track t.id) {
-            <div class="list-group-item border-0 px-0 py-2 d-flex align-items-center justify-content-between">
-              <div class="d-flex flex-column" style="line-height: 1.2;">
-                <span class="fw-bold text-dark small">#{{t.id}}</span>
-                <small class="text-muted" style="font-size: 0.75rem;">{{t.customer}}</small>
-                <small class="text-muted" style="font-size: 0.7rem;">{{t.date}}</small>
+            <div class="p-3 rounded-4 bg-light bg-opacity-50 mb-3 d-flex align-items-center justify-content-between border border-white">
+              <div class="d-flex flex-column gap-1">
+                <div class="d-flex align-items-center gap-2">
+                   <span class="fw-bold text-dark small">ORD-{{t.id}}</span>
+                   <span class="badge" style="font-size: 0.6rem;"
+                      [class.bg-success]="t.status === 'completed'" 
+                      [class.bg-warning]="t.status !== 'completed'">
+                      &nbsp;
+                   </span>
+                </div>
+                <small class="text-muted fw-medium">{{t.date}}</small>
               </div>
-              <div class="text-end d-flex flex-column align-items-end" style="line-height: 1.2;">
-                <span class="fw-bold text-primary small">{{t.total}}</span>
-                <span class="badge rounded-pill" style="font-size: 0.65rem;"
-                  [class.bg-success-subtle]="t.status === 'completed'" [class.text-success]="t.status === 'completed'"
-                  [class.bg-warning-subtle]="t.status !== 'completed'" [class.text-warning]="t.status !== 'completed'">
-                  {{t.status === 'completed' ? 'PAGADO' : 'PENDIENTE'}}
-                </span>
+              <div class="text-end">
+                <div class="fw-bold text-primary">{{t.total}}</div>
+                <small class="text-muted text-truncate d-block" style="max-width: 100px;">{{t.customer}}</small>
               </div>
             </div>
             }
-          </div>
-          <button class="btn btn-outline-secondary btn-sm w-100 mt-2" (click)="exportReport()">
-            <i class="fa-solid fa-download me-1"></i> Exportar
-          </button>
+            <button class="btn btn-outline-secondary btn-sm w-100 mt-2 rounded-pill border-dashed" (click)="exportReport()">
+              <i class="fa-solid fa-file-export me-1"></i> Reporte Detallado
+            </button>
           }
-          }
-
         </div>
       </div>
     </div>
-  </section>
+  </div>
 
+  <!-- Gestión Fiscal DGII (Premium Card) -->
   @if (modoFiscalActivo) {
-  <section class="mt-2 mb-2">
-    <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #fff 0%, #fffbeb 100%);">
-      <div class="card-body p-3 d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+  <section class="mt-4">
+    <div class="glass-card p-1 overflow-hidden" style="background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,251,235,0.95) 100%);">
+      <div class="p-3 d-flex flex-column flex-md-row justify-content-between align-items-center gap-4">
         <div class="d-flex align-items-center gap-3">
-          <div class="rounded-circle p-2 d-flex align-items-center justify-content-center"
-            style="background:#fef3c7; color:#d97706; width:45px; height:45px;">
-            <i class="fa-solid fa-file-invoice-dollar fs-4"></i>
+          <div class="rounded-4 p-3 d-flex align-items-center justify-content-center shadow-sm"
+               style="background:#fef3c7; color:#d97706;">
+            <i class="fa-solid fa-file-signature fs-3"></i>
           </div>
           <div>
-            <h6 class="fw-bold mb-0" style="color:#92400e;">Gestión Fiscal (DGII)</h6>
-            <small class="text-muted">Genera y exporta tus formatos 606 y 607 mensualmente.</small>
+            <h5 class="fw-bold mb-0 text-dark">Gestión Fiscal (DGII)</h5>
+            <p class="text-muted small mb-0">Automatización de formatos 606 y 607 para el cumplimiento tributario.</p>
           </div>
         </div>
         <div class="d-flex gap-2 w-100 w-md-auto">
-          <button (click)="generarReporte606()" class="btn btn-sm px-3 flex-fill"
-            style="background:#fde68a; color:#92400e; border:1px solid #fcd34d; font-weight:600;">
-            <i class="fa-solid fa-download me-1"></i> Reporte 606 (Compras)
+          <button (click)="generarReporte606()" class="btn btn-warning-subtle text-dark-orange border-0 rounded-pill px-4 py-2 fw-bold shadow-sm">
+            <i class="fa-solid fa-cloud-arrow-down me-1"></i> 606
           </button>
-          <button (click)="generarReporte607()" class="btn btn-sm px-3 flex-fill"
-            style="background:#fde68a; color:#92400e; border:1px solid #fcd34d; font-weight:600;">
-            <i class="fa-solid fa-download me-1"></i> Reporte 607 (Ventas)
+          <button (click)="generarReporte607()" class="btn btn-warning text-dark border-0 rounded-pill px-4 py-2 fw-bold shadow-sm">
+            <i class="fa-solid fa-cloud-arrow-up me-1"></i> 607
           </button>
         </div>
       </div>

@@ -21,7 +21,14 @@ export class ComprasService {
     private authService: AuthService,
     private sucursalService: SucursalService
   ) {
-    this.cargarCompras().catch(err => console.error('Error in initial cargarCompras:', err));
+    // Load purchases reactively when active branch changes (avoids startup crash)
+    this.sucursalService.sucursalActiva$.subscribe(sucursal => {
+      if (sucursal) {
+        this.cargarCompras().catch(err => console.error('Error in cargarCompras:', err));
+      } else {
+        this.comprasSubject.next([]);
+      }
+    });
   }
 
   // Cargar todas las compras

@@ -18,9 +18,14 @@
         </div>
 
         @if (cuenta) {
-        <span [class]="obtenerClaseEstado(cuenta.estado)">
-            {{ cuenta.estado | uppercase }}
-        </span>
+        <div class="d-flex align-items-center gap-3">
+            <button (click)="imprimir()" class="btn btn-outline-dark btn-sm shadow-sm" title="Imprimir Detalle">
+                <i class="fa-solid fa-print me-1"></i> Imprimir
+            </button>
+            <span [class]="obtenerClaseEstado(cuenta.estado)">
+                {{ cuenta.estado | uppercase }}
+            </span>
+        </div>
         }
     </header>
 

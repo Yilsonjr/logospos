@@ -1,7 +1,8 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, Router } from '@angular/router';
+import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import { AuthService } from '../../services/auth.service';
 import { SidebarService } from '../../services/sidebar.service';
 import { ProductosService } from '../../services/productos.service';
@@ -11,6 +12,7 @@ import { Sucursal } from '../../models/sucursal.model';
 
 @Component({
   selector: 'app-navbar',
+  standalone: true,
   imports: [CommonModule, RouterModule],
   templateUrl: './navbar.component.html',
   styleUrl: './navbar.component.css',
@@ -41,12 +43,20 @@ export class NavbarComponent implements OnInit, OnDestroy {
     // Suscribirse al estado del sidebar
     const sidebarSub = this.sidebarService.isCollapsed$.subscribe(collapsed => {
       this.isCollapsed = collapsed;
+      // Al colapsar el sidebar, cerramos todos los menús para que al re-abrir esté limpio
+      if (collapsed) {
+        this.menuItemsFiltrados.forEach(item => item.expanded = false);
+      } else {
+        // Al expandir, re-activamos el menú de la ruta actual
+        this.expandirMenuPorRuta(this.router.url);
+      }
     });
 
     // Suscribirse al estado de autenticación
     const authSub = this.authService.authState$.subscribe(authState => {
       this.usuario = authState.usuario;
       this.filtrarMenuPorPermisos();
+      this.expandirMenuPorRuta(this.router.url);
     });
 
     // Suscribirse a productos para detectar stock bajo
@@ -64,7 +74,14 @@ export class NavbarComponent implements OnInit, OnDestroy {
       this.sucursalesAsignadas = sucursales;
     });
 
-    this.subscriptions.push(sidebarSub, authSub, productosSub, sucursalActivaSub, sucursalesSub);
+    // Suscribirse a eventos de navegación para expandir el menú correcto automáticamente
+    const routerSub = this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd)
+    ).subscribe((event: any) => {
+      this.expandirMenuPorRuta(event.urlAfterRedirects || event.url);
+    });
+
+    this.subscriptions.push(sidebarSub, authSub, productosSub, sucursalActivaSub, sucursalesSub, routerSub);
   }
 
   ngOnDestroy() {
@@ -248,6 +265,20 @@ export class NavbarComponent implements OnInit, OnDestroy {
     });
   }
 
+  expandirMenuPorRuta(url: string) {
+    if (this.isCollapsed) return;
+    
+    this.menuItemsFiltrados.forEach(item => {
+      if (item.submenu) {
+        // Verificar si alguna subruta coincide con la URL actual
+        const isSubRouteActive = item.submenu.some((sub: any) => url.startsWith(sub.link));
+        if (isSubRouteActive) {
+          item.expanded = true;
+        }
+      }
+    });
+  }
+
   toggleMobileMenu() {
     this.isMobileMenuOpen = !this.isMobileMenuOpen;
   }
@@ -257,13 +288,19 @@ export class NavbarComponent implements OnInit, OnDestroy {
   }
 
   toggleSubmenu(item: any) {
-    if (this.isCollapsed) {
-      // Si está colapsado y hacen clic en un elemento con submenú, expandimos el sidebar
+    const isOpening = !item.expanded;
+    
+    // Acordeón: Cerrar todos los demás menús antes de abrir el nuevo
+    this.menuItemsFiltrados.forEach(i => {
+      if (i !== item) i.expanded = false;
+    });
+
+    if (this.isCollapsed && isOpening) {
+      // Si está colapsado y queremos abrir un menú, expandimos el sidebar primero
       this.sidebarService.toggleSidebar();
-      item.expanded = true;
-    } else {
-      item.expanded = !item.expanded;
     }
+    
+    item.expanded = isOpening;
   }
 
   handleMenuClick(event: Event, item: any) {
@@ -271,9 +308,17 @@ export class NavbarComponent implements OnInit, OnDestroy {
       event.preventDefault(); // Prevenir navegación si tiene submenu
       this.toggleSubmenu(item);
     } else {
-      // Si hacen clic en un elemento principal sin submenú mientras está colapsado en movil, no hace falta expandir (navega directo)
-      // Pero si quisieran cerrarlo en móvil, el overlay ya existe.
+      // Si no tiene submenu, es una opción directa -> colapsar sidebar
+      this.onOptionSelected();
     }
+  }
+
+  // Se llama cuando el usuario selecciona una opción final (link o sublink)
+  onOptionSelected() {
+    // Colapsar el sidebar (esto lo oculta en móvil o lo reduce en desktop según la lógica del service)
+    this.sidebarService.setCollapsed(true);
+    // Limpiar estados expandidos para que al volver a abrir esté limpio
+    this.menuItemsFiltrados.forEach(item => item.expanded = false);
   }
 
   // Ir al perfil
@@ -311,7 +356,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
       const encontrada = this.sucursalesAsignadas.find(s => s.id?.toString() === sucursalId.toString());
       if (encontrada) {
         this.sucursalService.setSucursalActiva(encontrada, true);
-        window.location.reload(); // Hard reload to refresh all context across the app
+        window.location.reload(); 
       }
       this.cambiandoSucursal = false;
     }, 150);

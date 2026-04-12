@@ -46,6 +46,10 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
   mostrarAutocomplete: boolean = false;
   selectedAutocompleteIndex: number = 0;
 
+  // Lector de Códigos de Barras
+  private barcodeBuffer: string = '';
+  private lastKeyTime: number = 0;
+
   // Categorías y filtros (dinámicas desde BD)
   categoriaSeleccionada: string = 'all';
   categorias: Array<{ id: string; nombre: string; icono: string; color: string }> = [
@@ -216,9 +220,41 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
-  // Listener global para atajos de teclado
+  // Listener global para atajos de teclado y Escáner de Códigos
   @HostListener('document:keydown', ['$event'])
   onKeyDown(event: KeyboardEvent) {
+    // === 1. LÓGICA DE ESCÁNER DE CÓDIGO DE BARRAS ===
+    const currentTime = new Date().getTime();
+    const timeDelta = currentTime - this.lastKeyTime;
+
+    // Si la tecla es un solo carácter imprimible
+    if (event.key.length === 1 && !event.ctrlKey && !event.altKey && !event.metaKey) {
+      if (timeDelta > 50) {
+        // Si fue muy lento, probablemente es un humano digitando, reiniciamos el buffer
+        this.barcodeBuffer = event.key;
+      } else {
+        // Escáner leyendo a toda velocidad
+        this.barcodeBuffer += event.key;
+      }
+      this.lastKeyTime = currentTime;
+    } else if (event.key === 'Enter') {
+      // Si recibimos 'Enter' (fin de lectura de la mayoría de los escáneres)
+      // y el buffer llegó suficientemente rápido y tiene una longitud razonable
+      if (timeDelta <= 50 && this.barcodeBuffer.length >= 3) {
+        event.preventDefault(); // Prevenir submit accidental de algún formulario activo
+        this.procesarCodigoEscaneado(this.barcodeBuffer);
+        this.barcodeBuffer = '';
+        return; // Salir de inmediato para no desencadenar otras acciones de Enter
+      } else {
+        // Si fue Enter pero lento, reseteamos porque fue un humano.
+        this.barcodeBuffer = '';
+      }
+    } else if (event.key !== 'Shift') {
+       // Otras teclas (Backspace, Tab, etc.) resetean el buffer
+       this.barcodeBuffer = '';
+    }
+
+    // === 2. ATAJOS DE TECLADO ===
     // F5 = Focus en búsqueda
     if (event.key === 'F5') {
       event.preventDefault();
@@ -237,12 +273,69 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
       this.limpiarCarrito();
     }
 
-    // ESC = Cerrar modal de pago
-    if (event.key === 'Escape' && this.mostrarPago) {
-      event.preventDefault();
-      this.cerrarModalPago();
+    // ESC = Cerrar modal de pago o autocompletado
+    if (event.key === 'Escape') {
+      if (this.mostrarPago) {
+        event.preventDefault();
+        this.cerrarModalPago();
+      } else if (this.mostrarAutocomplete) {
+        this.limpiarBusqueda();
+      }
     }
   }
+
+  // Cierra modal de pago
+  cerrarModalPago() {
+    this.mostrarPago = false;
+  }
+
+  // Función para procesar un producto proveniente del ESCÁNER DE BARRAS
+  async procesarCodigoEscaneado(codigo: string) {
+    const codigoLimpio = codigo.trim().toLowerCase();
+    
+    // Buscar en el array completo de productos por código de barra o SKU
+    const productoEncontrado = this.productos.find(p => 
+      p.codigo_barras?.toLowerCase() === codigoLimpio || 
+      p.sku?.toLowerCase() === codigoLimpio
+    );
+
+    if (productoEncontrado) {
+      // Reproducir sonido silencioso (opcional, muy leve)
+      this.agregarAlCarrito(productoEncontrado);
+      
+      // Feedback visual rápido
+      const Toast = Swal.mixin({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 1000,
+        timerProgressBar: true,
+        background: '#10b981',
+        color: '#fff'
+      });
+      Toast.fire({
+        icon: 'success',
+        title: `Escaneado: ${productoEncontrado.nombre}`
+      });
+
+      // Limpiamos la barra de búsqueda para que no se raye si tenía el focus
+      this.limpiarBusqueda();
+    } else {
+      const Toast = Swal.mixin({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 2000,
+        background: '#ef4444',
+        color: '#fff'
+      });
+      Toast.fire({
+        icon: 'error',
+        title: `Código no encontrado: ${codigo}`
+      });
+    }
+  }
+
 
   async cargarDatos() {
     this.cargando = true;
@@ -836,8 +929,4 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
     return '📦'; // Icono por defecto
   }
 
-  // Cerrar modal de pago
-  cerrarModalPago() {
-    this.mostrarPago = false;
-  }
 }

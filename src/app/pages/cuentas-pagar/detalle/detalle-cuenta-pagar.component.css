@@ -59,3 +59,78 @@
     background-color: #f1f5f9;
     border-color: #e2e8f0;
 }
+
+/* Print Styles */
+@media print {
+    :host {
+        height: auto !important;
+        background-color: white !important;
+    }
+
+    .container-fluid {
+        padding: 0 !important;
+        background: white !important;
+    }
+
+    header {
+        margin-bottom: 2rem !important;
+        border-bottom: 2px solid #334155 !important;
+        box-shadow: none !important;
+        padding: 0 0 1rem 0 !important;
+    }
+
+    header a, 
+    header button,
+    .btn-outline-danger,
+    .btn-sm[title="Eliminar pago"],
+    .flex-shrink-0 {
+        display: none !important;
+    }
+
+    .card {
+        border: 1px solid #e2e8f0 !important;
+        box-shadow: none !important;
+        margin-bottom: 1.5rem !important;
+        break-inside: avoid;
+        transform: none !important;
+    }
+
+    .card-header {
+        background-color: #f8fafc !important;
+        border-bottom: 1px solid #e2e8f0 !important;
+    }
+
+    .bg-dark {
+        background-color: #1e293b !important;
+        color: white !important;
+        -webkit-print-color-adjust: exact;
+    }
+
+    .table-responsive {
+        overflow: visible !important;
+    }
+
+    table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+    }
+
+    th, td {
+        border-bottom: 1px solid #e2e8f0 !important;
+        padding: 10px !important;
+    }
+
+    .text-success { color: #16a34a !important; }
+    .text-danger { color: #dc2626 !important; }
+
+    /* Force background colors */
+    .badge {
+        border: 1px solid #ddd !important;
+        -webkit-print-color-adjust: exact;
+    }
+
+    .overflow-auto {
+        overflow: visible !important;
+        height: auto !important;
+    }
+}

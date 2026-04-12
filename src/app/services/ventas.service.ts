@@ -30,7 +30,14 @@ export class VentasService {
     private injector: Injector,
     private auditoriaService: AuditoriaService
   ) {
-    this.cargarVentas().catch(err => console.error('Error in initial cargarVentas:', err));
+    // Load sales reactively when active branch changes (avoids startup crash)
+    this.sucursalService.sucursalActiva$.subscribe(sucursal => {
+      if (sucursal) {
+        this.cargarVentas().catch(err => console.error('Error in cargarVentas:', err));
+      } else {
+        this.ventasSubject.next([]);
+      }
+    });
   }
 
   private get syncService(): SyncService {

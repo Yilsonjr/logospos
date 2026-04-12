@@ -62,4 +62,8 @@ export class PlanPagosComponent implements OnInit {
     calcularTotalProyeccion(): number {
         return this.plan.reduce((sum, p) => sum + p.monto_total, 0);
     }
+
+    imprimir() {
+        window.print();
+    }
 }

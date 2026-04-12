@@ -52,25 +52,88 @@
 }
 
 @media print {
-
-    .bg-light,
-    .min-vh-100 {
+    :host {
+        height: auto !important;
         background-color: white !important;
     }
 
-    header,
-    .col-lg-4,
-    footer,
-    .btn {
+    .container-fluid {
+        padding: 0 !important;
+        background: white !important;
+    }
+
+    header {
+        margin-bottom: 2rem !important;
+        border-bottom: 2px solid #334155 !important;
+        box-shadow: none !important;
+        padding: 0 0 1rem 0 !important;
+    }
+
+    header a, 
+    header button,
+    header .d-flex.align-items-center.gap-2, /* Hide the "Proyectar a" select */
+    .btn,
+    .sticky-top .card:last-child { /* Hide the "Detalle de Compromisos" helper card */
         display: none !important;
     }
 
-    .col-lg-8 {
+    .row {
+        display: block !important;
+    }
+
+    .col-lg-8, .col-lg-4 {
         width: 100% !important;
+        display: block !important;
+    }
+
+    /* Move the summary to the top in print */
+    .col-lg-4 {
+        order: -1 !important;
+        margin-bottom: 2rem !important;
+    }
+
+    .bg-primary {
+        background-color: #1e40af !important;
+        color: white !important;
+        -webkit-print-color-adjust: exact;
     }
 
     .card {
-        box-shadow: none !important;
         border: 1px solid #e2e8f0 !important;
+        box-shadow: none !important;
+        margin-bottom: 1.5rem !important;
+        break-inside: avoid;
+        transform: none !important;
+    }
+
+    .card-header {
+        background-color: #f8fafc !important;
+        border-bottom: 1px solid #e2e8f0 !important;
+    }
+
+    .table-responsive {
+        overflow: visible !important;
+    }
+
+    table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+    }
+
+    th, td {
+        border-bottom: 1px solid #e2e8f0 !important;
+        padding: 10px !important;
+    }
+
+    .text-danger { color: #dc2626 !important; }
+    .text-success { color: #16a34a !important; }
+
+    .overflow-auto {
+        overflow: visible !important;
+        height: auto !important;
+    }
+
+    .timeline-item {
+        margin-bottom: 2rem !important;
     }
 }

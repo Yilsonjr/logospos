@@ -93,4 +93,8 @@ export class DetalleCuentaPagarComponent implements OnInit {
             default: return base + 'bg-secondary-subtle text-secondary border-secondary-subtle';
         }
     }
+
+    imprimir() {
+        window.print();
+    }
 }

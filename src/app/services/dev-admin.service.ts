@@ -14,10 +14,12 @@ export interface Tenant {
     logo_url?: string;
     plan_slug: string;
     estado: 'activo' | 'suspendido' | 'vencido';
+    features_override?: Record<string, boolean>; // Per-tenant Pro feature overrides
     created_at?: string;
     updated_at?: string;
     // Joined data
     plan_nombre?: string;
+    plan_features?: Record<string, boolean>;
     total_usuarios?: number;
     total_productos?: number;
 }
@@ -129,12 +131,42 @@ export class DevAdminService {
             return {
                 ...data,
                 plan_nombre: data.planes?.nombre || data.plan_slug,
+                plan_features: data.planes?.features || {},
+                features_override: data.features_override || {},
                 total_usuarios: usuarios.count || 0,
                 total_productos: productos.count || 0
             };
         } catch (error) {
             console.error('Error al obtener tenant:', error);
             return null;
+        }
+    }
+
+    /**
+     * Returns the effective features for a tenant:
+     * Plan features merged with per-tenant overrides.
+     * Overrides can enable or disable individual features.
+     */
+    obtenerFeaturesEfectivas(tenant: Tenant): Record<string, boolean> {
+        const planFeatures = tenant.plan_features || {};
+        const overrides = tenant.features_override || {};
+        return { ...planFeatures, ...overrides };
+    }
+
+    /**
+     * Save per-tenant feature overrides to the database.
+     * These overrides are merged on top of the plan's default features.
+     */
+    async guardarFeaturesOverride(tenantId: string, overrides: Record<string, boolean>): Promise<void> {
+        try {
+            const { error } = await this.supabaseService.client
+                .from('tenants')
+                .update({ features_override: overrides })
+                .eq('id', tenantId);
+            if (error) throw error;
+        } catch (error) {
+            console.error('Error al guardar features override:', error);
+            throw error;
         }
     }
 

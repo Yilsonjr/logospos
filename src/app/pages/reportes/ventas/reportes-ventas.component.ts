@@ -1,15 +1,19 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { VentasService } from '../../../services/ventas.service';
 import { FiscalService } from '../../../services/fiscal.service';
 import { Venta } from '../../../models/ventas.model';
 import { Subscription } from 'rxjs';
+import { ChartConfiguration, ChartOptions, Chart, registerables } from 'chart.js';
+import { BaseChartDirective } from 'ng2-charts';
+
+Chart.register(...registerables);
 
 @Component({
     selector: 'app-reportes-ventas',
     standalone: true,
-    imports: [CommonModule, FormsModule],
+    imports: [CommonModule, FormsModule, BaseChartDirective],
     templateUrl: './reportes-ventas.component.html',
     styleUrls: ['./reportes-ventas.component.css']
 })
@@ -28,6 +32,54 @@ export class ReportesVentasComponent implements OnInit, OnDestroy {
     totalTransacciones = 0;
     ticketPromedio = 0;
 
+    // Charts Config
+    @ViewChild(BaseChartDirective) chart: BaseChartDirective | undefined;
+
+    // Line Chart (Ventas Diarias)
+    public lineChartData: ChartConfiguration<'line'>['data'] = {
+        labels: [],
+        datasets: [
+            {
+                data: [],
+                label: 'Ventas 💰',
+                fill: true,
+                tension: 0.4,
+                borderColor: 'rgba(59, 130, 246, 1)', // Azul primary
+                backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                pointBackgroundColor: 'rgba(59, 130, 246, 1)',
+            }
+        ]
+    };
+    public lineChartOptions: ChartOptions<'line'> = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+            y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } },
+            x: { grid: { display: false } }
+        }
+    };
+
+    // Doughnut Chart (Medios de Pago)
+    public doughnutChartData: ChartConfiguration<'doughnut'>['data'] = {
+        labels: ['Efectivo', 'Tarjeta/Transf.'],
+        datasets: [
+            {
+                data: [0, 0],
+                backgroundColor: ['#10b981', '#6366f1'], // Verde y Indigo
+                borderWidth: 0,
+                hoverOffset: 4
+            }
+        ]
+    };
+    public doughnutChartOptions: ChartOptions<'doughnut'> = {
+        responsive: true,
+        plugins: {
+            legend: { position: 'bottom' }
+        },
+        cutout: '70%'
+    };
+
     private subscriptions: Subscription[] = [];
 
     constructor(
@@ -35,21 +87,26 @@ export class ReportesVentasComponent implements OnInit, OnDestroy {
         private fiscalService: FiscalService,
         private cdr: ChangeDetectorRef
     ) {
-        // Inicializar fechas: Desde inicio (ej: 2024-01-01) hasta hoy
+        // Inicializar fechas: Últimos 30 días por defecto (más rápido que cargar todo)
         const hoy = new Date();
+        const hace30Dias = new Date();
+        hace30Dias.setDate(hoy.getDate() - 30);
         this.fechaFin = hoy.toISOString().split('T')[0];
-        this.fechaInicio = '2024-01-01'; // "Desde su inicio"
+        this.fechaInicio = hace30Dias.toISOString().split('T')[0];
     }
 
     ngOnInit() {
         console.log('📊 Iniciando Reporte de Ventas Reactivo...');
 
-        // Suscribirse al stream de ventas
+        // Suscribirse al stream de ventas (refleja actualizaciones en tiempo real desde otras secciones)
         const salesSub = this.ventasService.ventas$.subscribe(ventas => {
-            console.log(`📦 Reporte recibió ${ventas.length} ventas`);
-            this.ventas = ventas;
-            this.aplicarFiltrosYCalcular();
-            this.cdr.detectChanges();
+            if (ventas.length > 0) {
+                // Solo mostramos las ventas que ya están en el store (no recargamos, ya están filtradas)
+                this.ventas = ventas;
+                this.aplicarFiltrosYCalcular();
+                this.isLoading = false;
+                this.cdr.detectChanges();
+            }
         });
 
         const fiscalSub = this.fiscalService.config$.subscribe(config => {
@@ -59,7 +116,7 @@ export class ReportesVentasComponent implements OnInit, OnDestroy {
 
         this.subscriptions.push(salesSub, fiscalSub);
 
-        // Carga inicial cargando "todo" (limitado a 5000 para no saturar, pero cubriendo "inicio")
+        // Carga inicial con filtro de fecha para evitar traer miles de registros
         this.cargarReporte();
     }
 
@@ -70,12 +127,23 @@ export class ReportesVentasComponent implements OnInit, OnDestroy {
     async cargarReporte() {
         this.isLoading = true;
         this.cdr.detectChanges();
+        
+        // Timeout de seguridad: si tarda más de 15s, dejar de mostrar spinner
+        const timeoutId = setTimeout(() => {
+            if (this.isLoading) {
+                this.isLoading = false;
+                this.cdr.detectChanges();
+                console.warn('⚠️ Reporte: timeout al cargar datos');
+            }
+        }, 15000);
+
         try {
-            // Cargamos un lote grande para asegurar que tenemos "todo" desde el inicio
-            await this.ventasService.cargarVentas(2000);
+            // Cargar con límite razonable (500 max) para evitar peticiones masivas
+            await this.ventasService.cargarVentas(500);
         } catch (error) {
             console.error('Error al cargar reporte de ventas:', error);
         } finally {
+            clearTimeout(timeoutId);
             this.isLoading = false;
             this.cdr.detectChanges();
         }
@@ -121,7 +189,37 @@ export class ReportesVentasComponent implements OnInit, OnDestroy {
         });
 
         this.ticketPromedio = this.totalTransacciones > 0 ? this.totalVentas / this.totalTransacciones : 0;
+        
+        // Actualizar Gráficos
+        this.actualizarGraficos(ventasInteres);
+        
         this.cdr.detectChanges();
+    }
+
+    actualizarGraficos(ventas: Venta[]) {
+        // Doughnut: Medios de pago
+        this.doughnutChartData.datasets[0].data = [this.totalEfectivo, this.totalTarjeta];
+
+        // Line: Agrupación por días
+        const ventasPorDia = new Map<string, number>();
+        
+        // Ordenamos ventas por fecha ascendente para el chart
+        const ventasOrdenadas = [...ventas].sort((a, b) => 
+            new Date(a.created_at || '').getTime() - new Date(b.created_at || '').getTime()
+        );
+
+        ventasOrdenadas.forEach(v => {
+            if (v.estado === 'completada') {
+                const diaStr = new Date(v.created_at || '').toLocaleDateString('es-DO', { day: '2-digit', month: 'short' });
+                ventasPorDia.set(diaStr, (ventasPorDia.get(diaStr) || 0) + v.total);
+            }
+        });
+
+        this.lineChartData.labels = Array.from(ventasPorDia.keys());
+        this.lineChartData.datasets[0].data = Array.from(ventasPorDia.values());
+
+        // Forzar actualización del componente gráfico
+        this.chart?.update();
     }
 
     exportarReporte() {

@@ -23,7 +23,14 @@ export class ProductosService {
     private dbService: DbService,
     private auditoriaService: AuditoriaService
   ) {
-    this.cargarProductos().catch(err => console.error('Error in initial cargarProductos:', err));
+    // Load products reactively when the active branch changes (avoids startup crash)
+    this.sucursalService.sucursalActiva$.subscribe(sucursal => {
+      if (sucursal) {
+        this.cargarProductos().catch(err => console.error('Error in cargarProductos:', err));
+      } else {
+        this.productosSubject.next([]);
+      }
+    });
   }
 
   private get syncService(): SyncService {

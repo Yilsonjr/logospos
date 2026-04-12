@@ -25,8 +25,16 @@ export class CajaService {
     private authService: AuthService,
     private sucursalService: SucursalService
   ) {
+    // verificarCajaAbierta only needs a logged in user (no branch required)
     this.verificarCajaAbierta().catch(err => console.error('Error inicializando caja:', err));
-    this.cargarHistorial().catch(err => console.error('Error cargando historial de caja:', err));
+    // cargarHistorial needs a branch; subscribe reactively
+    this.sucursalService.sucursalActiva$.subscribe(sucursal => {
+      if (sucursal) {
+        this.cargarHistorial().catch(err => console.error('Error cargando historial de caja:', err));
+      } else {
+        this.cajasSubject.next([]);
+      }
+    });
   }
 
   // Verificar si hay una caja abierta (evita llamadas duplicadas simultáneas)
