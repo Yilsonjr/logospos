@@ -47,6 +47,7 @@ export class ProductosService {
         return;
       }
       const sucursalId = this.sucursalService.getSucursalActivaIdOrThrow();
+      const tenantId = this.tenantService.getTenantIdOrThrow();
 
       const { data, error } = await this.supabaseService.client
         .from('productos')
@@ -55,14 +56,16 @@ export class ProductosService {
           categorias (
             nombre
           ),
-          stock_sucursales!inner (
+          stock_sucursales!left (
             cantidad,
             stock_minimo,
-            precio_venta_override
+            precio_venta_override,
+            sucursal_id
           )
         `)
-        .eq('stock_sucursales.sucursal_id', sucursalId)
-        .order('created_at', { ascending: false });
+        .eq('tenant_id', tenantId)
+        .eq('activo', true)
+        .order('nombre', { ascending: true });
 
       if (error) {
         console.error('Error al cargar productos:', error);
@@ -71,7 +74,9 @@ export class ProductosService {
 
       // Mapear los datos para aplanar la estructura de categoría y normalizar stock por sucursal
       const productosMapeados = (data || []).map((prod: any) => {
-        const stockData = Array.isArray(prod.stock_sucursales) ? prod.stock_sucursales[0] : prod.stock_sucursales;
+        // Buscar el stock correspondiente a la sucursal activa específicamente
+        const stockArray = Array.isArray(prod.stock_sucursales) ? prod.stock_sucursales : (prod.stock_sucursales ? [prod.stock_sucursales] : []);
+        const stockData = stockArray.find((s: any) => s.sucursal_id === sucursalId) || stockArray[0] || null;
         return {
           ...prod,
           categoria: prod.categorias?.nombre || 'Sin Categoría',

@@ -7,6 +7,7 @@ import { LoginComponent } from './pages/auth/login/login.component';
 import { AuthGuard } from './guards/auth.guard';
 import { PermissionGuard } from './guards/permission.guard';
 import { DevAdminGuard } from './guards/dev-admin.guard';
+import { FeatureGuard } from './guards/feature.guard';
 
 export const routes: Routes = [
     // Ruta de Login (sin protección, Eager Load para renderizado inmediato)
@@ -260,8 +261,8 @@ export const routes: Routes = [
     {
         path: 'admin/sucursales',
         loadComponent: () => import('./pages/admin/sucursales/sucursales.component').then(m => m.SucursalesComponent),
-        canActivate: [AuthGuard, PermissionGuard],
-        data: { permissions: ['config.general'] }
+        canActivate: [AuthGuard, PermissionGuard, FeatureGuard],
+        data: { permissions: ['config.general'], feature: 'multi_sucursal' }
     },
     {
         path: 'admin/auditoria',

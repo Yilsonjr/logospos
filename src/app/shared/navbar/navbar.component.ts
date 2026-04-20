@@ -7,6 +7,7 @@ import { AuthService } from '../../services/auth.service';
 import { SidebarService } from '../../services/sidebar.service';
 import { ProductosService } from '../../services/productos.service';
 import { SucursalService } from '../../services/sucursal.service';
+import { TenantService } from '../../services/tenant.service';
 import { Usuario } from '../../models/usuario.model';
 import { Sucursal } from '../../models/sucursal.model';
 
@@ -33,6 +34,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     private sidebarService: SidebarService,
     private productosService: ProductosService,
     private sucursalService: SucursalService,
+    private tenantService: TenantService,
     private router: Router
   ) {
     // Cargar estado inicial del sidebar
@@ -189,7 +191,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
       submenu: [
         { label: 'Usuarios', link: '/admin/usuarios', icon: 'fa-solid fa-users', permissions: ['usuarios.ver'] },
         { label: 'Roles', link: '/admin/roles', icon: 'fa-solid fa-user-tag', permissions: ['roles.ver'] },
-        { label: 'Sucursales', link: '/admin/sucursales', icon: 'fa-solid fa-building', permissions: ['config.general'] },
+        { label: 'Sucursales', link: '/admin/sucursales', icon: 'fa-solid fa-building', permissions: ['config.general'], feature: 'multi_sucursal' },
         { label: 'Sistema', link: '/admin/sistema', icon: 'fa-solid fa-cogs', permissions: ['config.general'], devAdminOnly: true },
         { label: 'Fiscal (DGII)', link: '/admin/fiscal', icon: 'fa-solid fa-file-invoice', permissions: ['config.general'] }
       ],
@@ -236,10 +238,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
       return;
     }
 
+    const isDevAdmin = this.usuario?.is_dev_admin === true;
+
     this.menuItemsFiltrados = this.menuItems.filter((item: any) => {
       // Dev Admin: solo visible para is_dev_admin
       if (item.devAdminOnly) {
-        return this.usuario?.is_dev_admin === true;
+        return isDevAdmin;
       }
 
       // Verificar si el usuario tiene alguno de los permisos requeridos para el item principal
@@ -251,7 +255,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
       // Si tiene submenu, filtrar los subitems
       if (item.submenu) {
         item.submenu = item.submenu.filter((subitem: any) => {
-          if (subitem.devAdminOnly && this.usuario?.is_dev_admin !== true) return false;
+          if (subitem.devAdminOnly && !isDevAdmin) return false;
+
+          // Filtrar por feature flag (dev admins siempre ven todo)
+          if (subitem.feature && !isDevAdmin && !this.tenantService.tieneFeature(subitem.feature)) {
+            return false;
+          }
 
           return !subitem.permissions ||
             subitem.permissions.some((permiso: string) => this.authService.tienePermiso(permiso));

@@ -48,6 +48,8 @@ export class AuthService {
         if (usuario.tenant_id) {
           this.tenantService.setTenantId(usuario.tenant_id);
           this.sucursalService.cargarSucursalesUsuario(usuario.id);
+          // Cargar features del tenant en background
+          this.cargarFeaturesTenant(usuario.tenant_id);
         }
 
         // Verificar validez del token ANTES de marcar como autenticado
@@ -100,6 +102,8 @@ export class AuthService {
       // Set tenant context immediately
       if (usuario.tenant_id) {
         this.tenantService.setTenantId(usuario.tenant_id);
+        // Cargar features del tenant
+        await this.cargarFeaturesTenant(usuario.tenant_id);
 
         // Kill Switch: Check tenant status (skip for dev admins)
         if (!usuario.is_dev_admin) {
@@ -379,6 +383,27 @@ export class AuthService {
     } catch (error) {
       console.error('Error al verificar token:', error);
       return false;
+    }
+  }
+
+  // Cargar features efectivas del tenant (plan + overrides)
+  private async cargarFeaturesTenant(tenantId: string): Promise<void> {
+    try {
+      const { data, error } = await this.supabaseService.client
+        .from('tenants')
+        .select('features_override, planes(features)')
+        .eq('id', tenantId)
+        .single();
+
+      if (error || !data) return;
+
+      const planFeatures: Record<string, boolean> = (data as any).planes?.features || {};
+      const overrides: Record<string, boolean> = (data as any).features_override || {};
+      const efectivas: Record<string, boolean> = { ...planFeatures, ...overrides };
+
+      this.tenantService.setFeatures(efectivas);
+    } catch (error) {
+      console.error('Error al cargar features del tenant:', error);
     }
   }
 
