@@ -71,7 +71,7 @@ export class ModalPagoComponent implements OnInit, OnChanges {
     cryptoMonto: number = 0;
     cryptoHash: string = '';
     cryptoQrUrl: string = '';
-    cryptoConfig: CryptoConfig = { wallet_usdt_trc20: null, wallet_btc: null, wallet_solana: null };
+    cryptoConfig: CryptoConfig = { pagos_crypto_activos: true, crypto_custom_wallets: [], wallet_usdt_trc20: null, wallet_btc: null, wallet_solana: null };
     cargandoCrypto: boolean = false;
     cryptoConfirmado: boolean = false;
     // ==============
