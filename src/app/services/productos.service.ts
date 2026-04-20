@@ -46,7 +46,9 @@ export class ProductosService {
         this.productosSubject.next(localProds);
         return;
       }
-      const sucursalId = this.sucursalService.getSucursalActivaIdOrThrow();
+
+      // Use optional sucursal — if null, products still load (stock shows 0 per branch)
+      const sucursalId = this.sucursalService.sucursalActiva?.id ?? null;
       const tenantId = this.tenantService.getTenantIdOrThrow();
 
       const { data, error } = await this.supabaseService.client
@@ -74,15 +76,18 @@ export class ProductosService {
 
       // Mapear los datos para aplanar la estructura de categoría y normalizar stock por sucursal
       const productosMapeados = (data || []).map((prod: any) => {
-        // Buscar el stock correspondiente a la sucursal activa específicamente
-        const stockArray = Array.isArray(prod.stock_sucursales) ? prod.stock_sucursales : (prod.stock_sucursales ? [prod.stock_sucursales] : []);
-        const stockData = stockArray.find((s: any) => s.sucursal_id === sucursalId) || stockArray[0] || null;
+        const stockArray = Array.isArray(prod.stock_sucursales)
+          ? prod.stock_sucursales
+          : (prod.stock_sucursales ? [prod.stock_sucursales] : []);
+        // Preferir stock de la sucursal activa; si no, tomar el primero disponible
+        const stockData = sucursalId
+          ? (stockArray.find((s: any) => s.sucursal_id === sucursalId) || stockArray[0] || null)
+          : (stockArray[0] || null);
         return {
           ...prod,
           categoria: prod.categorias?.nombre || 'Sin Categoría',
           stock: stockData?.cantidad ?? 0,
           stock_minimo: stockData?.stock_minimo ?? 0,
-          // Use override price if exists, else global base price
           precio_venta: stockData?.precio_venta_override ?? prod.precio_venta
         };
       });
@@ -93,6 +98,7 @@ export class ProductosService {
       throw error;
     }
   }
+
 
   // Crear un nuevo producto
   async crearProducto(producto: Omit<Productos, 'id' | 'created_at' | 'updated_at'>): Promise<Productos> {
