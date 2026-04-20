@@ -55,7 +55,7 @@ export class AuthService {
         }
 
         // Marcar como autenticado OPTIMISTAMENTE con datos del caché
-        const permisosCache = []; // se actualizan después
+        const permisosCache: string[] = []; // se actualizan después
         this.authStateSubject.next({
           isAuthenticated: true,
           usuario,
