@@ -36,40 +36,42 @@ export class AuthService {
 
   // Inicializar autenticación al cargar la app
   private async initializeAuth() {
+    // Timeout de 6 segundos: si Supabase tarda demasiado, asumimos sesión válida
+    // por la data en localStorage para no bloquear la app (evita pantalla infinita)
+    const timeout = new Promise<'timeout'>(resolve => setTimeout(() => resolve('timeout'), 6000));
+
     try {
-      // Intentar recuperar de localStorage o sessionStorage
       let token = localStorage.getItem('dolvin_token') || sessionStorage.getItem('dolvin_token');
       let usuarioData = localStorage.getItem('dolvin_usuario') || sessionStorage.getItem('dolvin_usuario');
 
       if (token && usuarioData) {
         const usuario = JSON.parse(usuarioData);
 
-        // Restore tenant context
+        // Restaurar contexto inmediatamente desde caché
         if (usuario.tenant_id) {
           this.tenantService.setTenantId(usuario.tenant_id);
           this.sucursalService.cargarSucursalesUsuario(usuario.id);
-          // Cargar features del tenant en background
           this.cargarFeaturesTenant(usuario.tenant_id);
         }
 
-        // Verificar validez del token ANTES de marcar como autenticado
-        const isValid = await this.verificarToken(token);
+        // Marcar como autenticado OPTIMISTAMENTE con datos del caché
+        const permisosCache = []; // se actualizan después
+        this.authStateSubject.next({
+          isAuthenticated: true,
+          usuario,
+          token,
+          permisos: permisosCache
+        });
 
-        if (isValid) {
-          const permisos = await this.cargarPermisosUsuario(usuario.id);
-          this.authStateSubject.next({
-            isAuthenticated: true,
-            usuario,
-            token,
-            permisos
-          });
-        } else {
-          console.warn('Token inválido o expirado durante inicialización');
-          // Limpiar sin llamar logout() para evitar redirección circular antes de que el guard esté listo
-          localStorage.removeItem('dolvin_token');
-          localStorage.removeItem('dolvin_usuario');
-          sessionStorage.removeItem('dolvin_token');
-          sessionStorage.removeItem('dolvin_usuario');
+        // Verificar token contra Supabase, con timeout de seguridad
+        const result = await Promise.race([
+          this.verificarYActualizarToken(token, usuario),
+          timeout
+        ]);
+
+        if (result === 'timeout') {
+          // Internet lento: mantener sesión optimista, seguir sin bloquear
+          console.warn('⏱️ Verificación de token tardó demasiado, continuando con sesión cacheada');
         }
       }
     } catch (error) {
@@ -78,11 +80,35 @@ export class AuthService {
       localStorage.removeItem('dolvin_usuario');
       sessionStorage.removeItem('dolvin_token');
       sessionStorage.removeItem('dolvin_usuario');
+      this.authStateSubject.next({ isAuthenticated: false, usuario: null, token: null, permisos: [] });
     } finally {
-      // Siempre señalar que la inicialización terminó
+      // SIEMPRE señalar que la inicialización terminó, pase lo que pase
       this.initializedSubject.next(true);
     }
   }
+
+  // Verifica el token en Supabase y actualiza permisos si es válido
+  private async verificarYActualizarToken(token: string, usuario: any): Promise<void> {
+    const isValid = await this.verificarToken(token);
+    if (isValid) {
+      const permisos = await this.cargarPermisosUsuario(usuario.id);
+      this.authStateSubject.next({
+        isAuthenticated: true,
+        usuario,
+        token,
+        permisos
+      });
+    } else {
+      console.warn('Token inválido o expirado');
+      localStorage.removeItem('dolvin_token');
+      localStorage.removeItem('dolvin_usuario');
+      sessionStorage.removeItem('dolvin_token');
+      sessionStorage.removeItem('dolvin_usuario');
+      this.authStateSubject.next({ isAuthenticated: false, usuario: null, token: null, permisos: [] });
+      this.router.navigate(['/login']);
+    }
+  }
+
 
   // Login
   async login(credentials: LoginCredentials): Promise<LoginResponse> {
