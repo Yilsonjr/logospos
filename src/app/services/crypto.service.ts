@@ -12,10 +12,19 @@ export interface CryptoRates {
   solana: { dop: number; usd: number };
 }
 
+export interface CryptoWalletCustom {
+  id: string; // identificador unico (ej: timestamp)
+  moneda: string; // ej: ETH
+  red: string; // ej: ERC-20
+  direccion: string;
+}
+
 export interface CryptoConfig {
+  pagos_crypto_activos: boolean;
   wallet_usdt_trc20: string | null;
   wallet_btc: string | null;
   wallet_solana: string | null;
+  crypto_custom_wallets: CryptoWalletCustom[];
 }
 
 @Injectable({ providedIn: 'root' })
@@ -91,21 +100,23 @@ export class CryptoService {
   async getCryptoConfig(): Promise<CryptoConfig> {
     try {
       const tenantId = this.tenantService.tenantId;
-      if (!tenantId) return { wallet_usdt_trc20: null, wallet_btc: null, wallet_solana: null };
+      if (!tenantId) return { pagos_crypto_activos: true, wallet_usdt_trc20: null, wallet_btc: null, wallet_solana: null, crypto_custom_wallets: [] };
 
       const { data } = await this.supabase.client
         .from('tenants')
-        .select('wallet_usdt_trc20, wallet_btc, wallet_solana')
+        .select('pagos_crypto_activos, wallet_usdt_trc20, wallet_btc, wallet_solana, crypto_custom_wallets')
         .eq('id', tenantId)
         .maybeSingle();
 
       return {
+        pagos_crypto_activos: data?.pagos_crypto_activos ?? true,
         wallet_usdt_trc20: data?.wallet_usdt_trc20 ?? null,
         wallet_btc: data?.wallet_btc ?? null,
         wallet_solana: data?.wallet_solana ?? null,
+        crypto_custom_wallets: data?.crypto_custom_wallets ?? [],
       };
     } catch {
-      return { wallet_usdt_trc20: null, wallet_btc: null, wallet_solana: null };
+      return { pagos_crypto_activos: true, wallet_usdt_trc20: null, wallet_btc: null, wallet_solana: null, crypto_custom_wallets: [] };
     }
   }
 

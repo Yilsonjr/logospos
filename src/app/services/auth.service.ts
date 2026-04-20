@@ -21,6 +21,10 @@ export class AuthService {
 
   public authState$ = this.authStateSubject.asObservable();
 
+  // Emite `true` cuando initializeAuth() ha terminado (éxito o fallo)
+  private initializedSubject = new BehaviorSubject<boolean>(false);
+  public initialized$ = this.initializedSubject.asObservable();
+
   constructor(
     private supabaseService: SupabaseService,
     private tenantService: TenantService,
@@ -46,15 +50,7 @@ export class AuthService {
           this.sucursalService.cargarSucursalesUsuario(usuario.id);
         }
 
-        // 1. Actualización Optimista: Asumir que es válido mientras verificamos
-        this.authStateSubject.next({
-          isAuthenticated: true,
-          usuario,
-          token,
-          permisos: []
-        });
-
-        // 2. Verificar validez en segundo plano
+        // Verificar validez del token ANTES de marcar como autenticado
         const isValid = await this.verificarToken(token);
 
         if (isValid) {
@@ -67,12 +63,22 @@ export class AuthService {
           });
         } else {
           console.warn('Token inválido o expirado durante inicialización');
-          this.logout();
+          // Limpiar sin llamar logout() para evitar redirección circular antes de que el guard esté listo
+          localStorage.removeItem('dolvin_token');
+          localStorage.removeItem('dolvin_usuario');
+          sessionStorage.removeItem('dolvin_token');
+          sessionStorage.removeItem('dolvin_usuario');
         }
       }
     } catch (error) {
       console.error('Error al inicializar autenticación:', error);
-      this.logout();
+      localStorage.removeItem('dolvin_token');
+      localStorage.removeItem('dolvin_usuario');
+      sessionStorage.removeItem('dolvin_token');
+      sessionStorage.removeItem('dolvin_usuario');
+    } finally {
+      // Siempre señalar que la inicialización terminó
+      this.initializedSubject.next(true);
     }
   }
 

@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FiscalService } from '../../../services/fiscal.service';
 import { ConfiguracionFiscal, SecuenciaNCF, TipoComprobante, TIPOS_COMPROBANTE } from '../../../models/fiscal.model';
-import { CryptoService, CryptoConfig } from '../../../services/crypto.service';
+import { CryptoService, CryptoConfig, CryptoWalletCustom } from '../../../services/crypto.service';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -28,8 +28,12 @@ export class ConfiguracionFiscalComponent implements OnInit {
     secuenciaEnEdicion: Partial<SecuenciaNCF> = {};
 
     // Crypto wallets
-    cryptoConfig: CryptoConfig = { wallet_usdt_trc20: null, wallet_btc: null, wallet_solana: null };
+    cryptoConfig: CryptoConfig = { pagos_crypto_activos: true, wallet_usdt_trc20: null, wallet_btc: null, wallet_solana: null, crypto_custom_wallets: [] };
     guardandoCrypto = false;
+
+    // Custom Wallet Modal State
+    mostrandoFormularioWallet = false;
+    nuevaWallet: Partial<CryptoWalletCustom> = {};
 
     constructor(
         private fiscalService: FiscalService,
@@ -131,12 +135,64 @@ export class ConfiguracionFiscalComponent implements OnInit {
         this.cdr.detectChanges();
         try {
             await this.cryptoService.saveCryptoConfig(this.cryptoConfig);
-            await Swal.fire({ icon: 'success', title: 'Wallets guardadas', text: 'Las direcciones de criptomonedas han sido actualizadas.', timer: 2000, showConfirmButton: false });
+            await Swal.fire({ icon: 'success', title: 'Wallets y Configuración Crypto Guardadas', text: 'Los parámetros han sido actualizados.', timer: 2000, showConfirmButton: false });
         } catch (e) {
             await Swal.fire('Error', 'No se pudieron guardar las wallets.', 'error');
         } finally {
             this.guardandoCrypto = false;
             this.cdr.detectChanges();
         }
+    }
+
+    // Custom Wallets Logic
+    abrirModalCustomWallet() {
+        this.nuevaWallet = {
+            id: Date.now().toString(),
+            moneda: '',
+            red: '',
+            direccion: ''
+        };
+        this.mostrandoFormularioWallet = true;
+        this.cdr.detectChanges();
+    }
+
+    cerrarModalCustomWallet() {
+        this.mostrandoFormularioWallet = false;
+        this.nuevaWallet = {};
+        this.cdr.detectChanges();
+    }
+
+    agregarCustomWallet() {
+        if (!this.nuevaWallet.moneda || !this.nuevaWallet.red || !this.nuevaWallet.direccion) {
+            Swal.fire('Advertencia', 'Completa todos los campos de la billetera', 'warning');
+            return;
+        }
+
+        // Initialize array if undefined
+        if (!this.cryptoConfig.crypto_custom_wallets) {
+            this.cryptoConfig.crypto_custom_wallets = [];
+        }
+
+        this.cryptoConfig.crypto_custom_wallets.push(this.nuevaWallet as CryptoWalletCustom);
+        this.cerrarModalCustomWallet();
+        
+        // Guardado automático tras agregar
+        this.guardarWallets();
+    }
+
+    eliminarCustomWallet(id: string) {
+        Swal.fire({
+            title: '¿Eliminar billetera?',
+            text: 'Esta billetera ya no aparecerá como opción de pago.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                this.cryptoConfig.crypto_custom_wallets = this.cryptoConfig.crypto_custom_wallets.filter(w => w.id !== id);
+                this.guardarWallets();
+            }
+        });
     }
 }

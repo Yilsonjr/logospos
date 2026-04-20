@@ -174,18 +174,32 @@
 
     <!-- ===== SECCIÓN: PAGOS CON CRIPTOMONEDAS ===== -->
     <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-5">
-        <div class="card-header bg-white border-0 py-3 px-4 d-flex align-items-center gap-3">
-            <div class="rounded-3 d-flex align-items-center justify-content-center"
-                 style="background: linear-gradient(135deg, #f59e0b, #d97706); width: 42px; height: 42px;">
-                <i class="fa-brands fa-bitcoin text-white fs-5"></i>
+        <div class="card-header bg-white border-0 py-3 px-4 d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded-3 d-flex align-items-center justify-content-center"
+                     style="background: linear-gradient(135deg, #f59e0b, #d97706); width: 42px; height: 42px;">
+                    <i class="fa-brands fa-bitcoin text-white fs-5"></i>
+                </div>
+                <div>
+                    <h5 class="fw-bold mb-0 flex-grow-1 text-dark">Pagos con Criptomonedas</h5>
+                    <small class="text-muted">Acepta cobros con activos digitales compatibles en el POS</small>
+                </div>
             </div>
-            <div>
-                <h5 class="fw-bold mb-0 text-dark">Pagos con Criptomonedas</h5>
-                <small class="text-muted">Configura las billeteras donde recibirás pagos en USDT, Bitcoin o Solana</small>
+            
+            <div class="d-flex align-items-center bg-light-subtle rounded-pill px-3 py-2 border shadow-sm">
+                <label class="form-check-label fw-bold small me-3" for="cryptoSwitch"
+                       [class.text-success]="cryptoConfig.pagos_crypto_activos"
+                       [class.text-muted]="!cryptoConfig.pagos_crypto_activos">
+                    {{ cryptoConfig.pagos_crypto_activos ? 'HABILITADO' : 'DESHABILITADO' }}
+                </label>
+                <div class="form-check form-switch fs-4 mb-0 m-0">
+                    <input class="form-check-input cursor-pointer" type="checkbox" role="switch" id="cryptoSwitch"
+                        [(ngModel)]="cryptoConfig.pagos_crypto_activos" (change)="guardarWallets()">
+                </div>
             </div>
         </div>
-        <div class="card-body px-4 pb-4">
-            <div class="row g-4">
+        <div class="card-body px-4 pb-4" *ngIf="cryptoConfig.pagos_crypto_activos">
+            <div class="row g-4 mb-4">
 
                 <!-- USDT TRC-20 -->
                 <div class="col-lg-4">
@@ -247,6 +261,8 @@
                             <small class="d-block text-muted mt-1">Vista previa del QR</small>
                         </div>
                     </div>
+                </div> <!-- END BITCOIN CARD -->
+
                 <!-- Solana -->
                 <div class="col-lg-4">
                     <div class="rounded-4 border p-4 h-100 position-relative overflow-hidden"
@@ -277,8 +293,61 @@
                             <small class="d-block text-muted mt-1">Vista previa del QR</small>
                         </div>
                     </div>
+                </div> <!-- END SOLANA CARD -->
+
+                <!-- Redes Personalizadas Grid -->
+                <div class="col-lg-4" *ngFor="let customWallet of cryptoConfig.crypto_custom_wallets">
+                    <div class="rounded-4 border p-4 h-100 position-relative overflow-hidden"
+                         style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);">
+                         
+                        <button class="btn btn-sm btn-outline-danger border-0 position-absolute top-0 end-0 m-2 rounded-circle" 
+                                style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;"
+                                (click)="eliminarCustomWallet(customWallet.id)" title="Eliminar Wallet">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                         
+                        <div class="d-flex align-items-center gap-2 mb-3 pe-4">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center text-white shadow-sm"
+                                 style="background: linear-gradient(135deg, #475569, #1e293b); width:32px; height:32px;">
+                                <i class="fa-solid fa-wallet fs-6"></i>
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-0 text-dark">{{ customWallet.moneda }}</h6>
+                                <small class="text-muted text-uppercase" style="font-size: 0.75rem;">Red: {{ customWallet.red }}</small>
+                            </div>
+                        </div>
+                        <label class="form-label fw-bold small text-dark">DIRECCIÓN DE BILLETERA</label>
+                        <input type="text" class="form-control font-monospace border-1 shadow-sm h-auto"
+                               [(ngModel)]="customWallet.direccion"
+                               placeholder="Dirección pública"
+                               style="background: #ffffff;">
+                               
+                        <!-- QR Preview inline for custom -->
+                        <div class="mt-3 text-center" *ngIf="customWallet.direccion">
+                            <img [src]="'https://api.qrserver.com/v1/create-qr-code/?size=120x120&margin=8&data=' + customWallet.direccion"
+                                 width="90" height="90" class="rounded-3 border shadow-sm" alt="QR Custom">
+                            <small class="d-block text-muted mt-1">Vista previa del QR</small>
+                        </div>
+                    </div>
                 </div>
+
+                <!-- Add Custom Wallet Button Card -->
+                <div class="col-lg-4">
+                    <div class="rounded-4 border border-dashed border-2 p-4 h-100 d-flex flex-column align-items-center justify-content-center text-center cursor-pointer hover-bg-light transition-all"
+                         style="min-height: 250px; background-color: rgba(248, 249, 250, 0.4);"
+                         (click)="abrirModalCustomWallet()">
+                        <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center mb-3"
+                             style="width: 50px; height: 50px;">
+                            <i class="fa-solid fa-plus fs-4"></i>
+                        </div>
+                        <h6 class="fw-bold text-dark mb-1">Añadir Red Personalizada</h6>
+                        <small class="text-muted px-3">Configura otra criptomoneda o red que no esté en la lista por defecto.</small>
+                    </div>
+                </div>
+
             </div>
+
+            <hr class="opacity-25 mt-0 mb-4">
 
             <div class="d-flex justify-content-end mt-4">
                 <button class="btn btn-dark fw-bold px-5 rounded-pill shadow-sm"
@@ -357,6 +426,56 @@
             <div class="modal-footer bg-light">
                 <button type="button" class="btn btn-secondary" (click)="cancelarEdicion()">Cancelar</button>
                 <button type="button" class="btn btn-primary fw-bold" (click)="guardarSecuencia()">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Billetera Personalizada -->
+<div class="modal-backdrop fade show" *ngIf="mostrandoFormularioWallet"></div>
+<div class="modal fade show d-block" *ngIf="mostrandoFormularioWallet" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow-lg border-0 rounded-4">
+            <div class="modal-header bg-dark text-white border-0 rounded-top-4">
+                <h5 class="modal-title fw-bold">
+                    <i class="fa-solid fa-wallet me-2"></i> Añadir Billetera Crypto
+                </h5>
+                <button type="button" class="btn-close btn-close-white" (click)="cerrarModalCustomWallet()"></button>
+            </div>
+            <div class="modal-body p-4 bg-light">
+                <form #customWalletForm="ngForm">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-dark">Nombre de la Moneda</label>
+                            <input type="text" class="form-control form-control-lg shadow-sm font-monospace border-0" 
+                                   [(ngModel)]="nuevaWallet.moneda" name="cw_moneda" placeholder="Ej: ETH" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-dark">Nombre de la Red</label>
+                            <input type="text" class="form-control form-control-lg shadow-sm font-monospace border-0" 
+                                   [(ngModel)]="nuevaWallet.red" name="cw_red" placeholder="Ej: ERC-20" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-dark">Dirección de Recepción</label>
+                        <input type="text" class="form-control form-control-lg shadow-sm font-monospace border-0" 
+                               [(ngModel)]="nuevaWallet.direccion" name="cw_direccion" placeholder="Ingresa la dirección pública" required>
+                    </div>
+                    
+                    <div class="alert alert-warning border-0 d-flex gap-3 align-items-center mb-0 mt-4 rounded-3 shadow-sm py-2 px-3">
+                        <i class="fa-solid fa-triangle-exclamation fs-4"></i>
+                        <small class="mb-0 lh-sm">
+                            Asegúrate de que la dirección corresponda estrictamente a la red indicada, pagos enviados en otra red podrían perderse permanentemente.
+                        </small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer bg-white border-0 rounded-bottom-4 px-4 py-3">
+                <button type="button" class="btn btn-light fw-bold px-4" (click)="cerrarModalCustomWallet()">Cancelar</button>
+                <button type="button" class="btn btn-dark fw-bold px-4" (click)="agregarCustomWallet()" [disabled]="!customWalletForm.valid">
+                    <i class="fa-solid fa-plus me-2"></i> Agregar Terminal
+                </button>
             </div>
         </div>
     </div>

@@ -41,3 +41,4 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+docs/07-pro-feature-overrides.sql
