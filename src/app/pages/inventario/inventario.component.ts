@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, ViewChild, ElementRef } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { Productos } from '../../models/productos.model';
 import { Categoria } from '../../models/categorias.model';
@@ -9,13 +9,14 @@ import { TransferenciasStockComponent } from './transferencias/transferencias-st
 import { ProductosService } from '../../services/productos.service';
 import { CategoriasService } from '../../services/categorias.service';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-inventario',
-  imports: [ModalProductosComponent, ModalGestionCategoriasComponent, ModalGestionUnidadesComponent, TransferenciasStockComponent, CommonModule],
+  imports: [ModalProductosComponent, ModalGestionCategoriasComponent, ModalGestionUnidadesComponent, TransferenciasStockComponent, CommonModule, FormsModule],
   templateUrl: './inventario.component.html',
   styleUrl: './inventario.component.css',
 })
@@ -31,6 +32,17 @@ export class Inventario implements OnInit, OnDestroy {
   private productosSubscription?: Subscription;
   private categoriasSubscription?: Subscription;
   private subscriptions: Subscription[] = [];
+
+  // === BÚSQUEDA, FILTRO, ORDEN, PAGINACIÓN ===
+  searchTerm = '';
+  filtroCategoria = '';
+  filtroStock: 'todos' | 'bajo' | 'normal' | 'sin_stock' = 'todos';
+  showFiltros = false;
+  sortField: 'nombre' | 'precio_venta' | 'precio_compra' | 'stock' | 'categoria' = 'nombre';
+  sortDirection: 'asc' | 'desc' = 'asc';
+  showSortMenu = false;
+  paginaActual = 1;
+  itemsPorPagina = 50;
 
   // Estadísticas del mes pasado (se cargarán desde la BD)
   totalProductosMesPasado = 0;
@@ -187,6 +199,143 @@ export class Inventario implements OnInit, OnDestroy {
 
   get totalProductos(): number {
     return this.productos.length;
+  }
+
+  // === PRODUCTOS FILTRADOS Y PAGINADOS ===
+  get productosFiltrados(): Productos[] {
+    let resultado = [...this.productos];
+
+    // 1. Búsqueda por texto
+    if (this.searchTerm.trim()) {
+      const term = this.searchTerm.toLowerCase().trim();
+      resultado = resultado.filter(p =>
+        p.nombre?.toLowerCase().includes(term) ||
+        p.sku?.toLowerCase().includes(term) ||
+        p.codigo_barras?.toLowerCase().includes(term) ||
+        p.categoria?.toLowerCase().includes(term)
+      );
+    }
+
+    // 2. Filtro por categoría
+    if (this.filtroCategoria) {
+      resultado = resultado.filter(p => p.categoria === this.filtroCategoria);
+    }
+
+    // 3. Filtro por stock
+    if (this.filtroStock === 'bajo') {
+      resultado = resultado.filter(p => p.stock > 0 && p.stock < (p.stock_minimo || 10));
+    } else if (this.filtroStock === 'sin_stock') {
+      resultado = resultado.filter(p => p.stock <= 0);
+    } else if (this.filtroStock === 'normal') {
+      resultado = resultado.filter(p => p.stock >= (p.stock_minimo || 10));
+    }
+
+    // 4. Ordenamiento
+    resultado.sort((a, b) => {
+      let valA: any, valB: any;
+      switch (this.sortField) {
+        case 'nombre': valA = a.nombre?.toLowerCase() || ''; valB = b.nombre?.toLowerCase() || ''; break;
+        case 'precio_venta': valA = a.precio_venta || 0; valB = b.precio_venta || 0; break;
+        case 'precio_compra': valA = a.precio_compra || 0; valB = b.precio_compra || 0; break;
+        case 'stock': valA = a.stock || 0; valB = b.stock || 0; break;
+        case 'categoria': valA = a.categoria?.toLowerCase() || ''; valB = b.categoria?.toLowerCase() || ''; break;
+        default: valA = a.nombre?.toLowerCase() || ''; valB = b.nombre?.toLowerCase() || '';
+      }
+      const cmp = valA < valB ? -1 : valA > valB ? 1 : 0;
+      return this.sortDirection === 'asc' ? cmp : -cmp;
+    });
+
+    return resultado;
+  }
+
+  get productosPaginados(): Productos[] {
+    const inicio = (this.paginaActual - 1) * this.itemsPorPagina;
+    return this.productosFiltrados.slice(inicio, inicio + this.itemsPorPagina);
+  }
+
+  get totalPaginas(): number {
+    return Math.max(1, Math.ceil(this.productosFiltrados.length / this.itemsPorPagina));
+  }
+
+  get paginasArray(): number[] {
+    const total = this.totalPaginas;
+    const current = this.paginaActual;
+    const pages: number[] = [];
+    const maxVisible = 5;
+    let start = Math.max(1, current - Math.floor(maxVisible / 2));
+    let end = Math.min(total, start + maxVisible - 1);
+    if (end - start + 1 < maxVisible) {
+      start = Math.max(1, end - maxVisible + 1);
+    }
+    for (let i = start; i <= end; i++) pages.push(i);
+    return pages;
+  }
+
+  // === ACCIONES DE BÚSQUEDA/FILTRO/ORDEN ===
+  onSearchChange() {
+    this.paginaActual = 1;
+  }
+
+  toggleFiltros() {
+    this.showFiltros = !this.showFiltros;
+    this.showSortMenu = false;
+  }
+
+  toggleSortMenu() {
+    this.showSortMenu = !this.showSortMenu;
+    this.showFiltros = false;
+  }
+
+  setFiltroCategoria(cat: string) {
+    this.filtroCategoria = this.filtroCategoria === cat ? '' : cat;
+    this.paginaActual = 1;
+  }
+
+  setFiltroStock(filtro: 'todos' | 'bajo' | 'normal' | 'sin_stock') {
+    this.filtroStock = filtro;
+    this.paginaActual = 1;
+  }
+
+  setSortField(field: 'nombre' | 'precio_venta' | 'precio_compra' | 'stock' | 'categoria') {
+    if (this.sortField === field) {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortField = field;
+      this.sortDirection = 'asc';
+    }
+    this.showSortMenu = false;
+    this.paginaActual = 1;
+  }
+
+  limpiarFiltros() {
+    this.searchTerm = '';
+    this.filtroCategoria = '';
+    this.filtroStock = 'todos';
+    this.sortField = 'nombre';
+    this.sortDirection = 'asc';
+    this.paginaActual = 1;
+    this.showFiltros = false;
+  }
+
+  irPagina(p: number) {
+    if (p >= 1 && p <= this.totalPaginas) this.paginaActual = p;
+  }
+
+  get paginaDesde(): number {
+    return this.productosFiltrados.length === 0 ? 0 : ((this.paginaActual - 1) * this.itemsPorPagina) + 1;
+  }
+
+  get paginaHasta(): number {
+    return Math.min(this.paginaActual * this.itemsPorPagina, this.productosFiltrados.length);
+  }
+
+  get categoriasUnicas(): string[] {
+    const cats = new Set(this.productos.map(p => p.categoria).filter(Boolean));
+    return Array.from(cats).sort();
+  }
+
+  get hayFiltrosActivos(): boolean {
+    return !!this.searchTerm || !!this.filtroCategoria || this.filtroStock !== 'todos';
   }
 
   exportarDatos() {

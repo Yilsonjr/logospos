@@ -125,17 +125,101 @@
         <span class="position-absolute top-50 start-0 translate-middle-y ms-3 text-muted">
           <i class="fa-solid fa-search small"></i>
         </span>
-        <input type="text" placeholder="Buscar..."
+        <input type="text" placeholder="Buscar por nombre, código, categoría..."
+          [(ngModel)]="searchTerm" (ngModelChange)="onSearchChange()"
           class="form-control form-control-sm ps-5 border-0 bg-light shadow-sm">
       </div>
 
-      <div class="d-flex gap-2">
-        <button class="btn btn-sm btn-white border shadow-sm text-secondary fw-medium d-flex align-items-center gap-1">
-          <i class="fa-solid fa-filter text-muted small"></i> Filtrar
-        </button>
-        <button class="btn btn-sm btn-white border shadow-sm text-secondary fw-medium d-flex align-items-center gap-1">
-          <i class="fa-solid fa-sort text-muted small"></i> Ordenar
-        </button>
+      <div class="d-flex gap-2 align-items-center">
+        <!-- Filtros activos indicator -->
+        @if (hayFiltrosActivos) {
+          <button (click)="limpiarFiltros()" class="btn btn-sm btn-outline-danger d-flex align-items-center gap-1">
+            <i class="fa-solid fa-xmark small"></i> Limpiar
+          </button>
+        }
+
+        <!-- Filtrar -->
+        <div class="position-relative">
+          <button (click)="toggleFiltros()"
+            class="btn btn-sm border shadow-sm fw-medium d-flex align-items-center gap-1"
+            [class.btn-primary]="filtroCategoria || filtroStock !== 'todos'"
+            [class.btn-white]="!filtroCategoria && filtroStock === 'todos'"
+            [class.text-white]="filtroCategoria || filtroStock !== 'todos'"
+            [class.text-secondary]="!filtroCategoria && filtroStock === 'todos'">
+            <i class="fa-solid fa-filter small"></i> Filtrar
+          </button>
+          @if (showFiltros) {
+            <div class="position-absolute end-0 mt-1 bg-white border rounded-3 shadow-lg p-3" style="z-index: 100; min-width: 260px;">
+              <h6 class="fw-bold small text-muted text-uppercase mb-2">Por Categoría</h6>
+              <div class="d-flex flex-wrap gap-1 mb-3" style="max-height: 150px; overflow-y: auto;">
+                @for (cat of categoriasUnicas; track cat) {
+                  <button (click)="setFiltroCategoria(cat)"
+                    class="btn btn-sm rounded-pill px-2 py-0"
+                    [class.btn-primary]="filtroCategoria === cat"
+                    [class.btn-outline-secondary]="filtroCategoria !== cat"
+                    style="font-size: 0.7rem;">
+                    {{cat}}
+                  </button>
+                }
+              </div>
+              <h6 class="fw-bold small text-muted text-uppercase mb-2">Por Stock</h6>
+              <div class="d-flex flex-wrap gap-1">
+                <button (click)="setFiltroStock('todos')" class="btn btn-sm rounded-pill px-2 py-0"
+                  [class.btn-dark]="filtroStock === 'todos'" [class.btn-outline-secondary]="filtroStock !== 'todos'"
+                  style="font-size: 0.7rem;">Todos</button>
+                <button (click)="setFiltroStock('normal')" class="btn btn-sm rounded-pill px-2 py-0"
+                  [class.btn-success]="filtroStock === 'normal'" [class.btn-outline-secondary]="filtroStock !== 'normal'"
+                  style="font-size: 0.7rem;">Normal</button>
+                <button (click)="setFiltroStock('bajo')" class="btn btn-sm rounded-pill px-2 py-0"
+                  [class.btn-warning]="filtroStock === 'bajo'" [class.btn-outline-secondary]="filtroStock !== 'bajo'"
+                  style="font-size: 0.7rem;">Bajo</button>
+                <button (click)="setFiltroStock('sin_stock')" class="btn btn-sm rounded-pill px-2 py-0"
+                  [class.btn-danger]="filtroStock === 'sin_stock'" [class.btn-outline-secondary]="filtroStock !== 'sin_stock'"
+                  style="font-size: 0.7rem;">Sin stock</button>
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Ordenar -->
+        <div class="position-relative">
+          <button (click)="toggleSortMenu()"
+            class="btn btn-sm btn-white border shadow-sm text-secondary fw-medium d-flex align-items-center gap-1">
+            <i class="fa-solid fa-sort text-muted small"></i> Ordenar
+          </button>
+          @if (showSortMenu) {
+            <div class="position-absolute end-0 mt-1 bg-white border rounded-3 shadow-lg py-1" style="z-index: 100; min-width: 180px;">
+              <button (click)="setSortField('nombre')" class="dropdown-item small d-flex justify-content-between align-items-center px-3 py-2">
+                Nombre
+                @if (sortField === 'nombre') { <i class="fa-solid fa-check text-primary"></i> }
+              </button>
+              <button (click)="setSortField('precio_venta')" class="dropdown-item small d-flex justify-content-between align-items-center px-3 py-2">
+                Precio Venta
+                @if (sortField === 'precio_venta') { <i class="fa-solid fa-check text-primary"></i> }
+              </button>
+              <button (click)="setSortField('precio_compra')" class="dropdown-item small d-flex justify-content-between align-items-center px-3 py-2">
+                Precio Compra
+                @if (sortField === 'precio_compra') { <i class="fa-solid fa-check text-primary"></i> }
+              </button>
+              <button (click)="setSortField('stock')" class="dropdown-item small d-flex justify-content-between align-items-center px-3 py-2">
+                Stock
+                @if (sortField === 'stock') { <i class="fa-solid fa-check text-primary"></i> }
+              </button>
+              <button (click)="setSortField('categoria')" class="dropdown-item small d-flex justify-content-between align-items-center px-3 py-2">
+                Categoría
+                @if (sortField === 'categoria') { <i class="fa-solid fa-check text-primary"></i> }
+              </button>
+              <hr class="my-1">
+              <div class="px-3 py-1 text-muted small">
+                Dirección:
+                <button (click)="sortDirection = sortDirection === 'asc' ? 'desc' : 'asc'" class="btn btn-sm btn-link p-0 ms-1">
+                  <i class="fa-solid" [class.fa-arrow-up-short-wide]="sortDirection === 'asc'" [class.fa-arrow-down-wide-short]="sortDirection === 'desc'"></i>
+                  {{sortDirection === 'asc' ? 'Ascendente' : 'Descendente'}}
+                </button>
+              </div>
+            </div>
+          }
+        </div>
       </div>
     </div>
 
@@ -147,11 +231,26 @@
           <tr>
             <th class="px-3 py-3 border-0 bg-transparent">Imag</th>
             <th class="px-3 py-3 border-0 bg-transparent">Código</th>
-            <th class="px-3 py-3 border-0 bg-transparent">Producto</th>
-            <th class="px-3 py-3 border-0 bg-transparent">Cat</th>
-            <th class="px-3 py-3 border-0 text-center bg-transparent">Compra</th>
-            <th class="px-3 py-3 border-0 text-center bg-transparent">Venta</th>
-            <th class="px-3 py-3 border-0 text-center bg-transparent">Stock</th>
+            <th class="px-3 py-3 border-0 bg-transparent" style="cursor:pointer" (click)="setSortField('nombre')">
+              Producto
+              @if (sortField === 'nombre') { <i class="fa-solid ms-1" [class.fa-caret-up]="sortDirection === 'asc'" [class.fa-caret-down]="sortDirection === 'desc'"></i> }
+            </th>
+            <th class="px-3 py-3 border-0 bg-transparent" style="cursor:pointer" (click)="setSortField('categoria')">
+              Cat
+              @if (sortField === 'categoria') { <i class="fa-solid ms-1" [class.fa-caret-up]="sortDirection === 'asc'" [class.fa-caret-down]="sortDirection === 'desc'"></i> }
+            </th>
+            <th class="px-3 py-3 border-0 text-center bg-transparent" style="cursor:pointer" (click)="setSortField('precio_compra')">
+              Compra
+              @if (sortField === 'precio_compra') { <i class="fa-solid ms-1" [class.fa-caret-up]="sortDirection === 'asc'" [class.fa-caret-down]="sortDirection === 'desc'"></i> }
+            </th>
+            <th class="px-3 py-3 border-0 text-center bg-transparent" style="cursor:pointer" (click)="setSortField('precio_venta')">
+              Venta
+              @if (sortField === 'precio_venta') { <i class="fa-solid ms-1" [class.fa-caret-up]="sortDirection === 'asc'" [class.fa-caret-down]="sortDirection === 'desc'"></i> }
+            </th>
+            <th class="px-3 py-3 border-0 text-center bg-transparent" style="cursor:pointer" (click)="setSortField('stock')">
+              Stock
+              @if (sortField === 'stock') { <i class="fa-solid ms-1" [class.fa-caret-up]="sortDirection === 'asc'" [class.fa-caret-down]="sortDirection === 'desc'"></i> }
+            </th>
             <th class="px-3 py-3 border-0 text-end bg-transparent">Acciones</th>
           </tr>
         </thead>
@@ -166,21 +265,27 @@
               </div>
             </td>
           </tr>
-          } @else if (productos.length === 0) {
+          } @else if (productosFiltrados.length === 0) {
           <tr>
             <td colspan="8" class="text-center py-5">
               <div class="text-muted opacity-50 mb-2">
                 <i class="fa-solid fa-box-open fa-2x"></i>
               </div>
-              <h6 class="fw-bold text-dark">Sin productos</h6>
-              <button (click)="abrirModal()" class="btn btn-sm btn-link pt-0">Crear nuevo</button>
+              @if (hayFiltrosActivos) {
+                <h6 class="fw-bold text-dark">Sin resultados</h6>
+                <p class="text-muted small mb-2">No se encontraron productos con los filtros seleccionados.</p>
+                <button (click)="limpiarFiltros()" class="btn btn-sm btn-outline-primary">Limpiar filtros</button>
+              } @else {
+                <h6 class="fw-bold text-dark">Sin productos</h6>
+                <button (click)="abrirModal()" class="btn btn-sm btn-link pt-0">Crear nuevo</button>
+              }
             </td>
           </tr>
           } @else {
-          @for (prod of productos; track prod.id) {
+          @for (prod of productosPaginados; track prod.id) {
           <tr>
             <!-- Imagen -->
-            <td class="px-3 py-1"> <!-- Padding vertical reducido -->
+            <td class="px-3 py-1">
               <div class="bg-light rounded d-flex align-items-center justify-content-center overflow-hidden border"
                 style="width: 36px; height: 36px;">
                 @if (prod.imagen_url) {
@@ -236,13 +341,32 @@
       </table>
     </div>
 
-    <!-- Pagination Compacta -->
+    <!-- Pagination Funcional -->
     <div class="glass-header border-top-0 p-3 d-flex justify-content-between align-items-center flex-shrink-0"
       style="font-size: 0.8rem; background: rgba(255, 255, 255, 0.3);">
-      <span class="text-muted">Total: {{productos.length}}</span>
-      <div class="btn-group btn-group-sm">
-        <button class="btn btn-outline-secondary disabled py-0 px-2">Ant</button>
-        <button class="btn btn-outline-secondary py-0 px-2">Sig</button>
+      <span class="text-muted">
+        Mostrando {{paginaDesde}}-{{paginaHasta}} de {{productosFiltrados.length}}
+        @if (hayFiltrosActivos) { <span class="text-primary">(filtrado de {{productos.length}})</span> }
+      </span>
+      <div class="d-flex align-items-center gap-1">
+        <button class="btn btn-sm btn-outline-secondary py-0 px-2"
+          [disabled]="paginaActual === 1"
+          (click)="irPagina(paginaActual - 1)">
+          <i class="fa-solid fa-chevron-left" style="font-size: 0.65rem;"></i>
+        </button>
+        @for (p of paginasArray; track p) {
+          <button class="btn btn-sm py-0 px-2"
+            [class.btn-primary]="p === paginaActual"
+            [class.btn-outline-secondary]="p !== paginaActual"
+            (click)="irPagina(p)">
+            {{p}}
+          </button>
+        }
+        <button class="btn btn-sm btn-outline-secondary py-0 px-2"
+          [disabled]="paginaActual === totalPaginas"
+          (click)="irPagina(paginaActual + 1)">
+          <i class="fa-solid fa-chevron-right" style="font-size: 0.65rem;"></i>
+        </button>
       </div>
     </div>
 

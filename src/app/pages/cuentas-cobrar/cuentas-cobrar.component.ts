@@ -5,13 +5,14 @@ import { Router, RouterModule, NavigationEnd } from '@angular/router';
 import { CuentaPorCobrar } from '../../models/cuentas-cobrar.model';
 import { CuentasCobrarService } from '../../services/cuentas-cobrar.service';
 import { ModalPagoComponent } from './modal-pago/modal-pago.component';
+import { ModalPagoMasivoComponent } from './modal-pago-masivo/modal-pago-masivo.component';
 import { HistorialPagosComponent } from './historial-pagos/historial-pagos.component';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 
 @Component({
   selector: 'app-cuentas-cobrar',
-  imports: [CommonModule, FormsModule, RouterModule, ModalPagoComponent, HistorialPagosComponent],
+  imports: [CommonModule, FormsModule, RouterModule, ModalPagoComponent, ModalPagoMasivoComponent, HistorialPagosComponent],
   templateUrl: './cuentas-cobrar.component.html',
   styleUrl: './cuentas-cobrar.component.css'
 })
@@ -27,6 +28,11 @@ export class CuentasCobrarComponent implements OnInit, OnDestroy {
   cuentaSeleccionada?: CuentaPorCobrar;
   cuentaIdHistorial?: number;
   menuAbiertoId: number | null = null;
+  // Pago Masivo
+  isModalPagoMasivoOpen = false;
+  pagoMasivoClienteNombre = '';
+  pagoMasivoClienteId = 0;
+  pagoMasivoCuentas: CuentaPorCobrar[] = [];
   private cuentasSubscription?: Subscription;
   private subscriptions: Subscription[] = [];
 
@@ -160,6 +166,45 @@ export class CuentasCobrarComponent implements OnInit, OnDestroy {
   onPagoRegistrado() {
     console.log('✅ Pago registrado');
     this.cerrarModalPago();
+  }
+
+  // === PAGO MASIVO ===
+  abrirPagoMasivo(clienteNombre: string, clienteId: number) {
+    const cuentasCliente = this.cuentas.filter(
+      c => c.cliente_id === clienteId && c.estado !== 'pagada' && c.monto_pendiente > 0
+    );
+    if (cuentasCliente.length === 0) return;
+    this.pagoMasivoClienteNombre = clienteNombre;
+    this.pagoMasivoClienteId = clienteId;
+    this.pagoMasivoCuentas = cuentasCliente;
+    this.isModalPagoMasivoOpen = true;
+    this.menuAbiertoId = null;
+  }
+
+  cerrarPagoMasivo() {
+    this.isModalPagoMasivoOpen = false;
+    this.pagoMasivoCuentas = [];
+  }
+
+  onPagoMasivoRegistrado() {
+    console.log('✅ Pago masivo registrado');
+    this.cerrarPagoMasivo();
+  }
+
+  // Agrupar cuentas por cliente para mostrar botón "Saldar Deuda"
+  get clientesConMultiplesCuentas(): { nombre: string; clienteId: number; cantidad: number; totalPendiente: number }[] {
+    const agrupado = new Map<number, { nombre: string; cantidad: number; totalPendiente: number }>();
+    this.cuentas
+      .filter(c => c.estado !== 'pagada' && c.monto_pendiente > 0)
+      .forEach(c => {
+        const entry = agrupado.get(c.cliente_id) || { nombre: c.cliente_nombre || '', cantidad: 0, totalPendiente: 0 };
+        entry.cantidad++;
+        entry.totalPendiente += c.monto_pendiente;
+        agrupado.set(c.cliente_id, entry);
+      });
+    return Array.from(agrupado.entries())
+      .filter(([_, v]) => v.cantidad > 1)
+      .map(([clienteId, v]) => ({ nombre: v.nombre, clienteId, cantidad: v.cantidad, totalPendiente: v.totalPendiente }));
   }
 
   get totalPendiente(): number {

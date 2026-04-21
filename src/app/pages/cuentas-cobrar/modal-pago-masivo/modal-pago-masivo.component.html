@@ -1,0 +1,154 @@
+<!-- Overlay -->
+<div class="modal-overlay" (click)="cerrar()"></div>
+
+<!-- Modal -->
+<div class="modal-pago-masivo">
+  <!-- Header -->
+  <div class="modal-header-custom">
+    <div>
+      <h5 class="fw-bold text-white mb-0 d-flex align-items-center gap-2">
+        <i class="fa-solid fa-money-bill-transfer"></i> Pago Masivo
+      </h5>
+      <small class="text-white-50">{{clienteNombre}}</small>
+    </div>
+    <button class="btn btn-link text-white p-0" (click)="cerrar()">
+      <i class="fa-solid fa-xmark fs-5"></i>
+    </button>
+  </div>
+
+  <!-- Body -->
+  <div class="modal-body-custom">
+
+    <!-- Resumen superior -->
+    <div class="row g-2 mb-3">
+      <div class="col-4">
+        <div class="bg-primary bg-opacity-10 rounded-3 p-2 text-center">
+          <small class="text-muted d-block" style="font-size: 0.7rem;">FACTURAS</small>
+          <span class="fw-bold text-primary fs-5">{{cantidadSeleccionadas}}</span>
+          <small class="text-muted"> de {{cuentasSeleccionables.length}}</small>
+        </div>
+      </div>
+      <div class="col-4">
+        <div class="bg-danger bg-opacity-10 rounded-3 p-2 text-center">
+          <small class="text-muted d-block" style="font-size: 0.7rem;">DEUDA TOTAL</small>
+          <span class="fw-bold text-danger">{{formatearMoneda(totalSeleccionado)}}</span>
+        </div>
+      </div>
+      <div class="col-4">
+        <div class="rounded-3 p-2 text-center" [class.bg-success]="esPagoCompleto" [class.bg-opacity-10]="true"
+          [class.bg-warning]="!esPagoCompleto">
+          <small class="text-muted d-block" style="font-size: 0.7rem;">A PAGAR</small>
+          <span class="fw-bold" [class.text-success]="esPagoCompleto"
+            [class.text-warning]="!esPagoCompleto">{{formatearMoneda(montoAPagar)}}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lista de facturas con checkboxes -->
+    <div class="mb-3">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h6 class="fw-bold mb-0 small text-uppercase text-muted">Facturas Pendientes</h6>
+        <button class="btn btn-sm btn-link p-0 text-decoration-none" (click)="toggleTodas()">
+          {{todasSeleccionadas ? 'Deseleccionar todas' : 'Seleccionar todas'}}
+        </button>
+      </div>
+
+      <div class="facturas-list">
+        @for (cuenta of cuentasSeleccionables; track cuenta.id) {
+        <div class="factura-item" [class.selected]="cuenta.seleccionada" (click)="cuenta.seleccionada = !cuenta.seleccionada">
+          <div class="form-check d-flex align-items-center gap-3 m-0 w-100">
+            <input class="form-check-input flex-shrink-0" type="checkbox" [(ngModel)]="cuenta.seleccionada"
+              (click)="$event.stopPropagation()">
+            <div class="flex-grow-1">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <span class="small text-muted">Factura #{{cuenta.venta_id}}</span>
+                  <span class="badge rounded-pill ms-2" style="font-size: 0.6rem;"
+                    [class.bg-danger-subtle]="cuenta.estado === 'vencida'"
+                    [class.text-danger]="cuenta.estado === 'vencida'"
+                    [class.bg-warning-subtle]="cuenta.estado === 'pendiente'"
+                    [class.text-warning-emphasis]="cuenta.estado === 'pendiente'"
+                    [class.bg-info-subtle]="cuenta.estado === 'parcial'"
+                    [class.text-info-emphasis]="cuenta.estado === 'parcial'">
+                    {{cuenta.estado | uppercase}}
+                  </span>
+                </div>
+                <span class="fw-bold text-danger">{{formatearMoneda(cuenta.monto_pendiente)}}</span>
+              </div>
+              <div class="d-flex justify-content-between">
+                <small class="text-muted">{{formatearFecha(cuenta.fecha_venta)}}</small>
+                <small class="text-muted">Total: {{formatearMoneda(cuenta.monto_total)}}</small>
+              </div>
+            </div>
+          </div>
+        </div>
+        }
+      </div>
+    </div>
+
+    <!-- Opciones de monto -->
+    <div class="mb-3">
+      <h6 class="fw-bold mb-2 small text-uppercase text-muted">Monto a Pagar</h6>
+      <div class="btn-group w-100 mb-2" role="group">
+        <button class="btn btn-sm" [class.btn-primary]="modoMonto === 'total'"
+          [class.btn-outline-primary]="modoMonto !== 'total'" (click)="modoMonto = 'total'; montoPersonalizado = null">
+          <i class="fa-solid fa-check-double me-1"></i> Saldar Todo ({{formatearMoneda(totalSeleccionado)}})
+        </button>
+        <button class="btn btn-sm" [class.btn-primary]="modoMonto === 'personalizado'"
+          [class.btn-outline-primary]="modoMonto !== 'personalizado'" (click)="modoMonto = 'personalizado'; montoPersonalizado = totalSeleccionado">
+          <i class="fa-solid fa-pen me-1"></i> Monto Personalizado
+        </button>
+      </div>
+
+      @if (modoMonto === 'personalizado') {
+      <div class="input-group">
+        <span class="input-group-text bg-light">RD$</span>
+        <input type="number" class="form-control" [(ngModel)]="montoPersonalizado" [max]="totalSeleccionado" min="1"
+          placeholder="Monto a pagar">
+      </div>
+      @if (montoPersonalizado !== null && montoPersonalizado < totalSeleccionado) {
+      <small class="text-warning d-block mt-1">
+        <i class="fa-solid fa-info-circle me-1"></i>
+        Se distribuirá empezando por las facturas más antiguas. Pendiente: {{formatearMoneda(pendienteDespuesPago)}}
+      </small>
+      }
+      }
+    </div>
+
+    <!-- Método de Pago -->
+    <div class="row g-2 mb-3">
+      <div class="col-6">
+        <label class="form-label small fw-bold text-muted">Método de Pago</label>
+        <select class="form-select form-select-sm" [(ngModel)]="metodoPago">
+          @for (metodo of metodosPago; track metodo) {
+          <option [value]="metodo">{{metodo}}</option>
+          }
+        </select>
+      </div>
+      <div class="col-6">
+        <label class="form-label small fw-bold text-muted">Fecha</label>
+        <input type="date" class="form-control form-control-sm" [(ngModel)]="fechaPago">
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label small fw-bold text-muted">Referencia (opcional)</label>
+      <input type="text" class="form-control form-control-sm" [(ngModel)]="referencia"
+        placeholder="No. cheque, transferencia, etc.">
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="modal-footer-custom">
+    <button class="btn btn-outline-secondary" (click)="cerrar()" [disabled]="isSaving">Cancelar</button>
+    <button class="btn btn-primary fw-bold d-flex align-items-center gap-2" (click)="confirmarPago()"
+      [disabled]="!puedeConfirmar">
+      @if (isSaving) {
+      <span class="spinner-border spinner-border-sm"></span> Procesando...
+      } @else {
+      <i class="fa-solid fa-money-bill-transfer"></i>
+      Pagar {{formatearMoneda(montoAPagar)}}
+      }
+    </button>
+  </div>
+</div>

@@ -6,7 +6,29 @@
       <h2 class="fw-bold text-dark mb-0">Cuentas por Cobrar</h2>
       <p class="text-muted mb-0 small">Gestiona los créditos y pagos pendientes de tus clientes</p>
     </div>
-    <div class="d-flex gap-2">
+    <div class="d-flex gap-2 flex-wrap">
+      <!-- Pago Masivo: mostrar clientes con múltiples facturas -->
+      @if (clientesConMultiplesCuentas.length > 0) {
+        <div class="dropdown">
+          <button class="btn btn-success d-flex align-items-center gap-2 shadow-sm dropdown-toggle" data-bs-toggle="dropdown">
+            <i class="fa-solid fa-money-bill-transfer"></i> Saldar Deuda
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+            @for (cliente of clientesConMultiplesCuentas; track cliente.clienteId) {
+            <li>
+              <button class="dropdown-item py-2 d-flex justify-content-between align-items-center gap-3"
+                (click)="abrirPagoMasivo(cliente.nombre, cliente.clienteId)">
+                <div>
+                  <span class="fw-bold">{{cliente.nombre}}</span>
+                  <br><small class="text-muted">{{cliente.cantidad}} facturas</small>
+                </div>
+                <span class="badge bg-danger rounded-pill">${{cliente.totalPendiente.toLocaleString()}}</span>
+              </button>
+            </li>
+            }
+          </ul>
+        </div>
+      }
       <button routerLink="/cuentas-cobrar/recordatorios"
         class="btn btn-primary d-flex align-items-center gap-2 shadow-sm">
         <i class="fa-solid fa-bell"></i> Recordatorios
@@ -159,6 +181,8 @@
               @if (cuenta.estado !== 'pagada') {
               <li><button class="dropdown-item py-2" (click)="abrirModalPago(cuenta)"><i
                     class="fa-solid fa-hand-holding-dollar me-2 text-primary"></i>Registrar Pago</button></li>
+              <li><button class="dropdown-item py-2" (click)="abrirPagoMasivo(cuenta.cliente_nombre!, cuenta.cliente_id)"><i
+                    class="fa-solid fa-money-bill-transfer me-2 text-success"></i>Saldar Deuda Completa</button></li>
               }
               <li><button class="dropdown-item py-2" (click)="abrirHistorial(cuenta)"><i
                     class="fa-solid fa-clock-rotate-left me-2 text-secondary"></i>Ver Historial</button></li>
@@ -271,4 +295,14 @@
 @if (isHistorialOpen && cuentaIdHistorial) {
 <app-historial-pagos [cuentaId]="cuentaIdHistorial" (close)="cerrarHistorial()">
 </app-historial-pagos>
+}
+
+@if (isModalPagoMasivoOpen) {
+<app-modal-pago-masivo
+  [clienteNombre]="pagoMasivoClienteNombre"
+  [clienteId]="pagoMasivoClienteId"
+  [cuentas]="pagoMasivoCuentas"
+  (close)="cerrarPagoMasivo()"
+  (pagoRegistrado)="onPagoMasivoRegistrado()">
+</app-modal-pago-masivo>
 }
