@@ -3,15 +3,17 @@
 
 <!-- Modal -->
 <div class="modal-pago-masivo">
+
   <!-- Header -->
   <div class="modal-header-custom">
     <div>
       <h5 class="fw-bold text-white mb-0 d-flex align-items-center gap-2">
-        <i class="fa-solid fa-money-bill-transfer"></i> Pago Masivo
+        <i class="fa-solid fa-money-bill-transfer"></i>
+        Abonar / Saldar Deuda
       </h5>
       <small class="text-white-50">{{clienteNombre}}</small>
     </div>
-    <button class="btn btn-link text-white p-0" (click)="cerrar()">
+    <button class="btn btn-link text-white p-0 opacity-75" (click)="cerrar()">
       <i class="fa-solid fa-xmark fs-5"></i>
     </button>
   </div>
@@ -19,103 +21,131 @@
   <!-- Body -->
   <div class="modal-body-custom">
 
-    <!-- Resumen superior -->
-    <div class="row g-2 mb-3">
-      <div class="col-4">
-        <div class="bg-primary bg-opacity-10 rounded-3 p-2 text-center">
-          <small class="text-muted d-block" style="font-size: 0.7rem;">FACTURAS</small>
-          <span class="fw-bold text-primary fs-5">{{cantidadSeleccionadas}}</span>
-          <small class="text-muted"> de {{cuentasSeleccionables.length}}</small>
-        </div>
+    <!-- Resumen del cliente -->
+    <div class="resumen-strip mb-4">
+      <div class="resumen-item">
+        <small>FACTURAS</small>
+        <strong>{{cantidadFacturas}}</strong>
       </div>
-      <div class="col-4">
-        <div class="bg-danger bg-opacity-10 rounded-3 p-2 text-center">
-          <small class="text-muted d-block" style="font-size: 0.7rem;">DEUDA TOTAL</small>
-          <span class="fw-bold text-danger">{{formatearMoneda(totalSeleccionado)}}</span>
-        </div>
+      <div class="resumen-item text-danger">
+        <small>DEUDA TOTAL</small>
+        <strong>{{formatearMoneda(totalDeuda)}}</strong>
       </div>
-      <div class="col-4">
-        <div class="rounded-3 p-2 text-center" [class.bg-success]="esPagoCompleto" [class.bg-opacity-10]="true"
-          [class.bg-warning]="!esPagoCompleto">
-          <small class="text-muted d-block" style="font-size: 0.7rem;">A PAGAR</small>
-          <span class="fw-bold" [class.text-success]="esPagoCompleto"
-            [class.text-warning]="!esPagoCompleto">{{formatearMoneda(montoAPagar)}}</span>
-        </div>
+      <div class="resumen-item" [class.text-success]="esSaldoTotal" [class.text-warning]="!esSaldoTotal">
+        <small>A PAGAR</small>
+        <strong>{{formatearMoneda(montoInput || 0)}}</strong>
       </div>
     </div>
 
-    <!-- Lista de facturas con checkboxes -->
-    <div class="mb-3">
-      <div class="d-flex justify-content-between align-items-center mb-2">
-        <h6 class="fw-bold mb-0 small text-uppercase text-muted">Facturas Pendientes</h6>
-        <button class="btn btn-sm btn-link p-0 text-decoration-none" (click)="toggleTodas()">
-          {{todasSeleccionadas ? 'Deseleccionar todas' : 'Seleccionar todas'}}
+    <!-- Input de monto grande -->
+    <div class="monto-input-section mb-4">
+      <label class="form-label fw-bold text-muted small text-uppercase">Monto a Abonar / Pagar</label>
+      <div class="input-group input-group-lg">
+        <span class="input-group-text fw-bold">RD$</span>
+        <input type="number" class="form-control form-control-lg fw-bold"
+          [(ngModel)]="montoInput" (ngModelChange)="onMontoChange()"
+          [max]="totalDeuda" min="1" step="1" placeholder="0.00"
+          style="font-size: 1.5rem; letter-spacing: 0.5px;">
+      </div>
+      <div class="d-flex gap-2 mt-2">
+        <button class="btn btn-sm btn-outline-success flex-grow-1" (click)="pagarTodo()">
+          <i class="fa-solid fa-check-double me-1"></i> Saldar Todo ({{formatearMoneda(totalDeuda)}})
         </button>
       </div>
+    </div>
 
-      <div class="facturas-list">
-        @for (cuenta of cuentasSeleccionables; track cuenta.id) {
-        <div class="factura-item" [class.selected]="cuenta.seleccionada" (click)="cuenta.seleccionada = !cuenta.seleccionada">
-          <div class="form-check d-flex align-items-center gap-3 m-0 w-100">
-            <input class="form-check-input flex-shrink-0" type="checkbox" [(ngModel)]="cuenta.seleccionada"
-              (click)="$event.stopPropagation()">
-            <div class="flex-grow-1">
-              <div class="d-flex justify-content-between align-items-center">
-                <div>
-                  <span class="small text-muted">Factura #{{cuenta.venta_id}}</span>
-                  <span class="badge rounded-pill ms-2" style="font-size: 0.6rem;"
-                    [class.bg-danger-subtle]="cuenta.estado === 'vencida'"
-                    [class.text-danger]="cuenta.estado === 'vencida'"
-                    [class.bg-warning-subtle]="cuenta.estado === 'pendiente'"
-                    [class.text-warning-emphasis]="cuenta.estado === 'pendiente'"
-                    [class.bg-info-subtle]="cuenta.estado === 'parcial'"
-                    [class.text-info-emphasis]="cuenta.estado === 'parcial'">
-                    {{cuenta.estado | uppercase}}
-                  </span>
-                </div>
-                <span class="fw-bold text-danger">{{formatearMoneda(cuenta.monto_pendiente)}}</span>
+    <!-- ============================================================
+         SIMULACIÓN FIFO — Se actualiza en tiempo real al escribir
+    ============================================================ -->
+    <div class="mb-4">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h6 class="fw-bold text-uppercase text-muted mb-0" style="font-size:0.75rem;">
+          <i class="fa-solid fa-diagram-project me-1"></i> Distribución del Abono (Más Antiguo Primero)
+        </h6>
+        <div class="d-flex gap-2">
+          @if (facturasSaldadas > 0) {
+          <span class="badge bg-success-subtle text-success border border-success-subtle">
+            ✅ {{facturasSaldadas}} saldada{{facturasSaldadas !== 1 ? 's' : ''}}
+          </span>
+          }
+          @if (facturasParciales > 0) {
+          <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">
+            ⚠️ {{facturasParciales}} parcial{{facturasParciales !== 1 ? 'es' : ''}}
+          </span>
+          }
+          @if (facturasSinTocar > 0) {
+          <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">
+            {{facturasSinTocar}} pendiente{{facturasSinTocar !== 1 ? 's' : ''}}
+          </span>
+          }
+        </div>
+      </div>
+
+      <div class="simulacion-lista">
+        @for (sim of simulacion; track sim.cuenta.id; let i = $index) {
+        <div class="sim-row" [class.sim-saldada]="sim.saldada" [class.sim-parcial]="sim.parcial"
+          [class.sim-sintocar]="sim.sinTocar">
+
+          <!-- Indicador de estado -->
+          <div class="sim-icono">
+            @if (sim.saldada) { <i class="fa-solid fa-circle-check text-success"></i> }
+            @else if (sim.parcial) { <i class="fa-solid fa-circle-half-stroke text-warning"></i> }
+            @else { <i class="fa-regular fa-circle text-secondary"></i> }
+          </div>
+
+          <!-- Detalle de la factura -->
+          <div class="sim-detalle flex-grow-1">
+            <div class="d-flex justify-content-between">
+              <span class="fw-semibold small">
+                Factura #{{i + 1}} · {{formatearFecha(sim.cuenta.fecha_venta)}}
+              </span>
+              <span class="small fw-bold" [class.text-success]="sim.saldada"
+                [class.text-warning]="sim.parcial" [class.text-muted]="sim.sinTocar">
+                @if (sim.saldada) { SALDADA }
+                @else if (sim.parcial) { ABONO PARCIAL }
+                @else { SIN TOCAR }
+              </span>
+            </div>
+
+            <!-- Barra de progreso visual -->
+            <div class="sim-progress-bar mt-1">
+              <div class="sim-progress-fill"
+                [class.fill-green]="sim.saldada"
+                [class.fill-yellow]="sim.parcial"
+                [style.width.%]="sim.saldada ? 100 : (sim.montoAplicado / sim.cuenta.monto_pendiente * 100)">
               </div>
-              <div class="d-flex justify-content-between">
-                <small class="text-muted">{{formatearFecha(cuenta.fecha_venta)}}</small>
-                <small class="text-muted">Total: {{formatearMoneda(cuenta.monto_total)}}</small>
-              </div>
+            </div>
+
+            <div class="d-flex justify-content-between mt-1">
+              <small class="text-muted">
+                Deuda: <strong>{{formatearMoneda(sim.cuenta.monto_pendiente)}}</strong>
+                @if (sim.montoAplicado > 0) {
+                → Aplica: <strong class="text-primary">{{formatearMoneda(sim.montoAplicado)}}</strong>
+                }
+              </small>
+              @if (!sim.saldada && sim.pendienteDespues > 0) {
+              <small class="text-danger fw-bold">Resta: {{formatearMoneda(sim.pendienteDespues)}}</small>
+              }
             </div>
           </div>
         </div>
         }
       </div>
-    </div>
 
-    <!-- Opciones de monto -->
-    <div class="mb-3">
-      <h6 class="fw-bold mb-2 small text-uppercase text-muted">Monto a Pagar</h6>
-      <div class="btn-group w-100 mb-2" role="group">
-        <button class="btn btn-sm" [class.btn-primary]="modoMonto === 'total'"
-          [class.btn-outline-primary]="modoMonto !== 'total'" (click)="modoMonto = 'total'; montoPersonalizado = null">
-          <i class="fa-solid fa-check-double me-1"></i> Saldar Todo ({{formatearMoneda(totalSeleccionado)}})
-        </button>
-        <button class="btn btn-sm" [class.btn-primary]="modoMonto === 'personalizado'"
-          [class.btn-outline-primary]="modoMonto !== 'personalizado'" (click)="modoMonto = 'personalizado'; montoPersonalizado = totalSeleccionado">
-          <i class="fa-solid fa-pen me-1"></i> Monto Personalizado
-        </button>
+      @if (pendienteResidualdespuesPago > 0) {
+      <div class="alert alert-warning d-flex align-items-center gap-2 mt-3 py-2 mb-0">
+        <i class="fa-solid fa-info-circle"></i>
+        <small>Quedará un saldo pendiente de <strong>{{formatearMoneda(pendienteResidualdespuesPago)}}</strong></small>
       </div>
-
-      @if (modoMonto === 'personalizado') {
-      <div class="input-group">
-        <span class="input-group-text bg-light">RD$</span>
-        <input type="number" class="form-control" [(ngModel)]="montoPersonalizado" [max]="totalSeleccionado" min="1"
-          placeholder="Monto a pagar">
+      } @else if ((montoInput || 0) > 0) {
+      <div class="alert alert-success d-flex align-items-center gap-2 mt-3 py-2 mb-0">
+        <i class="fa-solid fa-circle-check"></i>
+        <small>¡Toda la deuda quedará <strong>completamente saldada</strong>!</small>
       </div>
-      @if (montoPersonalizado !== null && montoPersonalizado < totalSeleccionado) {
-      <small class="text-warning d-block mt-1">
-        <i class="fa-solid fa-info-circle me-1"></i>
-        Se distribuirá empezando por las facturas más antiguas. Pendiente: {{formatearMoneda(pendienteDespuesPago)}}
-      </small>
-      }
       }
     </div>
 
-    <!-- Método de Pago -->
+    <!-- Detalles del pago -->
     <div class="row g-2 mb-3">
       <div class="col-6">
         <label class="form-label small fw-bold text-muted">Método de Pago</label>
@@ -130,8 +160,7 @@
         <input type="date" class="form-control form-control-sm" [(ngModel)]="fechaPago">
       </div>
     </div>
-
-    <div class="mb-3">
+    <div class="mb-2">
       <label class="form-label small fw-bold text-muted">Referencia (opcional)</label>
       <input type="text" class="form-control form-control-sm" [(ngModel)]="referencia"
         placeholder="No. cheque, transferencia, etc.">
@@ -141,14 +170,15 @@
   <!-- Footer -->
   <div class="modal-footer-custom">
     <button class="btn btn-outline-secondary" (click)="cerrar()" [disabled]="isSaving">Cancelar</button>
-    <button class="btn btn-primary fw-bold d-flex align-items-center gap-2" (click)="confirmarPago()"
-      [disabled]="!puedeConfirmar">
+    <button class="btn btn-primary fw-bold d-flex align-items-center gap-2"
+      (click)="confirmarPago()" [disabled]="!puedeConfirmar">
       @if (isSaving) {
-      <span class="spinner-border spinner-border-sm"></span> Procesando...
+        <span class="spinner-border spinner-border-sm"></span> Procesando...
       } @else {
-      <i class="fa-solid fa-money-bill-transfer"></i>
-      Pagar {{formatearMoneda(montoAPagar)}}
+        <i class="fa-solid fa-money-bill-transfer"></i>
+        Registrar {{formatearMoneda(montoInput || 0)}}
       }
     </button>
   </div>
+
 </div>

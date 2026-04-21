@@ -25,3 +25,32 @@
   font-weight: 600;
   letter-spacing: 0.5px;
 }
+
+/* Acordeón de facturas por cliente */
+.facturas-acordeon {
+  border: 1px solid #e9ecef;
+  border-radius: 10px;
+  overflow: hidden;
+  animation: fadeIn 0.2s ease;
+}
+
+.factura-row {
+  background: #f8f9fa;
+  border-bottom: 1px solid #eee;
+  transition: background 0.15s;
+}
+
+.factura-row:last-child { border-bottom: none; }
+.factura-row:hover { background: #e9ecef; }
+
+/* Cursor en tabla */
+.cursor-pointer { cursor: pointer; }
+
+.card:hover {
+  box-shadow: 0 8px 24px rgba(0,0,0,0.10) !important;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

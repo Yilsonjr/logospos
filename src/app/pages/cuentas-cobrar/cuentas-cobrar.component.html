@@ -1,34 +1,12 @@
 <div class="container-fluid py-4 min-vh-100 bg-light">
 
   <!-- Header -->
-  <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 gap-3">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
     <div>
       <h2 class="fw-bold text-dark mb-0">Cuentas por Cobrar</h2>
       <p class="text-muted mb-0 small">Gestiona los créditos y pagos pendientes de tus clientes</p>
     </div>
     <div class="d-flex gap-2 flex-wrap">
-      <!-- Pago Masivo: mostrar clientes con múltiples facturas -->
-      @if (clientesConMultiplesCuentas.length > 0) {
-        <div class="dropdown">
-          <button class="btn btn-success d-flex align-items-center gap-2 shadow-sm dropdown-toggle" data-bs-toggle="dropdown">
-            <i class="fa-solid fa-money-bill-transfer"></i> Saldar Deuda
-          </button>
-          <ul class="dropdown-menu dropdown-menu-end shadow border-0">
-            @for (cliente of clientesConMultiplesCuentas; track cliente.clienteId) {
-            <li>
-              <button class="dropdown-item py-2 d-flex justify-content-between align-items-center gap-3"
-                (click)="abrirPagoMasivo(cliente.nombre, cliente.clienteId)">
-                <div>
-                  <span class="fw-bold">{{cliente.nombre}}</span>
-                  <br><small class="text-muted">{{cliente.cantidad}} facturas</small>
-                </div>
-                <span class="badge bg-danger rounded-pill">${{cliente.totalPendiente.toLocaleString()}}</span>
-              </button>
-            </li>
-            }
-          </ul>
-        </div>
-      }
       <button routerLink="/cuentas-cobrar/recordatorios"
         class="btn btn-primary d-flex align-items-center gap-2 shadow-sm">
         <i class="fa-solid fa-bell"></i> Recordatorios
@@ -41,63 +19,48 @@
 
   <!-- Estadísticas -->
   <div class="row g-3 mb-4">
-    <!-- Total Pendiente -->
-    <div class="col-md-3">
+    <div class="col-6 col-md-3">
       <div class="card border-0 shadow-sm h-100">
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-start mb-2">
-            <span class="text-uppercase text-muted fw-bold small" style="font-size: 0.75rem;">Total Pendiente</span>
-            <div class="bg-warning bg-opacity-10 text-warning p-2 rounded">
-              <i class="fa-solid fa-hand-holding-dollar fs-5"></i>
-            </div>
+            <span class="text-uppercase text-muted fw-bold" style="font-size: 0.7rem;">Total Pendiente</span>
+            <div class="bg-warning bg-opacity-10 text-warning p-2 rounded"><i class="fa-solid fa-hand-holding-dollar fs-5"></i></div>
           </div>
           <h3 class="fw-bold text-dark mb-0">${{totalPendiente.toFixed(2)}}</h3>
           <small class="text-muted">Por cobrar actualmente</small>
         </div>
       </div>
     </div>
-
-    <!-- Cuentas Activas -->
-    <div class="col-md-3">
+    <div class="col-6 col-md-3">
       <div class="card border-0 shadow-sm h-100">
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-start mb-2">
-            <span class="text-uppercase text-muted fw-bold small" style="font-size: 0.75rem;">Cuentas Activas</span>
-            <div class="bg-primary bg-opacity-10 text-primary p-2 rounded">
-              <i class="fa-solid fa-file-invoice fs-5"></i>
-            </div>
+            <span class="text-uppercase text-muted fw-bold" style="font-size: 0.7rem;">Clientes</span>
+            <div class="bg-primary bg-opacity-10 text-primary p-2 rounded"><i class="fa-solid fa-users fs-5"></i></div>
           </div>
-          <h3 class="fw-bold text-dark mb-0">{{cuentasPendientes}}</h3>
-          <small class="text-muted">Créditos vigentes</small>
+          <h3 class="fw-bold text-dark mb-0">{{clientesPendientesCount}}</h3>
+          <small class="text-muted">Con deuda activa</small>
         </div>
       </div>
     </div>
-
-    <!-- Cuentas Vencidas -->
-    <div class="col-md-3">
+    <div class="col-6 col-md-3">
       <div class="card border-0 shadow-sm h-100">
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-start mb-2">
-            <span class="text-uppercase text-muted fw-bold small" style="font-size: 0.75rem;">Cuentas Vencidas</span>
-            <div class="bg-danger bg-opacity-10 text-danger p-2 rounded">
-              <i class="fa-solid fa-triangle-exclamation fs-5"></i>
-            </div>
+            <span class="text-uppercase text-muted fw-bold" style="font-size: 0.7rem;">Vencidos</span>
+            <div class="bg-danger bg-opacity-10 text-danger p-2 rounded"><i class="fa-solid fa-triangle-exclamation fs-5"></i></div>
           </div>
-          <h3 class="fw-bold text-dark mb-0">{{cuentasVencidas}}</h3>
-          <small class="text-muted">Requieren atención inmediata</small>
+          <h3 class="fw-bold text-dark mb-0">{{cuentasVencidasCount}}</h3>
+          <small class="text-muted">Clientes en mora</small>
         </div>
       </div>
     </div>
-
-    <!-- Monto Vencido -->
-    <div class="col-md-3">
+    <div class="col-6 col-md-3">
       <div class="card border-0 shadow-sm h-100">
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-start mb-2">
-            <span class="text-uppercase text-muted fw-bold small" style="font-size: 0.75rem;">Monto Vencido</span>
-            <div class="bg-danger bg-opacity-10 text-danger p-2 rounded">
-              <i class="fa-solid fa-chart-line fs-5"></i>
-            </div>
+            <span class="text-uppercase text-muted fw-bold" style="font-size: 0.7rem;">Monto Vencido</span>
+            <div class="bg-danger bg-opacity-10 text-danger p-2 rounded"><i class="fa-solid fa-circle-exclamation fs-5"></i></div>
           </div>
           <h3 class="fw-bold text-dark mb-0">${{totalVencido.toFixed(2)}}</h3>
           <small class="text-muted">Total en mora</small>
@@ -106,38 +69,29 @@
     </div>
   </div>
 
-  <!-- Filtros y Vista -->
+  <!-- Filtros -->
   <div class="card border-0 shadow-sm mb-4">
     <div class="card-header bg-white py-3 border-bottom">
       <div class="row g-3 align-items-center">
-        <!-- Buscador -->
         <div class="col-md-4">
           <div class="input-group input-group-sm">
-            <span class="input-group-text bg-light border-end-0 text-muted">
-              <i class="fa-solid fa-search"></i>
-            </span>
+            <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-search"></i></span>
             <input type="text" [(ngModel)]="busqueda" (input)="onBusquedaChange()"
-              class="form-control border-start-0 ps-0 bg-light" placeholder="Cliente...">
+              class="form-control border-start-0 ps-0 bg-light" placeholder="Buscar cliente...">
           </div>
         </div>
-
-        <!-- Filtros de Estado -->
         <div class="col-md-6 text-md-center">
           <div class="btn-group btn-group-sm shadow-sm" role="group">
             <button type="button" class="btn fw-semibold" [class.btn-primary]="filtroEstado === 'todas'"
-              [class.btn-outline-primary]="filtroEstado !== 'todas'" (click)="cambiarFiltro('todas')">Todas</button>
+              [class.btn-outline-primary]="filtroEstado !== 'todas'" (click)="cambiarFiltro('todas')">Todos</button>
             <button type="button" class="btn fw-semibold" [class.btn-warning]="filtroEstado === 'pendiente'"
-              [class.btn-outline-warning]="filtroEstado !== 'pendiente'"
-              (click)="cambiarFiltro('pendiente')">Pendientes</button>
+              [class.btn-outline-warning]="filtroEstado !== 'pendiente'" (click)="cambiarFiltro('pendiente')">Pendientes</button>
             <button type="button" class="btn fw-semibold" [class.btn-info]="filtroEstado === 'parcial'"
               [class.btn-outline-info]="filtroEstado !== 'parcial'" (click)="cambiarFiltro('parcial')">Parcial</button>
             <button type="button" class="btn fw-semibold" [class.btn-danger]="filtroEstado === 'vencida'"
-              [class.btn-outline-danger]="filtroEstado !== 'vencida'"
-              (click)="cambiarFiltro('vencida')">Vencidas</button>
+              [class.btn-outline-danger]="filtroEstado !== 'vencida'" (click)="cambiarFiltro('vencida')">Vencidos</button>
           </div>
         </div>
-
-        <!-- Vista -->
         <div class="col-md-2 text-end">
           <div class="btn-group btn-group-sm shadow-sm">
             <button class="btn" [class.btn-primary]="vistaActual === 'tarjetas'"
@@ -157,70 +111,84 @@
   @if (isLoading) {
   <div class="text-center py-5">
     <div class="spinner-border text-primary" role="status"></div>
-    <p class="mt-2 text-muted small">Preparando cuentas por cobrar...</p>
+    <p class="mt-2 text-muted small">Cargando cuentas por cobrar...</p>
   </div>
   } @else {
 
-  <!-- Vista Tarjetas -->
+  <!-- ======================== VISTA TARJETAS ======================== -->
   @if (vistaActual === 'tarjetas') {
   <div class="row g-4">
-    @for (cuenta of cuentasFiltradas; track cuenta.id) {
+    @for (deudor of clientesFiltrados; track deudor.clienteId) {
     <div class="col-md-6 col-lg-4">
-      <div class="card h-100 border-0 shadow-sm hover-shadow transition-all position-relative overflow-visible">
+      <div class="card h-100 border-0 shadow-sm position-relative overflow-visible"
+        [class.border-danger]="deudor.estadoPeor === 'vencida'"
+        style="transition: box-shadow 0.2s;">
+
+        <!-- Badge estado + nro facturas -->
         <div class="card-header bg-white border-bottom-0 pt-3 px-3 d-flex justify-content-between align-items-center">
-          <span [class]="getEstadoBadgeClass(cuenta.estado)">{{cuenta.estado | uppercase}}</span>
-
-          <!-- Menu Opciones -->
-          <div class="dropdown">
-            <button class="btn btn-light btn-sm rounded-circle d-flex align-items-center justify-content-center"
-              (click)="toggleMenu($event, cuenta.id!)" style="width: 32px; height: 32px;">
-              <i class="fa-solid fa-ellipsis-vertical"></i>
-            </button>
-            <ul class="dropdown-menu dropdown-menu-end shadow border-0" [class.show]="menuAbiertoId === cuenta.id"
-              style="position: absolute; right: 0; left: auto; margin-top: 5px;">
-              @if (cuenta.estado !== 'pagada') {
-              <li><button class="dropdown-item py-2" (click)="abrirModalPago(cuenta)"><i
-                    class="fa-solid fa-hand-holding-dollar me-2 text-primary"></i>Registrar Pago</button></li>
-              <li><button class="dropdown-item py-2" (click)="abrirPagoMasivo(cuenta.cliente_nombre!, cuenta.cliente_id)"><i
-                    class="fa-solid fa-money-bill-transfer me-2 text-success"></i>Saldar Deuda Completa</button></li>
-              }
-              <li><button class="dropdown-item py-2" (click)="abrirHistorial(cuenta)"><i
-                    class="fa-solid fa-clock-rotate-left me-2 text-secondary"></i>Ver Historial</button></li>
-            </ul>
-          </div>
-        </div>
-
-        <div class="card-body px-3 pt-0">
-          <h5 class="fw-bold text-dark mb-1">{{cuenta.cliente_nombre}}</h5>
-          <p class="text-muted small mb-3">Venta: {{formatearFecha(cuenta.fecha_venta)}}</p>
-
-          <div class="row g-2 mb-3 bg-light rounded p-2 mx-0 text-center">
-            <div class="col-6 border-end">
-              <small class="text-muted d-block small">TOTAL</small>
-              <span class="fw-bold text-dark">${{cuenta.monto_total.toLocaleString()}}</span>
-            </div>
-            <div class="col-6">
-              <small class="text-muted d-block small">PENDIENTE</small>
-              <span class="fw-bold text-danger">${{cuenta.monto_pendiente.toLocaleString()}}</span>
-            </div>
-          </div>
-
-          <div class="d-flex justify-content-between align-items-center">
-            <small class="text-muted">Vencimiento:</small>
-            <span class="small fw-bold" [class.text-danger]="diasVencimiento(cuenta.fecha_vencimiento) < 0">
-              {{formatearFecha(cuenta.fecha_vencimiento)}}
+          <div class="d-flex align-items-center gap-2">
+            <span [class]="getEstadoBadgeClass(deudor.estadoPeor)">{{deudor.estadoPeor | uppercase}}</span>
+            <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill">
+              <i class="fa-solid fa-file-invoice me-1"></i>{{deudor.cantidadFacturas}}
+              {{deudor.cantidadFacturas === 1 ? 'factura' : 'facturas'}}
             </span>
           </div>
         </div>
 
-        <div class="card-footer bg-light border-top-0 pb-3 pt-2 d-flex gap-2">
-          @if (cuenta.estado !== 'pagada') {
-          <button class="btn btn-primary btn-sm w-100 fw-bold rounded-pill" (click)="abrirModalPago(cuenta)">
-            COBRAR
+        <div class="card-body px-3 pt-1">
+          <!-- Nombre cliente clickeable -->
+          <h5 class="fw-bold text-dark mb-1">{{deudor.clienteNombre}}</h5>
+          <p class="text-muted small mb-3">Deuda desde: {{formatearFecha(deudor.fechaMasAntigua)}}</p>
+
+          <!-- Montos -->
+          <div class="row g-0 mb-3 bg-light rounded p-2 mx-0 text-center">
+            <div class="col-6 border-end">
+              <small class="text-muted d-block" style="font-size:0.7rem;">TOTAL DEUDA</small>
+              <span class="fw-bold text-dark">${{deudor.montoPendiente.toLocaleString('es-DO', {minimumFractionDigits:2})}}</span>
+            </div>
+            <div class="col-6">
+              <small class="text-muted d-block" style="font-size:0.7rem;">VENCIMIENTO</small>
+              <span class="fw-bold small" [class.text-danger]="diasVencimiento(deudor.fechaVencimientoMasAntigua) < 0">
+                {{formatearFecha(deudor.fechaVencimientoMasAntigua)}}
+              </span>
+            </div>
+          </div>
+
+          <!-- Botón desplegable de facturas individuales -->
+          <button class="btn btn-sm btn-light w-100 d-flex justify-content-between align-items-center mb-2"
+            (click)="toggleDetalle(deudor.clienteId)">
+            <span><i class="fa-solid fa-list-ul me-2 text-muted"></i>Ver {{deudor.cantidadFacturas}} factura{{deudor.cantidadFacturas !== 1 ? 's' : ''}}</span>
+            <i class="fa-solid" [class.fa-chevron-down]="clienteDetalleId !== deudor.clienteId"
+              [class.fa-chevron-up]="clienteDetalleId === deudor.clienteId"></i>
           </button>
+
+          <!-- Facturas individuales (acordeón) -->
+          @if (clienteDetalleId === deudor.clienteId) {
+          <div class="facturas-acordeon mb-2">
+            @for (c of deudor.cuentas; track c.id; let i = $index) {
+            <div class="factura-row d-flex justify-content-between align-items-center px-2 py-1">
+              <div>
+                <small class="text-muted">#{{i + 1}} · Vta {{formatearFecha(c.fecha_venta)}}</small>
+                <span class="badge ms-1" style="font-size:0.6rem;" [class]="getEstadoBadgeClass(c.estado)">{{c.estado}}</span>
+              </div>
+              <div class="d-flex align-items-center gap-2">
+                <span class="fw-bold text-danger small">${{c.monto_pendiente.toLocaleString('es-DO', {minimumFractionDigits:2})}}</span>
+                <button class="btn btn-xs btn-outline-secondary p-0 px-1" style="font-size:0.65rem;"
+                  (click)="abrirHistorial(c.id!)">
+                  <i class="fa-solid fa-clock-rotate-left"></i>
+                </button>
+              </div>
+            </div>
+            }
+          </div>
           }
-          <button class="btn btn-outline-secondary btn-sm w-100 fw-bold rounded-pill" (click)="abrirHistorial(cuenta)">
-            DETALLES
+        </div>
+
+        <!-- Acciones -->
+        <div class="card-footer bg-light border-top-0 pb-3 pt-2">
+          <button class="btn btn-primary btn-sm w-100 fw-bold rounded-pill" (click)="abrirPagoMasivo(deudor)">
+            <i class="fa-solid fa-money-bill-transfer me-2"></i>
+            {{deudor.cantidadFacturas === 1 ? 'Cobrar' : 'Abonar / Saldar Deuda'}}
           </button>
         </div>
       </div>
@@ -229,7 +197,7 @@
   </div>
   }
 
-  <!-- Vista Tabla -->
+  <!-- ======================== VISTA TABLA ======================== -->
   @if (vistaActual === 'tabla') {
   <div class="card border-0 shadow-sm overflow-hidden">
     <div class="table-responsive">
@@ -237,38 +205,74 @@
         <thead class="bg-light text-secondary text-uppercase small fw-bold">
           <tr>
             <th class="px-4 py-3">Cliente</th>
-            <th class="px-4 py-3">Venta</th>
-            <th class="px-4 py-3">Vencimiento</th>
-            <th class="text-end">Total</th>
+            <th class="text-center">Facturas</th>
+            <th class="px-4 py-3">Deuda Desde</th>
+            <th class="px-4 py-3">Vence</th>
             <th class="text-end">Pendiente</th>
             <th class="text-center">Estado</th>
             <th class="text-end pe-4">Acciones</th>
           </tr>
         </thead>
         <tbody>
-          @for (cuenta of cuentasFiltradas; track cuenta.id) {
-          <tr>
-            <td class="px-4 py-3 fw-bold text-dark">{{cuenta.cliente_nombre}}</td>
-            <td class="px-4 py-3 text-muted small">{{formatearFecha(cuenta.fecha_venta)}}</td>
-            <td class="px-4 py-3 small">{{formatearFecha(cuenta.fecha_vencimiento)}}</td>
-            <td class="text-end fw-bold">${{cuenta.monto_total.toLocaleString()}}</td>
-            <td class="text-end fw-bold text-danger">${{cuenta.monto_pendiente.toLocaleString()}}</td>
+          @for (deudor of clientesFiltrados; track deudor.clienteId) {
+          <!-- Fila cliente -->
+          <tr class="cursor-pointer" (click)="toggleDetalle(deudor.clienteId)"
+            [class.table-active]="clienteDetalleId === deudor.clienteId">
+            <td class="px-4 py-3 fw-bold text-dark">
+              <i class="fa-solid me-2 text-muted"
+                [class.fa-chevron-right]="clienteDetalleId !== deudor.clienteId"
+                [class.fa-chevron-down]="clienteDetalleId === deudor.clienteId"></i>
+              {{deudor.clienteNombre}}
+            </td>
             <td class="text-center">
-              <span [class]="getEstadoBadgeClass(cuenta.estado)">{{cuenta.estado | uppercase}}</span>
+              <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill">
+                {{deudor.cantidadFacturas}}
+              </span>
+            </td>
+            <td class="px-4 py-3 text-muted small">{{formatearFecha(deudor.fechaMasAntigua)}}</td>
+            <td class="px-4 py-3 small" [class.text-danger]="diasVencimiento(deudor.fechaVencimientoMasAntigua) < 0">
+              {{formatearFecha(deudor.fechaVencimientoMasAntigua)}}
+            </td>
+            <td class="text-end fw-bold text-danger">
+              ${{deudor.montoPendiente.toLocaleString('es-DO', {minimumFractionDigits:2})}}
+            </td>
+            <td class="text-center">
+              <span [class]="getEstadoBadgeClass(deudor.estadoPeor)">{{deudor.estadoPeor | uppercase}}</span>
             </td>
             <td class="text-end pe-4">
-              <div class="btn-group btn-group-sm">
-                @if (cuenta.estado !== 'pagada') {
-                <button (click)="abrirModalPago(cuenta)" class="btn btn-outline-primary" title="Cobrar">
-                  <i class="fa-solid fa-hand-holding-dollar"></i>
-                </button>
-                }
-                <button (click)="abrirHistorial(cuenta)" class="btn btn-outline-secondary" title="Historial">
-                  <i class="fa-solid fa-clock-rotate-left"></i>
-                </button>
-              </div>
+              <button (click)="abrirPagoMasivo(deudor); $event.stopPropagation()"
+                class="btn btn-sm btn-primary rounded-pill">
+                <i class="fa-solid fa-money-bill-transfer me-1"></i>
+                {{deudor.cantidadFacturas === 1 ? 'Cobrar' : 'Abonar'}}
+              </button>
             </td>
           </tr>
+          <!-- Facturas expandidas (sub-tabla) -->
+          @if (clienteDetalleId === deudor.clienteId) {
+          @for (c of deudor.cuentas; track c.id; let i = $index) {
+          <tr class="table-light">
+            <td class="px-4 text-muted small" style="padding-left: 3rem !important;">
+              └ Factura #{{c.venta_id}} · {{formatearFecha(c.fecha_venta)}}
+            </td>
+            <td></td>
+            <td class="small text-muted">{{formatearFecha(c.fecha_venta)}}</td>
+            <td class="small" [class.text-danger]="diasVencimiento(c.fecha_vencimiento) < 0">
+              {{formatearFecha(c.fecha_vencimiento)}}
+            </td>
+            <td class="text-end fw-bold text-danger small">
+              ${{c.monto_pendiente.toLocaleString('es-DO', {minimumFractionDigits:2})}}
+            </td>
+            <td class="text-center">
+              <span [class]="getEstadoBadgeClass(c.estado)" style="font-size: 0.65rem;">{{c.estado}}</span>
+            </td>
+            <td class="text-end pe-4">
+              <button (click)="abrirHistorial(c.id!)" class="btn btn-xs btn-outline-secondary btn-sm" title="Historial">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+              </button>
+            </td>
+          </tr>
+          }
+          }
           }
         </tbody>
       </table>
@@ -276,10 +280,11 @@
   </div>
   }
 
-  @if (cuentasFiltradas.length === 0) {
+  @if (clientesFiltrados.length === 0) {
   <div class="text-center py-5">
-    <i class="fa-solid fa-folder-open fa-3x text-muted opacity-25 mb-3"></i>
-    <h5 class="fw-bold">No hay cuentas por cobrar</h5>
+    <i class="fa-solid fa-users-slash fa-3x text-muted opacity-25 mb-3 d-block"></i>
+    <h5 class="fw-bold">No hay clientes con deudas pendientes</h5>
+    <p class="text-muted small">{{ busqueda ? 'Prueba con otro nombre de cliente' : 'Todos los créditos están al día' }}</p>
   </div>
   }
   }
@@ -287,16 +292,6 @@
 </div>
 
 <!-- Modales -->
-@if (isModalPagoOpen && cuentaSeleccionada) {
-<app-modal-pago [cuenta]="cuentaSeleccionada" (close)="cerrarModalPago()" (pagoRegistrado)="onPagoRegistrado()">
-</app-modal-pago>
-}
-
-@if (isHistorialOpen && cuentaIdHistorial) {
-<app-historial-pagos [cuentaId]="cuentaIdHistorial" (close)="cerrarHistorial()">
-</app-historial-pagos>
-}
-
 @if (isModalPagoMasivoOpen) {
 <app-modal-pago-masivo
   [clienteNombre]="pagoMasivoClienteNombre"
@@ -305,4 +300,9 @@
   (close)="cerrarPagoMasivo()"
   (pagoRegistrado)="onPagoMasivoRegistrado()">
 </app-modal-pago-masivo>
+}
+
+@if (isHistorialOpen && cuentaIdHistorial) {
+<app-historial-pagos [cuentaId]="cuentaIdHistorial" (close)="cerrarHistorial()">
+</app-historial-pagos>
 }

@@ -42,3 +42,6 @@ __screenshots__/
 .DS_Store
 Thumbs.db
 docs/07-pro-feature-overrides.sql
+build-errors.txt
+LicorFullDB.sql
+migrar_licor.py

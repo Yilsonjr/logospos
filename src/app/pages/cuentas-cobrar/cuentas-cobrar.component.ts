@@ -4,36 +4,55 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterModule, NavigationEnd } from '@angular/router';
 import { CuentaPorCobrar } from '../../models/cuentas-cobrar.model';
 import { CuentasCobrarService } from '../../services/cuentas-cobrar.service';
-import { ModalPagoComponent } from './modal-pago/modal-pago.component';
 import { ModalPagoMasivoComponent } from './modal-pago-masivo/modal-pago-masivo.component';
 import { HistorialPagosComponent } from './historial-pagos/historial-pagos.component';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 
+// Interfaz para agrupar cuentas por cliente
+export interface ClienteDeudor {
+  clienteId: number;
+  clienteNombre: string;
+  cantidadFacturas: number;
+  montoTotal: number;
+  montoPagado: number;
+  montoPendiente: number;
+  fechaMasAntigua: string;
+  fechaVencimientoMasAntigua: string;
+  estadoPeor: 'pendiente' | 'parcial' | 'pagada' | 'vencida';
+  cuentas: CuentaPorCobrar[]; // todas sus facturas activas
+}
+
 @Component({
   selector: 'app-cuentas-cobrar',
-  imports: [CommonModule, FormsModule, RouterModule, ModalPagoComponent, ModalPagoMasivoComponent, HistorialPagosComponent],
+  imports: [CommonModule, FormsModule, RouterModule, ModalPagoMasivoComponent, HistorialPagosComponent],
   templateUrl: './cuentas-cobrar.component.html',
   styleUrl: './cuentas-cobrar.component.css'
 })
 export class CuentasCobrarComponent implements OnInit, OnDestroy {
   cuentas: CuentaPorCobrar[] = [];
-  cuentasFiltradas: CuentaPorCobrar[] = [];
-  filtroEstado: string = 'todas';
-  busqueda: string = '';
   isLoading = true;
   vistaActual: 'tarjetas' | 'tabla' = 'tarjetas';
-  isModalPagoOpen = false;
-  isHistorialOpen = false;
-  cuentaSeleccionada?: CuentaPorCobrar;
-  cuentaIdHistorial?: number;
-  menuAbiertoId: number | null = null;
-  // Pago Masivo
+  busqueda: string = '';
+  filtroEstado: string = 'todas';
+
+  // Clientes agrupados (fuente principal de la vista)
+  clientesDeudores: ClienteDeudor[] = [];
+  clientesFiltrados: ClienteDeudor[] = [];
+
+  // Modal pago masivo
   isModalPagoMasivoOpen = false;
   pagoMasivoClienteNombre = '';
   pagoMasivoClienteId = 0;
   pagoMasivoCuentas: CuentaPorCobrar[] = [];
-  private cuentasSubscription?: Subscription;
+
+  // Historial (por factura individual)
+  isHistorialOpen = false;
+  cuentaIdHistorial?: number;
+
+  // Detalle de cliente (expandir sus facturas)
+  clienteDetalleId: number | null = null;
+
   private subscriptions: Subscription[] = [];
 
   constructor(
@@ -43,19 +62,15 @@ export class CuentasCobrarComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit() {
-    console.log('🔄 Cuentas por Cobrar: Iniciando componente...');
-
-    // Suscribirse al observable de cuentas
     const cuentasSub = this.cuentasService.cuentas$.subscribe(cuentas => {
-      console.log('💰 Cuentas recibidas:', cuentas.length);
       this.cuentas = cuentas;
+      this.agruparPorCliente();
       this.aplicarFiltros();
       this.isLoading = false;
       this.cdr.detectChanges();
     });
     this.subscriptions.push(cuentasSub);
 
-    // Escuchar cambios de navegación para recargar si es necesario
     const navSub = this.router.events
       .pipe(filter(event => event instanceof NavigationEnd))
       .subscribe(() => {
@@ -65,120 +80,125 @@ export class CuentasCobrarComponent implements OnInit, OnDestroy {
       });
     this.subscriptions.push(navSub);
 
-    // Primera carga
     this.cargarCuentas();
   }
 
   ngOnDestroy() {
-    if (this.cuentasSubscription) {
-      this.cuentasSubscription.unsubscribe();
-    }
     this.subscriptions.forEach(sub => sub.unsubscribe());
   }
 
   async cargarCuentas() {
-    if (this.isLoading && this.cuentas.length > 0) return; // Evitar si ya está cargando
-
     this.isLoading = true;
     this.cdr.detectChanges();
-
     try {
-      console.log('📦 CuentasCobrar: Cargando desde el servicio...');
       await this.cuentasService.cargarCuentas();
-      console.log('📦 CuentasCobrar: Datos cargados');
     } catch (error) {
-      console.error('📦 CuentasCobrar: Error al cargar:', error);
+      console.error('Error al cargar cuentas:', error);
     } finally {
       this.isLoading = false;
       this.cdr.detectChanges();
-
-      // Delay de seguridad para sincronizar UI
       setTimeout(() => this.cdr.detectChanges(), 100);
     }
   }
 
-  aplicarFiltros() {
-    let resultado = this.cuentas;
+  // ==================== AGRUPACIÓN POR CLIENTE ====================
 
-    // Filtrar por estado
-    if (this.filtroEstado !== 'todas') {
-      resultado = resultado.filter(c => c.estado === this.filtroEstado);
+  agruparPorCliente() {
+    const mapa = new Map<number, ClienteDeudor>();
+
+    // Solo cuentas no pagadas
+    const cuentasActivas = this.cuentas.filter(c => c.estado !== 'pagada' && c.monto_pendiente > 0);
+
+    for (const c of cuentasActivas) {
+      const existing = mapa.get(c.cliente_id);
+      if (existing) {
+        existing.cantidadFacturas++;
+        existing.montoTotal += c.monto_total;
+        existing.montoPagado += c.monto_pagado;
+        existing.montoPendiente += c.monto_pendiente;
+        existing.cuentas.push(c);
+        // Fecha más antigua
+        if (new Date(c.fecha_venta) < new Date(existing.fechaMasAntigua)) {
+          existing.fechaMasAntigua = c.fecha_venta;
+        }
+        // Vencimiento más urgente
+        if (new Date(c.fecha_vencimiento) < new Date(existing.fechaVencimientoMasAntigua)) {
+          existing.fechaVencimientoMasAntigua = c.fecha_vencimiento;
+        }
+        // Estado peor
+        existing.estadoPeor = this.estadoPeor(existing.estadoPeor, c.estado);
+      } else {
+        mapa.set(c.cliente_id, {
+          clienteId: c.cliente_id,
+          clienteNombre: c.cliente_nombre || 'Sin nombre',
+          cantidadFacturas: 1,
+          montoTotal: c.monto_total,
+          montoPagado: c.monto_pagado,
+          montoPendiente: c.monto_pendiente,
+          fechaMasAntigua: c.fecha_venta,
+          fechaVencimientoMasAntigua: c.fecha_vencimiento,
+          estadoPeor: c.estado,
+          cuentas: [c]
+        });
+      }
     }
 
-    // Filtrar por búsqueda
+    // Ordenar cuentas internas por fecha de venta (FIFO: más antiguas primero)
+    mapa.forEach(deudor => {
+      deudor.cuentas.sort((a, b) => new Date(a.fecha_venta).getTime() - new Date(b.fecha_venta).getTime());
+    });
+
+    // Lista de clientes ordenada por monto pendiente descendente
+    this.clientesDeudores = Array.from(mapa.values())
+      .sort((a, b) => b.montoPendiente - a.montoPendiente);
+  }
+
+  private estadoPeor(
+    actual: 'pendiente' | 'parcial' | 'pagada' | 'vencida',
+    nuevo: 'pendiente' | 'parcial' | 'pagada' | 'vencida'
+  ): 'pendiente' | 'parcial' | 'pagada' | 'vencida' {
+    const prioridad = { vencida: 4, pendiente: 3, parcial: 2, pagada: 1 };
+    return prioridad[nuevo] > prioridad[actual] ? nuevo : actual;
+  }
+
+  // ==================== FILTROS ====================
+
+  aplicarFiltros() {
+    let resultado = this.clientesDeudores;
+
+    if (this.filtroEstado !== 'todas') {
+      resultado = resultado.filter(cd => cd.estadoPeor === this.filtroEstado);
+    }
+
     if (this.busqueda.trim()) {
-      const busquedaLower = this.busqueda.toLowerCase();
-      resultado = resultado.filter(c =>
-        c.cliente_nombre?.toLowerCase().includes(busquedaLower) ||
-        c.id?.toString().includes(busquedaLower)
+      const q = this.busqueda.toLowerCase();
+      resultado = resultado.filter(cd =>
+        cd.clienteNombre.toLowerCase().includes(q)
       );
     }
 
-    this.cuentasFiltradas = resultado;
-    this.menuAbiertoId = null; // Cerrar menús al filtrar
+    this.clientesFiltrados = resultado;
   }
 
-  // ==================== UI ACTIONS ====================
-
-  toggleMenu(event: Event, id: number) {
-    event.stopPropagation();
-    if (this.menuAbiertoId === id) {
-      this.menuAbiertoId = null;
-    } else {
-      this.menuAbiertoId = id;
-    }
-  }
-
-  @HostListener('document:click')
-  cerrarMenus() {
-    this.menuAbiertoId = null;
-  }
-
-  onBusquedaChange() {
-    this.aplicarFiltros();
-  }
-
+  onBusquedaChange() { this.aplicarFiltros(); }
   cambiarFiltro(estado: string) {
     this.filtroEstado = estado;
     this.aplicarFiltros();
   }
 
-  abrirModalPago(cuenta: CuentaPorCobrar) {
-    this.cuentaSeleccionada = cuenta;
-    this.isModalPagoOpen = true;
+  // ==================== DETALLE INLINE ====================
+
+  toggleDetalle(clienteId: number) {
+    this.clienteDetalleId = this.clienteDetalleId === clienteId ? null : clienteId;
   }
 
-  cerrarModalPago() {
-    this.isModalPagoOpen = false;
-    this.cuentaSeleccionada = undefined;
-  }
+  // ==================== PAGO MASIVO ====================
 
-  abrirHistorial(cuenta: CuentaPorCobrar) {
-    this.cuentaIdHistorial = cuenta.id;
-    this.isHistorialOpen = true;
-  }
-
-  cerrarHistorial() {
-    this.isHistorialOpen = false;
-    this.cuentaIdHistorial = undefined;
-  }
-
-  onPagoRegistrado() {
-    console.log('✅ Pago registrado');
-    this.cerrarModalPago();
-  }
-
-  // === PAGO MASIVO ===
-  abrirPagoMasivo(clienteNombre: string, clienteId: number) {
-    const cuentasCliente = this.cuentas.filter(
-      c => c.cliente_id === clienteId && c.estado !== 'pagada' && c.monto_pendiente > 0
-    );
-    if (cuentasCliente.length === 0) return;
-    this.pagoMasivoClienteNombre = clienteNombre;
-    this.pagoMasivoClienteId = clienteId;
-    this.pagoMasivoCuentas = cuentasCliente;
+  abrirPagoMasivo(deudor: ClienteDeudor) {
+    this.pagoMasivoClienteNombre = deudor.clienteNombre;
+    this.pagoMasivoClienteId = deudor.clienteId;
+    this.pagoMasivoCuentas = deudor.cuentas; // ya vienen ordenadas FIFO
     this.isModalPagoMasivoOpen = true;
-    this.menuAbiertoId = null;
   }
 
   cerrarPagoMasivo() {
@@ -187,103 +207,83 @@ export class CuentasCobrarComponent implements OnInit, OnDestroy {
   }
 
   onPagoMasivoRegistrado() {
-    console.log('✅ Pago masivo registrado');
     this.cerrarPagoMasivo();
   }
 
-  // Agrupar cuentas por cliente para mostrar botón "Saldar Deuda"
-  get clientesConMultiplesCuentas(): { nombre: string; clienteId: number; cantidad: number; totalPendiente: number }[] {
-    const agrupado = new Map<number, { nombre: string; cantidad: number; totalPendiente: number }>();
-    this.cuentas
-      .filter(c => c.estado !== 'pagada' && c.monto_pendiente > 0)
-      .forEach(c => {
-        const entry = agrupado.get(c.cliente_id) || { nombre: c.cliente_nombre || '', cantidad: 0, totalPendiente: 0 };
-        entry.cantidad++;
-        entry.totalPendiente += c.monto_pendiente;
-        agrupado.set(c.cliente_id, entry);
-      });
-    return Array.from(agrupado.entries())
-      .filter(([_, v]) => v.cantidad > 1)
-      .map(([clienteId, v]) => ({ nombre: v.nombre, clienteId, cantidad: v.cantidad, totalPendiente: v.totalPendiente }));
+  // ==================== HISTORIAL ====================
+
+  abrirHistorial(cuentaId: number) {
+    this.cuentaIdHistorial = cuentaId;
+    this.isHistorialOpen = true;
   }
+
+  cerrarHistorial() {
+    this.isHistorialOpen = false;
+    this.cuentaIdHistorial = undefined;
+  }
+
+  // ==================== GETTERS ====================
 
   get totalPendiente(): number {
     return this.cuentas
       .filter(c => c.estado !== 'pagada')
-      .reduce((sum, c) => sum + c.monto_pendiente, 0);
+      .reduce((s, c) => s + c.monto_pendiente, 0);
   }
 
   get totalVencido(): number {
     return this.cuentas
       .filter(c => c.estado === 'vencida')
-      .reduce((sum, c) => sum + c.monto_pendiente, 0);
+      .reduce((s, c) => s + c.monto_pendiente, 0);
   }
 
-  get cuentasVencidas(): number {
-    return this.cuentas.filter(c => c.estado === 'vencida').length;
+  get cuentasVencidasCount(): number {
+    return this.clientesDeudores.filter(cd => cd.estadoPeor === 'vencida').length;
   }
 
-  get cuentasPendientes(): number {
-    return this.cuentas.filter(c => c.estado === 'pendiente' || c.estado === 'parcial').length;
+  get clientesPendientesCount(): number {
+    return this.clientesDeudores.filter(cd => cd.estadoPeor !== 'pagada').length;
   }
+
+  // ==================== HELPERS ====================
 
   getEstadoBadgeClass(estado: string): string {
     const base = 'badge rounded-pill ';
     switch (estado) {
-      case 'pagada': return base + 'bg-success-subtle text-success border border-success-subtle';
+      case 'pagada':    return base + 'bg-success-subtle text-success border border-success-subtle';
       case 'pendiente': return base + 'bg-warning-subtle text-warning-emphasis border border-warning-subtle';
-      case 'parcial': return base + 'bg-info-subtle text-info-emphasis border border-info-subtle';
-      case 'vencida': return base + 'bg-danger-subtle text-danger border border-danger-subtle';
-      default: return base + 'bg-secondary-subtle text-secondary border border-secondary-subtle';
+      case 'parcial':   return base + 'bg-info-subtle text-info-emphasis border border-info-subtle';
+      case 'vencida':   return base + 'bg-danger-subtle text-danger border border-danger-subtle';
+      default:          return base + 'bg-secondary-subtle text-secondary border border-secondary-subtle';
     }
   }
 
   formatearFecha(fecha: string): string {
     return new Date(fecha).toLocaleDateString('es-DO', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
+      year: 'numeric', month: 'short', day: 'numeric'
     });
   }
 
   diasVencimiento(fechaVencimiento: string): number {
-    const hoy = new Date();
-    const vencimiento = new Date(fechaVencimiento);
-    const diff = vencimiento.getTime() - hoy.getTime();
+    const diff = new Date(fechaVencimiento).getTime() - new Date().getTime();
     return Math.ceil(diff / (1000 * 60 * 60 * 24));
   }
 
   exportarDatos() {
-    if (this.cuentasFiltradas.length === 0) {
-      alert('No hay cuentas para exportar');
-      return;
-    }
-
-    const datosExportar = this.cuentasFiltradas.map(cuenta => ({
-      Cliente: cuenta.cliente_nombre || '',
-      'Monto Total': cuenta.monto_total,
-      'Monto Pagado': cuenta.monto_pagado,
-      'Monto Pendiente': cuenta.monto_pendiente,
-      'Fecha Venta': cuenta.fecha_venta,
-      'Fecha Vencimiento': cuenta.fecha_vencimiento,
-      Estado: cuenta.estado
+    if (this.clientesFiltrados.length === 0) { alert('No hay datos para exportar'); return; }
+    const rows = this.clientesFiltrados.map(cd => ({
+      Cliente: cd.clienteNombre,
+      Facturas: cd.cantidadFacturas,
+      'Total Deuda': cd.montoPendiente,
+      'Fecha Más Antigua': cd.fechaMasAntigua,
+      'Vencimiento Más Urgente': cd.fechaVencimientoMasAntigua,
+      Estado: cd.estadoPeor
     }));
-
-    const headers = Object.keys(datosExportar[0]).join(',');
-    const csvContent = datosExportar.map(row =>
-      Object.values(row).map(val => `"${val}"`).join(',')
-    ).join('\n');
-
-    const csv = headers + '\n' + csvContent;
-
+    const csv = Object.keys(rows[0]).join(',') + '\n' +
+      rows.map(r => Object.values(r).map(v => `"${v}"`).join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `cuentas_cobrar_${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
+    link.href = URL.createObjectURL(blob);
+    link.download = `cuentas_cobrar_${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
-    document.body.removeChild(link);
   }
 }

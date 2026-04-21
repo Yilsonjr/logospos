@@ -1,7 +1,7 @@
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.55);
   backdrop-filter: blur(4px);
   z-index: 1050;
 }
@@ -12,88 +12,169 @@
   left: 50%;
   transform: translate(-50%, -50%);
   width: 95%;
-  max-width: 560px;
-  max-height: 90vh;
+  max-width: 600px;
+  max-height: 92vh;
   background: white;
-  border-radius: 16px;
+  border-radius: 18px;
   z-index: 1051;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  animation: slideUp 0.3s ease-out;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.28);
+  animation: slideUp 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 @keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translate(-50%, -45%);
-  }
-  to {
-    opacity: 1;
-    transform: translate(-50%, -50%);
-  }
+  from { opacity: 0; transform: translate(-50%, -44%); }
+  to   { opacity: 1; transform: translate(-50%, -50%); }
 }
 
+/* Header */
 .modal-header-custom {
-  padding: 16px 20px;
-  background: linear-gradient(135deg, #0d6efd, #0b5ed7);
+  padding: 16px 22px;
+  background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-shrink: 0;
 }
 
+/* Body */
 .modal-body-custom {
-  padding: 16px 20px;
+  padding: 20px 22px;
   overflow-y: auto;
   flex: 1;
 }
 
+/* Footer */
 .modal-footer-custom {
-  padding: 12px 20px;
+  padding: 12px 22px;
   border-top: 1px solid #e9ecef;
   display: flex;
   justify-content: flex-end;
   gap: 8px;
   background: #f8f9fa;
+  flex-shrink: 0;
 }
 
-/* Facturas list */
-.facturas-list {
-  max-height: 220px;
+/* Resumen strip */
+.resumen-strip {
+  display: flex;
+  gap: 0;
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.resumen-item {
+  flex: 1;
+  text-align: center;
+  padding: 10px 8px;
+  border-right: 1px solid #e9ecef;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.resumen-item:last-child { border-right: none; }
+
+.resumen-item small {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #adb5bd;
+  letter-spacing: 0.5px;
+}
+
+.resumen-item strong {
+  font-size: 0.95rem;
+}
+
+/* Monto input */
+.monto-input-section .input-group-text {
+  background: #f8f9fa;
+  font-size: 1.2rem;
+  border-right: none;
+}
+
+.monto-input-section .form-control {
+  border-left: none;
+  color: #0d6efd;
+}
+
+/* Simulación FIFO */
+.simulacion-lista {
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  overflow: hidden;
+  max-height: 280px;
   overflow-y: auto;
+}
+
+.sim-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 14px;
+  border-bottom: 1px solid #f0f0f0;
+  transition: background 0.15s;
+}
+
+.sim-row:last-child { border-bottom: none; }
+
+.sim-saldada  { background: #f0fdf4; }
+.sim-parcial  { background: #fffbeb; }
+.sim-sintocar { background: white; opacity: 0.65; }
+
+.sim-icono {
+  width: 20px;
+  text-align: center;
+  margin-top: 2px;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.sim-detalle { min-width: 0; }
+
+/* Progress bar de simulación */
+.sim-progress-bar {
+  height: 5px;
+  background: #e9ecef;
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.sim-progress-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.3s ease;
+  background: #dee2e6;
+}
+
+.sim-progress-fill.fill-green  { background: linear-gradient(90deg, #22c55e, #16a34a); }
+.sim-progress-fill.fill-yellow { background: linear-gradient(90deg, #f59e0b, #d97706); }
+
+/* Acordeón facturas en tarjeta */
+.facturas-acordeon {
   border: 1px solid #e9ecef;
   border-radius: 10px;
+  overflow: hidden;
+  animation: fadeIn 0.2s ease;
 }
 
-.factura-item {
-  padding: 10px 12px;
-  border-bottom: 1px solid #f0f0f0;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  background: white;
-}
-
-.factura-item:last-child {
-  border-bottom: none;
-}
-
-.factura-item:hover {
+.factura-row {
   background: #f8f9fa;
+  border-bottom: 1px solid #eee;
+  transition: background 0.15s;
 }
 
-.factura-item.selected {
-  background: #e8f0fe;
-  border-left: 3px solid #0d6efd;
-}
+.factura-row:last-child { border-bottom: none; }
+.factura-row:hover { background: #e9ecef; }
 
-.form-check-input {
-  width: 18px;
-  height: 18px;
-  cursor: pointer;
-}
+/* Cursor en tabla */
+.cursor-pointer { cursor: pointer; }
 
-.form-check-input:checked {
-  background-color: #0d6efd;
-  border-color: #0d6efd;
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
