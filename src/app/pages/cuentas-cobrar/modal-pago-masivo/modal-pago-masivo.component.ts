@@ -134,7 +134,7 @@ export class ModalPagoMasivoComponent implements OnInit {
           monto: montoParaEstaCuenta,
           metodo_pago: this.metodoPago,
           fecha_pago: this.fechaPago,
-          referencia: this.referencia || null,
+          referencia: this.referencia || undefined,
           notas: this.notas || `Pago masivo - ${cuentasAPagar.length} facturas`
         });
       }
