@@ -68,5 +68,49 @@ export class TenantService {
         localStorage.removeItem('dolvin_tenant_features');
         sessionStorage.removeItem('dolvin_tenant_id');
     }
-}
 
+    // ============================================================
+    // Business Identity Management (Self-Service for Tenants)
+    // ============================================================
+
+    /**
+     * Obtains full business info for the current tenant.
+     */
+    async getTenantInfo(supabase: any): Promise<any> {
+        try {
+            const id = this.getTenantIdOrThrow();
+            const { data, error } = await supabase
+                .from('tenants')
+                .select('*')
+                .eq('id', id)
+                .single();
+
+            if (error) throw error;
+            return data;
+        } catch (error) {
+            console.error('Error al obtener info del tenant:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Updates business identity data for the current tenant.
+     */
+    async updateTenantInfo(supabase: any, changes: any): Promise<void> {
+        try {
+            const id = this.getTenantIdOrThrow();
+            const { error } = await supabase
+                .from('tenants')
+                .update({
+                    ...changes,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', id);
+
+            if (error) throw error;
+        } catch (error) {
+            console.error('Error al actualizar info del tenant:', error);
+            throw error;
+        }
+    }
+}

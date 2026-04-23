@@ -193,7 +193,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
         { label: 'Roles', link: '/admin/roles', icon: 'fa-solid fa-user-tag', permissions: ['roles.ver'] },
         { label: 'Sucursales', link: '/admin/sucursales', icon: 'fa-solid fa-building', permissions: ['config.general'], feature: 'multi_sucursal' },
         { label: 'Sistema', link: '/admin/sistema', icon: 'fa-solid fa-cogs', permissions: ['config.general'], devAdminOnly: true },
-        { label: 'Fiscal (DGII)', link: '/admin/fiscal', icon: 'fa-solid fa-file-invoice', permissions: ['config.general'] }
+        { label: 'Fiscal (DGII)', link: '/admin/fiscal', icon: 'fa-solid fa-file-invoice', permissions: ['config.general'] },
+        { label: 'Identidad del Negocio', link: '/admin/identidad', icon: 'fa-solid fa-id-card', permissions: ['config.general'] }
       ],
       expanded: false
     },

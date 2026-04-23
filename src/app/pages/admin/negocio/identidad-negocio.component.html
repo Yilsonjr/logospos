@@ -1,0 +1,104 @@
+<div class="container-fluid py-4 min-vh-100 bg-light">
+    <!-- Header -->
+    <div class="mb-4">
+        <h2 class="fw-bold text-dark mb-0">Identidad del Negocio</h2>
+        <p class="text-muted small">Personaliza la información y la imagen de tu empresa</p>
+    </div>
+
+    @if (isLoading) {
+    <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-2 text-muted">Cargando configuración...</p>
+    </div>
+    } @else {
+    <div class="row g-4">
+        <!-- Sidebar: Logo/Preview -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm overflow-hidden h-100">
+                <div class="card-body text-center d-flex flex-column align-items-center justify-content-center py-5">
+                    <div class="logo-preview-container mb-4 position-relative">
+                        @if (logoPreview) {
+                        <img [src]="logoPreview" alt="Logo preview" class="logo-preview shadow-sm">
+                        } @else {
+                        <div class="logo-placeholder bg-light d-flex align-items-center justify-content-center rounded-circle">
+                            <i class="fa-solid fa-building fa-3x text-muted opacity-25"></i>
+                        </div>
+                        }
+                        <label for="logoUpload" class="btn btn-sm btn-primary rounded-circle position-absolute bottom-0 end-0 p-2 shadow">
+                            <i class="fa-solid fa-camera"></i>
+                            <input type="file" id="logoUpload" class="d-none" (change)="onFileSelected($event)" accept="image/*">
+                        </label>
+                    </div>
+                    <h5 class="fw-bold mb-1">{{negocio.nombre || 'Nombre del Negocio'}}</h5>
+                    <p class="text-muted small mb-3">{{negocio.rnc || 'RNC no configurado'}}</p>
+                    <p class="small text-muted px-3 mb-0">
+                        Este logo aparecerá en tus facturas, reportes y en la barra lateral del sistema.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulario: Datos del Negocio -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white py-3 border-bottom-0">
+                    <h5 class="card-title fw-bold text-dark mb-0">Configuración General</h5>
+                </div>
+                <div class="card-body">
+                    <form (ngSubmit)="guardarCambios()" #negocioForm="ngForm">
+                        <div class="row g-3">
+                            <!-- Nombre -->
+                            <div class="col-md-12">
+                                <label class="form-label small fw-bold text-muted text-uppercase">Nombre Comercial</label>
+                                <input type="text" name="nombre" [(ngModel)]="negocio.nombre" class="form-control" 
+                                    placeholder="Ej: Mi Tienda S.R.L." required>
+                            </div>
+
+                            <!-- RNC -->
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-muted text-uppercase">RNC / Cédula</label>
+                                <input type="text" name="rnc" [(ngModel)]="negocio.rnc" class="form-control" 
+                                    placeholder="130XXXX-X">
+                            </div>
+
+                            <!-- Email -->
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-muted text-uppercase">Correo Electrónico</label>
+                                <input type="email" name="email" [(ngModel)]="negocio.email" class="form-control" 
+                                    placeholder="contacto@empresa.com">
+                            </div>
+
+                            <!-- Teléfono -->
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-muted text-uppercase">Teléfono de Contacto</label>
+                                <input type="tel" name="telefono" [(ngModel)]="negocio.telefono" class="form-control" 
+                                    placeholder="809-XXX-XXXX">
+                            </div>
+
+                            <!-- Dirección -->
+                            <div class="col-md-12">
+                                <label class="form-label small fw-bold text-muted text-uppercase">Dirección Física</label>
+                                <textarea name="direccion" [(ngModel)]="negocio.direccion" class="form-control" rows="3"
+                                    placeholder="Calle, No., Sector, Ciudad..."></textarea>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 pt-3 border-top d-flex justify-content-end">
+                            <button type="submit" class="btn btn-primary px-4 fw-bold shadow-sm d-flex align-items-center gap-2"
+                                [disabled]="isSaving || !negocioForm.form.valid">
+                                @if (isSaving) {
+                                <span class="spinner-border spinner-border-sm" role="status"></span>
+                                Guardando...
+                                } @else {
+                                <i class="fa-solid fa-save"></i>
+                                Guardar Datos
+                                }
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    }
+</div>

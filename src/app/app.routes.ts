@@ -282,6 +282,12 @@ export const routes: Routes = [
         canActivate: [AuthGuard, PermissionGuard],
         data: { permissions: ['config.general'] }
     },
+    {
+        path: 'admin/identidad',
+        loadComponent: () => import('./pages/admin/negocio/identidad-negocio.component').then(m => m.IdentidadNegocioComponent),
+        canActivate: [AuthGuard, PermissionGuard],
+        data: { permissions: ['config.general'] }
+    },
 
     // Redirecciones fallback
     { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
