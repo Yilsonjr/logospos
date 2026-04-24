@@ -167,7 +167,8 @@
 }
 
 .btn-exportar,
-.btn-exportar-csv {
+.btn-exportar-csv,
+.btn-exportar-pdf {
     background: #16a34a;
     color: #fff;
     border: none;
@@ -177,21 +178,27 @@
     cursor: pointer;
     font-size: 0.9rem;
     transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
+.btn-exportar-csv { background: #7c3aed; }
+.btn-exportar-pdf { background: #dc2626; }
+
 .btn-exportar:hover:not(:disabled),
-.btn-exportar-csv:hover:not(:disabled) {
+.btn-exportar-csv:hover:not(:disabled),
+.btn-exportar-pdf:hover:not(:disabled) {
     filter: brightness(1.1);
+    transform: translateY(-1px);
 }
 
 .btn-exportar:disabled,
-.btn-exportar-csv:disabled {
+.btn-exportar-csv:disabled,
+.btn-exportar-pdf:disabled {
     opacity: 0.4;
     cursor: not-allowed;
-}
-
-.btn-exportar-csv {
-    background: #7c3aed;
+    transform: none;
 }
 
 /* Resumen Cards */

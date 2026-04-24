@@ -4,9 +4,14 @@
             <h2 class="fw-bold text-dark mb-0">Reporte de Ventas</h2>
             <p class="text-muted small mb-0">Analiza el rendimiento de tus ventas</p>
         </div>
-        <button class="btn btn-outline-secondary btn-sm" (click)="exportarReporte()">
-            <i class="fa-solid fa-file-export me-2"></i> Exportar
-        </button>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-secondary btn-sm" (click)="exportarReporte()">
+                <i class="fa-solid fa-file-csv me-2"></i> CSV
+            </button>
+            <button class="btn btn-outline-danger btn-sm" (click)="exportarPDF()">
+                <i class="fa-solid fa-file-pdf me-2"></i> PDF
+            </button>
+        </div>
     </div>
 
     <!-- Filtros -->

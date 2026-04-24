@@ -7,6 +7,8 @@ import { TenantService } from '../../../services/tenant.service';
 import { SupabaseService } from '../../../services/supabase.service';
 import { CuentaPorCobrar } from '../../../models/cuentas-cobrar.model';
 import { Cliente } from '../../../models/clientes.model';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface AgingBand {
   label: string;
@@ -45,11 +47,24 @@ interface ClienteAging {
           <p>Antigüedad de saldos y cartera vencida por cliente</p>
         </div>
         <div class="ec-actions">
+          <div class="date-filters">
+            <div class="date-input-group">
+              <label>Desde:</label>
+              <input type="date" [(ngModel)]="fechaInicio" (change)="aplicarFiltros()">
+            </div>
+            <div class="date-input-group">
+              <label>Hasta:</label>
+              <input type="date" [(ngModel)]="fechaFin" (change)="aplicarFiltros()">
+            </div>
+          </div>
           <button class="btn-export" (click)="exportarCSV()" [disabled]="!clienteSeleccionado">
-            <i class="fa-solid fa-file-csv"></i> Exportar
+            <i class="fa-solid fa-file-csv"></i> CSV
+          </button>
+          <button class="btn-pdf" (click)="exportarPDF()" [disabled]="!clienteSeleccionado">
+            <i class="fa-solid fa-file-pdf"></i> PDF
           </button>
           <button class="btn-print" (click)="imprimir()" [disabled]="!clienteSeleccionado">
-            <i class="fa-solid fa-print"></i> Imprimir
+            <i class="fa-solid fa-print"></i>
           </button>
         </div>
       </div>
@@ -276,6 +291,10 @@ export class EstadoCuentaComponent implements OnInit {
   todosLosClientes: Partial<Cliente>[] = [];
   clientesFiltrados: Partial<Cliente>[] = [];
 
+  // Date filters
+  fechaInicio = '';
+  fechaFin = '';
+
   // Aging bands config
   agingBands: AgingBand[] = [
     { label: 'Corriente', dias: '0-30 días', minDias: 0, maxDias: 30, color: '#16a34a', bgColor: '#f0fdf4', monto: 0, cuentas: [] },
@@ -343,6 +362,9 @@ export class EstadoCuentaComponent implements OnInit {
         .order('nombre');
       this.todosLosClientes = clientes || [];
 
+      // Initial group
+      this.aplicarFiltros();
+
     } catch (err: any) {
       console.error('Error cargando estado de cuenta:', err);
     } finally {
@@ -351,10 +373,41 @@ export class EstadoCuentaComponent implements OnInit {
     }
   }
 
-  buildAgingGlobal() {
+  aplicarFiltros() {
+    const inicio = this.fechaInicio ? new Date(this.fechaInicio + 'T00:00:00') : null;
+    const fin = this.fechaFin ? new Date(this.fechaFin + 'T23:59:59') : null;
+
+    const cuentasFiltradas = this.todasLasCuentas.filter(c => {
+      const f = new Date(c.fecha_venta);
+      if (inicio && f < inicio) return false;
+      if (fin && f > fin) return false;
+      return true;
+    });
+
+    this.buildAgingGlobal(cuentasFiltradas);
+    
+    // Update selected client if any
+    if (this.clienteSeleccionado) {
+      const ag = this.agingGlobal.find(a => a.cliente_id === this.clienteSeleccionado?.id);
+      if (ag) {
+        this.agingCliente = ag;
+        this.calcularBands(ag);
+      } else {
+        this.agingCliente = { 
+          cliente_id: this.clienteSeleccionado.id!, 
+          cliente_nombre: this.clienteSeleccionado.nombre || '', 
+          total_pendiente: 0, 
+          bands: this.agingBands.map(b => ({ ...b, monto: 0, cuentas: [] })), 
+          cuentas: [] 
+        };
+      }
+    }
+  }
+
+  buildAgingGlobal(cuentas: CuentaConAging[]) {
     const map = new Map<number, ClienteAging>();
 
-    this.todasLasCuentas.forEach(c => {
+    cuentas.forEach(c => {
       if (!map.has(c.cliente_id)) {
         map.set(c.cliente_id, {
           cliente_id: c.cliente_id,
@@ -482,6 +535,61 @@ export class EstadoCuentaComponent implements OnInit {
     a.href = URL.createObjectURL(blob);
     a.download = `estado_cuenta_${(this.clienteSeleccionado?.nombre ?? 'cliente').replace(/ /g, '_')}.csv`;
     a.click();
+  }
+
+  exportarPDF() {
+    if (!this.agingCliente || !this.clienteSeleccionado) return;
+
+    const doc = new jsPDF();
+    const cliente = this.clienteSeleccionado;
+    
+    doc.setFontSize(20);
+    doc.text('Estado de Cuenta', 14, 20);
+    
+    doc.setFontSize(10);
+    doc.text(`Cliente: ${cliente.nombre}`, 14, 30);
+    if (cliente.rnc) doc.text(`RNC/Cédula: ${cliente.rnc}`, 14, 35);
+    doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 14, 40);
+    if (this.fechaInicio || this.fechaFin) {
+        doc.text(`Filtro: ${this.fechaInicio || 'Inicio'} hasta ${this.fechaFin || 'Hoy'}`, 14, 45);
+    }
+
+    // Resumen
+    doc.setFontSize(12);
+    doc.text('Resumen de Saldos', 14, 55);
+    doc.setFontSize(10);
+    doc.text(`Total Pendiente: ${this.formatMoneda(this.agingCliente.total_pendiente)}`, 14, 62);
+    doc.text(`Corriente (0-30d): ${this.formatMoneda(this.getBandMonto(0, 30))}`, 14, 68);
+    doc.text(`Vencido (31-90d): ${this.formatMoneda(this.getBandMonto(31, 90))}`, 14, 74);
+    doc.text(`Crítico (+90d): ${this.formatMoneda(this.getBandMonto(91, 9999))}`, 14, 80);
+
+    // Tabla
+    const head = [['Factura', 'Fecha', 'Vencimiento', 'Total', 'Pagado', 'Pendiente', 'Atraso']];
+    const data = this.agingCliente.cuentas.map(c => [
+        `#${c.venta_id}`,
+        this.formatFecha(c.fecha_venta),
+        this.formatFecha(c.fecha_vencimiento),
+        this.formatMoneda(c.monto_total),
+        this.formatMoneda(c.monto_pagado),
+        this.formatMoneda(c.monto_pendiente),
+        c.dias_atraso > 0 ? `${c.dias_atraso}d` : 'Al día'
+    ]);
+
+    autoTable(doc, {
+        head: head,
+        body: data,
+        startY: 90,
+        theme: 'striped',
+        headStyles: { fillColor: [71, 85, 105] },
+        styles: { fontSize: 8 }
+    });
+
+    const finalY = (doc as any).lastAutoTable.finalY || 150;
+    doc.setFontSize(10);
+    doc.text('Totales:', 130, finalY + 10);
+    doc.text(`${this.formatMoneda(this.agingCliente.total_pendiente)}`, 165, finalY + 10);
+
+    doc.save(`estado_cuenta_${(cliente.nombre || 'cliente').replace(/ /g, '_')}.pdf`);
   }
 
   imprimir() { window.print(); }

@@ -5,6 +5,8 @@ import { SupabaseService } from '../../../services/supabase.service';
 import { TenantService } from '../../../services/tenant.service';
 import { FiscalService } from '../../../services/fiscal.service';
 import Swal from 'sweetalert2';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface Registro606 {
     rnc_cedula: string;
@@ -115,6 +117,9 @@ interface Registro608 {
           </button>
           <button class="btn-exportar-csv" (click)="exportarCSV()" [disabled]="!tieneRegistros()">
             <i class="fa-solid fa-file-csv"></i> Exportar CSV
+          </button>
+          <button class="btn-exportar-pdf" (click)="exportarPDF()" [disabled]="!tieneRegistros()">
+            <i class="fa-solid fa-file-pdf"></i> Exportar PDF
           </button>
         </div>
 
@@ -490,6 +495,67 @@ export class ReportesDgiiComponent implements OnInit {
         }
 
         this.descargar(headers + '\n' + rows, filename, 'text/csv;charset=utf-8');
+    }
+
+    exportarPDF() {
+        if (!this.tieneRegistros()) return;
+
+        const doc = new jsPDF();
+        const periodo = `${this.meses[this.mesSeleccionado - 1]} ${this.anioSeleccionado}`;
+        
+        doc.setFontSize(18);
+        doc.text(`Reporte DGII — Formato ${this.tabActiva}`, 14, 20);
+        doc.setFontSize(10);
+        doc.text(`Empresa: ${this.rncEmpresa}`, 14, 28);
+        doc.text(`Período: ${periodo}`, 14, 34);
+        doc.text(`Fecha de generación: ${new Date().toLocaleString()}`, 14, 40);
+
+        let head: string[][] = [];
+        let data: any[][] = [];
+
+        if (this.tabActiva === '607') {
+            head = [['RNC/Cédula', 'NCF', 'Fecha', 'Monto Facturado', 'ITBIS', 'Forma Pago']];
+            data = this.registros607.map(r => [
+                r.rnc_cedula || 'N/A',
+                r.ncf,
+                r.fecha_comprobante,
+                this.formatMoneda(r.monto_facturado),
+                this.formatMoneda(r.itbis_facturado),
+                this.getFormaPagoLabel(r.forma_pago)
+            ]);
+            doc.text(`Total Facturado: ${this.formatMoneda(this.totalFacturado607)}`, 14, 50);
+            doc.text(`Total ITBIS: ${this.formatMoneda(this.totalItbis607)}`, 14, 56);
+        } else if (this.tabActiva === '606') {
+            head = [['RNC Proveedor', 'NCF', 'Fecha', 'Monto Total', 'ITBIS', 'Forma Pago']];
+            data = this.registros606.map(r => [
+                r.rnc_cedula,
+                r.ncf,
+                r.fecha_comprobante,
+                this.formatMoneda(r.total),
+                this.formatMoneda(r.itbis_facturado),
+                this.getFormaPagoLabel(r.forma_pago)
+            ]);
+            doc.text(`Total Compras: ${this.formatMoneda(this.totalCompras606)}`, 14, 50);
+            doc.text(`Total ITBIS: ${this.formatMoneda(this.totalItbis606)}`, 14, 56);
+        } else {
+            head = [['NCF Anulado', 'Tipo Anulación', 'Fecha']];
+            data = this.registros608.map(r => [
+                r.ncf,
+                this.getTipoAnulacion(r.tipo_anulacion),
+                r.fecha_anulacion
+            ]);
+        }
+
+        autoTable(doc, {
+            head: head,
+            body: data,
+            startY: this.tabActiva === '608' ? 50 : 65,
+            theme: 'striped',
+            headStyles: { fillColor: [63, 101, 246] },
+            styles: { fontSize: 8 }
+        });
+
+        doc.save(`reporte_dgii_${this.tabActiva}_${this.anioSeleccionado}${String(this.mesSeleccionado).padStart(2, '0')}.pdf`);
     }
 
     // =================== HELPERS ===================

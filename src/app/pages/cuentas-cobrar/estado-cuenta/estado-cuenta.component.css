@@ -40,43 +40,73 @@
 }
 
 .ec-actions {
-    display: flex;
-    gap: 10px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
 }
 
-.btn-export,
-.btn-print {
-    padding: 9px 18px;
-    border-radius: 8px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    cursor: pointer;
-    border: none;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    gap: 6px;
+.date-filters {
+  display: flex;
+  gap: 16px;
+  background: #f8fafc;
+  padding: 8px 16px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  margin-right: 12px;
 }
 
-.btn-export {
-    background: #7c3aed;
-    color: #fff;
+.date-input-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.btn-print {
-    background: #0f172a;
-    color: #fff;
+.date-input-group label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
 }
 
-.btn-export:hover,
-.btn-print:hover {
-    filter: brightness(1.15);
+.date-input-group input {
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 0.85rem;
+  color: #1e293b;
+  outline: none;
+  transition: all 0.2s;
 }
 
-.btn-export:disabled,
-.btn-print:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
+.date-input-group input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.btn-export, .btn-pdf, .btn-print {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #475569;
+}
+
+.btn-export:hover { background: #f8fafc; color: #7c3aed; border-color: #7c3aed; }
+.btn-pdf:hover { background: #fef2f2; color: #dc2626; border-color: #dc2626; }
+.btn-print:hover { background: #f8fafc; color: #2563eb; border-color: #2563eb; }
+
+.btn-export:disabled, .btn-pdf:disabled, .btn-print:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f1f5f9;
+  color: #94a3b8;
+  border-color: #e2e8f0;
 }
 
 /* Client Selector */

@@ -142,14 +142,50 @@
       </button>
     </div>
 
-    <!-- 2. Cliente Selector -->
-    <div class="p-3 border-bottom" style="background: rgba(255,255,255,0.2);">
-      <label class="form-label small fw-bold text-muted mb-1"><i class="fa-solid fa-user me-1"></i> CLIENTE</label>
-      <select class="form-select form-select-sm border-0 shadow-sm py-2 rounded-3" [(ngModel)]="clienteSeleccionado"
-        (ngModelChange)="clienteSeleccionado && seleccionarCliente(clienteSeleccionado)">
-        <option [ngValue]="undefined">Cliente General</option>
-        <option *ngFor="let cliente of clientes" [ngValue]="cliente">{{ cliente.nombre }}</option>
-      </select>
+    <div class="p-3 border-bottom position-relative client-selector-container" style="background: rgba(255,255,255,0.2);">
+      <label class="form-label small fw-bold text-muted mb-1 d-flex justify-content-between">
+        <span><i class="fa-solid fa-user me-1"></i> CLIENTE</span>
+        <span *ngIf="!clienteSeleccionado" class="badge bg-primary-subtle text-primary">Recurrente</span>
+      </label>
+
+      <!-- Input de Búsqueda -->
+      <div class="position-relative" *ngIf="!clienteSeleccionado">
+        <div class="input-group input-group-sm">
+          <span class="input-group-text bg-white border-0"><i class="fa-solid fa-search small"></i></span>
+          <input type="text" class="form-control border-0 shadow-none ps-0" 
+            placeholder="Buscar cliente..." [(ngModel)]="busquedaCliente" (input)="buscarCliente()">
+        </div>
+
+        <!-- Autocomplete Clientes -->
+        <div class="position-absolute w-100 mt-1 shadow-lg rounded bg-white border z-3 overflow-hidden client-dropdown"
+          *ngIf="mostrarAutocompleteCliente && clientesFiltradosParaBusqueda.length > 0">
+          <ul class="list-group list-group-flush">
+            <li *ngFor="let c of clientesFiltradosParaBusqueda"
+              class="list-group-item list-group-item-action p-2 cursor-pointer d-flex align-items-center"
+              (click)="seleccionarCliente(c)">
+              <div class="mini-avatar me-2">{{ c.nombre.charAt(0).toUpperCase() }}</div>
+              <div class="flex-grow-1 overflow-hidden">
+                <div class="small fw-bold text-truncate">{{ c.nombre }}</div>
+                <div class="text-muted" style="font-size: 0.7rem;" *ngIf="c.rnc || c.cedula">
+                  {{ c.rnc || c.cedula }}
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Cliente Seleccionado (Chip) -->
+      <div class="selected-client-chip d-flex align-items-center p-2 rounded-3 bg-white shadow-sm border" *ngIf="clienteSeleccionado">
+        <div class="mini-avatar me-2 bg-primary text-white">{{ clienteSeleccionado.nombre.charAt(0).toUpperCase() }}</div>
+        <div class="flex-grow-1 overflow-hidden">
+          <div class="small fw-bold text-truncate">{{ clienteSeleccionado.nombre }}</div>
+          <div class="text-muted" style="font-size: 0.7rem;" *ngIf="clienteSeleccionado.rnc">RNC: {{ clienteSeleccionado.rnc }}</div>
+        </div>
+        <button class="btn btn-link btn-sm text-danger p-0 ms-2" (click)="seleccionarCliente(undefined)">
+          <i class="fa-solid fa-circle-xmark"></i>
+        </button>
+      </div>
 
     </div>
 

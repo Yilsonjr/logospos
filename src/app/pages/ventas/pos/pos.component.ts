@@ -46,6 +46,11 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
   mostrarAutocomplete: boolean = false;
   selectedAutocompleteIndex: number = 0;
 
+  // Búsqueda de Clientes
+  busquedaCliente: string = '';
+  clientesFiltradosParaBusqueda: Cliente[] = [];
+  mostrarAutocompleteCliente: boolean = false;
+
   // Lector de Códigos de Barras
   private barcodeBuffer: string = '';
   private lastKeyTime: number = 0;
@@ -581,9 +586,42 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
+  // Búsqueda de clientes
+  buscarCliente() {
+    if (!this.busquedaCliente.trim()) {
+      this.clientesFiltradosParaBusqueda = [];
+      this.mostrarAutocompleteCliente = false;
+      return;
+    }
+
+    const q = this.busquedaCliente.toLowerCase();
+    this.clientesFiltradosParaBusqueda = this.clientes.filter(c =>
+      c.nombre.toLowerCase().includes(q) ||
+      c.rnc?.includes(q) ||
+      c.cedula?.includes(q) ||
+      c.telefono?.includes(q)
+    ).slice(0, 8);
+    this.mostrarAutocompleteCliente = true;
+  }
+
+  limpiarBusquedaCliente() {
+    this.busquedaCliente = '';
+    this.clientesFiltradosParaBusqueda = [];
+    this.mostrarAutocompleteCliente = false;
+  }
+
   // Seleccionar cliente
-  seleccionarCliente(cliente: Cliente) {
+  seleccionarCliente(cliente: Cliente | undefined) {
+    if (!cliente) {
+      this.clienteSeleccionado = undefined;
+      this.rncCliente = '';
+      this.limpiarBusquedaCliente();
+      this.calcularTotales();
+      return;
+    }
+
     this.clienteSeleccionado = cliente;
+    this.limpiarBusquedaCliente();
 
     // Auto-detect NCF type if fiscal mode is active
     if (this.configFiscal?.modo_fiscal && !this.isOffline) {

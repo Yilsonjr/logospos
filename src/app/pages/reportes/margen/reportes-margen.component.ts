@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { SupabaseService } from '../../../services/supabase.service';
 import { TenantService } from '../../../services/tenant.service';
 import Swal from 'sweetalert2';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface ProductoMargen {
   producto_id: number;
@@ -56,7 +58,10 @@ interface ProductoMargen {
           {{ isLoading ? 'Cargando...' : 'Generar Reporte' }}
         </button>
         <button class="btn-exportar" (click)="exportarCSV()" [disabled]="productos.length === 0">
-          <i class="fa-solid fa-file-csv"></i> Exportar
+          <i class="fa-solid fa-file-csv"></i> CSV
+        </button>
+        <button class="btn-exportar-pdf" (click)="exportarPDF()" [disabled]="productos.length === 0">
+          <i class="fa-solid fa-file-pdf"></i> PDF
         </button>
       </div>
 
@@ -339,5 +344,49 @@ export class ReportesMargenComponent implements OnInit {
     URL.revokeObjectURL(url);
 
     Swal.fire({ title: '✅ Exportado', icon: 'success', timer: 1500, showConfirmButton: false });
+  }
+
+  exportarPDF() {
+    if (this.productos.length === 0) return;
+
+    const doc = new jsPDF();
+    
+    doc.setFontSize(18);
+    doc.text('Reporte de Márgenes de Ganancia', 14, 20);
+    doc.setFontSize(10);
+    doc.text(`Período: ${this.fechaInicio} al ${this.fechaFin}`, 14, 28);
+    doc.text(`Fecha de generación: ${new Date().toLocaleString()}`, 14, 34);
+
+    // Resumen
+    doc.setFontSize(12);
+    doc.text('Resumen del Análisis', 14, 45);
+    doc.setFontSize(10);
+    doc.text(`Total Vendido: ${this.formatMoneda(this.totalVendido)}`, 14, 52);
+    doc.text(`Costo Total: ${this.formatMoneda(this.costoTotal)}`, 14, 58);
+    doc.text(`Ganancia Neta: ${this.formatMoneda(this.gananciaNeta)}`, 14, 64);
+    doc.text(`Margen Promedio: ${this.margenPromedio.toFixed(1)}%`, 14, 70);
+
+    // Tabla
+    const head = [['Producto', 'P. Compra', 'P. Venta', 'Cant', 'Venta Total', 'Ganancia', 'Margen %']];
+    const data = this.productos.map(p => [
+        p.producto_nombre,
+        this.formatMoneda(p.precio_compra),
+        this.formatMoneda(p.precio_venta),
+        p.cantidad_vendida,
+        this.formatMoneda(p.total_vendido),
+        this.formatMoneda(p.ganancia),
+        `${p.margen_porcentaje.toFixed(1)}%`
+    ]);
+
+    autoTable(doc, {
+        head: head,
+        body: data,
+        startY: 75,
+        theme: 'striped',
+        headStyles: { fillColor: [37, 99, 235] },
+        styles: { fontSize: 8 }
+    });
+
+    doc.save(`reporte_margen_${this.fechaInicio}_${this.fechaFin}.pdf`);
   }
 }

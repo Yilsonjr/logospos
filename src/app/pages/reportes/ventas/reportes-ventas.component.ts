@@ -7,6 +7,8 @@ import { Venta } from '../../../models/ventas.model';
 import { Subscription } from 'rxjs';
 import { ChartConfiguration, ChartOptions, Chart, registerables } from 'chart.js';
 import { BaseChartDirective } from 'ng2-charts';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 Chart.register(...registerables);
 
@@ -223,12 +225,12 @@ export class ReportesVentasComponent implements OnInit, OnDestroy {
     }
 
     exportarReporte() {
-        if (this.ventas.length === 0) {
+        if (this.ventasFiltradas.length === 0) {
             alert('No hay datos para exportar');
             return;
         }
 
-        const datosExportar = this.ventas.map(v => ({
+        const datosExportar = this.ventasFiltradas.map(v => ({
             Fecha: new Date(v.created_at || '').toLocaleDateString(),
             Factura: v.numero_venta,
             NCF: v.ncf || '',
@@ -253,6 +255,53 @@ export class ReportesVentasComponent implements OnInit, OnDestroy {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+    }
+
+    exportarPDF() {
+        if (this.ventasFiltradas.length === 0) {
+            alert('No hay datos para exportar');
+            return;
+        }
+
+        const doc = new jsPDF();
+        
+        // Título y Encabezado
+        doc.setFontSize(18);
+        doc.text('Reporte de Ventas', 14, 20);
+        doc.setFontSize(10);
+        doc.text(`Período: ${this.fechaInicio} al ${this.fechaFin}`, 14, 28);
+        doc.text(`Fecha de generación: ${new Date().toLocaleString()}`, 14, 34);
+
+        // Resumen
+        doc.setFontSize(12);
+        doc.text('Resumen del Período', 14, 45);
+        doc.setFontSize(10);
+        doc.text(`Ventas Totales: ${this.formatearMoneda(this.totalVentas)}`, 14, 52);
+        doc.text(`Total Transacciones: ${this.totalTransacciones}`, 14, 58);
+        doc.text(`Ticket Promedio: ${this.formatearMoneda(this.ticketPromedio)}`, 14, 64);
+
+        // Tabla de Datos
+        const head = [['Fecha', 'Factura', 'NCF', 'Cliente', 'Método', 'Total', 'Estado']];
+        const data = this.ventasFiltradas.map(v => [
+            new Date(v.created_at || '').toLocaleDateString(),
+            v.numero_venta,
+            v.ncf || '-',
+            v.cliente_id ? `Cliente #${v.cliente_id}` : 'General',
+            v.metodo_pago.toUpperCase(),
+            this.formatearMoneda(v.total),
+            v.estado.toUpperCase()
+        ]);
+
+        autoTable(doc, {
+            head: head,
+            body: data,
+            startY: 70,
+            theme: 'striped',
+            headStyles: { fillColor: [59, 130, 246] },
+            styles: { fontSize: 8 }
+        });
+
+        doc.save(`reporte_ventas_${this.fechaInicio}_${this.fechaFin}.pdf`);
     }
 
     formatearMoneda(valor: number): string {
