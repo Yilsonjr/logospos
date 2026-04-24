@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { METODOS_PAGO } from '../../../models/ventas.model';
 import { Cliente } from '../../../models/clientes.model';
 import { ConfiguracionFiscal, TIPOS_COMPROBANTE } from '../../../models/fiscal.model';
-import { VerifoneService } from '../../../services/verifone.service';
+import { AzulService } from '../../../services/azul.service';
 import { SyncService } from '../../../services/offline/sync.service';
 import { CryptoService, CryptoMoneda, CryptoConfig } from '../../../services/crypto.service';
 import Swal from 'sweetalert2';
@@ -47,10 +47,10 @@ export class ModalPagoComponent implements OnInit, OnChanges {
     tiposComprobante = TIPOS_COMPROBANTE.filter(t => t.codigo !== 'B03' && t.codigo !== 'B04');
     // ==============
 
-    @Output() confirmarPago = new EventEmitter<any>();
     @Output() cancelar = new EventEmitter<void>();
+    @Input() numeroFactura?: string; // Nuevo input para el número de factura
 
-    private verifoneService = inject(VerifoneService);
+    private azulService = inject(AzulService);
     private syncService = inject(SyncService);
     procesandoTarjeta: boolean = false;
     isOffline: boolean = false;
@@ -250,20 +250,46 @@ export class ModalPagoComponent implements OnInit, OnChanges {
     }
 
     async onConfirmar() {
-        // Si hay un monto que cobrar por tarjeta, simular el pase por el Verifone
+        // Si hay un monto que cobrar por tarjeta, procesar con la terminal AZUL
         if (this.metodoPago === 'tarjeta' || (this.metodoPago === 'mixto' && this.montoTarjeta > 0)) {
             this.procesandoTarjeta = true;
             try {
-                const montoACobrar = this.metodoPago === 'tarjeta' ? this.total : this.montoTarjeta;
-                const res = await this.verifoneService.procesarPago(montoACobrar);
+                const montoACobrar = this.metodoPago === 'tarjeta' ? this.totalConDescuento : this.montoTarjeta;
+                
+                // Calcular ITBIS (18%) para enviar a la terminal si el modo fiscal está activo
+                const impuestoACobrar = this.configFiscal?.modo_fiscal ? (montoACobrar * 0.18 / 1.18) : 0;
+                
+                const res = await this.azulService.procesarPago(
+                    montoACobrar, 
+                    impuestoACobrar, 
+                    this.numeroFactura || 'POS-' + Date.now()
+                );
 
-                if (!res.aprobado) {
-                    Swal.fire('Pago Declinado', res.mensaje || 'Transacción rechazada', 'error');
+                if (!res.Success) {
+                    Swal.fire({
+                        title: 'Pago Declinado',
+                        text: res.Message || 'Transacción rechazada por el terminal.',
+                        icon: 'error',
+                        confirmButtonColor: '#dc2626'
+                    });
                     this.procesandoTarjeta = false;
                     return;
                 }
+
+                // Si fue aprobado, guardamos los datos de la transacción para el registro
+                this._azulDatosTransaccion = res;
+                
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: 'Tarjeta Procesada: ' + res.AuthorizationCode,
+                    showConfirmButton: false,
+                    timer: 3000
+                });
+
             } catch (err) {
-                Swal.fire('Error', 'No se pudo comunicar con la terminal Verifone.', 'error');
+                Swal.fire('Error', 'No se pudo comunicar con la terminal AZUL. Verifique la conexión.', 'error');
                 this.procesandoTarjeta = false;
                 return;
             }
@@ -279,6 +305,8 @@ export class ModalPagoComponent implements OnInit, OnChanges {
             referenciaTransferencia: this.referenciaTransferencia || null,
             cambio: this.cambio,
             descuento: this.descuentoCalculado,
+            // Datos Terminal AZUL
+            azul_data: this._azulDatosTransaccion,
             // Cripto
             crypto_moneda: this.metodoPago === 'crypto' ? this.cryptoMoneda : null,
             crypto_monto: this.metodoPago === 'crypto' ? this.cryptoMonto : null,
@@ -289,4 +317,6 @@ export class ModalPagoComponent implements OnInit, OnChanges {
             rncCliente: this.configFiscal?.modo_fiscal ? this.rncCliente : undefined
         });
     }
+
+    private _azulDatosTransaccion: any = null;
 }

@@ -94,6 +94,7 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
   rncCliente: string = '';
   tiposComprobante = TIPOS_COMPROBANTE;
   isOffline: boolean = false;
+  proximaFactura: string = '';
 
   // Subscriptions
   private subscriptions: Subscription[] = [];
@@ -269,7 +270,7 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
     // F12 = Procesar pago
     if (event.key === 'F12' && this.carrito.length > 0) {
       event.preventDefault();
-      this.mostrarPago = true;
+      this.abrirModalPago();
     }
 
     // F9 = Limpiar carrito
@@ -289,9 +290,24 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
+  // Abre modal de pago
+  async abrirModalPago() {
+    if (this.carrito.length === 0) return;
+    
+    // Pre-generar número de factura para la terminal
+    try {
+      this.proximaFactura = await this.ventasService.generarNumeroFactura();
+    } catch (e) {
+      this.proximaFactura = 'POS-' + Date.now();
+    }
+    
+    this.mostrarPago = true;
+  }
+
   // Cierra modal de pago
   cerrarModalPago() {
     this.mostrarPago = false;
+    this.proximaFactura = '';
   }
 
   // Función para procesar un producto proveniente del ESCÁNER DE BARRAS
@@ -796,6 +812,8 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
         descuento: this.descuentoTotal,
         impuesto: this.impuesto,
         total: this.total,
+        ncf: ncfGenerado, // Pasar el NCF generado
+        numero_venta: this.proximaFactura, // Usar el número pre-generado
         metodo_pago: this.metodoPago,
         monto_efectivo: this.montoEfectivo,
         monto_tarjeta: this.montoTarjeta,

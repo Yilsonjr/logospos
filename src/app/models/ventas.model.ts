@@ -80,6 +80,8 @@ export interface CrearVenta {
   tipo_ncf?: string;
   rnc_cliente?: string;
   nombre_cliente_fiscal?: string;
+  numero_venta?: string; // Para usar número pre-generado
+  azul_data?: any; // Datos de la transacción de la terminal
   detalles: Omit<VentaDetalle, 'id' | 'venta_id' | 'created_at'>[];
 }
 

@@ -83,8 +83,8 @@ export class VentasService {
       const usuarioId = this.authService.usuarioActual?.id;
       if (!usuarioId) throw new Error('No hay usuario autenticado');
 
-      // 1. Generar número de venta
-      const numeroVenta = await this.generarNumeroFactura();
+      // 1. Usar número pre-generado o generar uno nuevo
+      const numeroVenta = venta.numero_venta || await this.generarNumeroFactura();
       console.log('📄 Número de venta:', numeroVenta);
 
       // Si estamos offline, encolamos en Dexie y fingimos el éxito para no detener el POS
@@ -516,10 +516,11 @@ export class VentasService {
       if (venta.metodo_pago === 'tarjeta' || venta.metodo_pago === 'mixto') {
         const montoTarjeta = venta.metodo_pago === 'tarjeta' ? venta.total : (venta.monto_tarjeta || 0);
         if (montoTarjeta > 0) {
+          const authCode = venta.azul_data?.AuthorizationCode ? ` (Auth: ${venta.azul_data.AuthorizationCode})` : '';
           await this.cajaService.registrarMovimiento({
             caja_id: venta.caja_id!,
             tipo: 'venta',
-            concepto: `Venta ${numeroVenta} (Tarjeta)`,
+            concepto: `Venta ${numeroVenta}${authCode} (Tarjeta)`,
             monto: montoTarjeta,
             referencia: ventaId.toString(),
             usuario_id: usuarioId

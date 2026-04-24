@@ -104,6 +104,12 @@ export const routes: Routes = [
         canActivate: [AuthGuard, PermissionGuard],
         data: { permissions: ['ventas.historial'] }
     },
+    {
+        path: 'terminal/azul',
+        loadComponent: () => import('./pages/terminal/azul/azul-terminal.component').then(m => m.AzulTerminalComponent),
+        canActivate: [AuthGuard, PermissionGuard],
+        data: { permissions: ['ventas.ver'] }
+    },
 
     // Caja
     {

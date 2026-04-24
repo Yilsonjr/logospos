@@ -318,6 +318,7 @@
 <!-- ========================================= -->
 <app-modal-pago *ngIf="mostrarPago" [total]="total" [clienteSeleccionado]="clienteSeleccionado"
   [configFiscal]="configFiscal" [tipoComprobante]="tipoComprobante" [rncCliente]="rncCliente"
+  [numeroFactura]="proximaFactura"
   (tipoComprobanteChange)="tipoComprobante = $event" (rncClienteChange)="rncCliente = $event"
-  (confirmarPago)="onPagoConfirmado($event)" (cancelar)="mostrarPago = false">
+  (confirmarPago)="onPagoConfirmado($event)" (cancelar)="cerrarModalPago()">
 </app-modal-pago>

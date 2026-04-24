@@ -130,7 +130,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
       permissions: ['ventas.ver'],
       submenu: [
         { label: 'Nueva Transaccion', link: '/ventas/nueva', icon: 'fa-solid fa-plus-circle', permissions: ['ventas.crear'] },
-        { label: 'Historial', link: '/ventas/historial', icon: 'fa-solid fa-clock-rotate-left', permissions: ['ventas.historial'] }
+        { label: 'Historial', link: '/ventas/historial', icon: 'fa-solid fa-clock-rotate-left', permissions: ['ventas.historial'] },
+        { label: 'Terminal AZUL', link: '/terminal/azul', icon: 'fa-solid fa-credit-card', permissions: ['ventas.ver'] }
       ],
       expanded: false
     },
