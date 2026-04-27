@@ -74,7 +74,7 @@ import Swal from 'sweetalert2';
                                         </span>
                                     </td>
                                     <td>
-                                        <button class="btn-print-sm" (click)="reimprimir(t.ReceiptNumber)" title="Reimprimir Comprobante">
+                                        <button class="btn-print-sm" (click)="reimprimir(t.ReceiptNumber || '')" title="Reimprimir Comprobante">
                                             <i class="fa-solid fa-print"></i>
                                         </button>
                                     </td>
@@ -242,6 +242,10 @@ export class AzulTerminalComponent implements OnInit {
     }
 
     async reimprimir(referencia: string) {
+        if (!referencia) {
+            Swal.fire('Sin referencia', 'Esta transacción no tiene número de referencia para reimprimir.', 'warning');
+            return;
+        }
         const result = await Swal.fire({
             title: '¿Reimprimir comprobante?',
             text: `Se enviará la orden de reimpresión para la referencia ${referencia}`,

@@ -206,7 +206,13 @@ export class VentasService {
   // Actualizar stock del producto (en la sucursal activa)
   private async actualizarStockProducto(productoId: number, cantidadVendida: number): Promise<void> {
     try {
-      const sucursalId = this.sucursalService.getSucursalActivaIdOrThrow();
+      // Guard: si no hay sucursal activa, advertir pero no bloquear la venta
+      const sucursalActiva = this.sucursalService.sucursalActiva;
+      if (!sucursalActiva || !sucursalActiva.id) {
+        console.warn(`⚠️ No hay sucursal activa. No se descontará stock del producto ${productoId}.`);
+        return;
+      }
+      const sucursalId = sucursalActiva.id;
 
       // Obtener stock actual en la sucursal
       const { data: stockRef, error: errorGet } = await this.supabaseService.client

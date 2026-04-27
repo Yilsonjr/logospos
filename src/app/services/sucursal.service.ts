@@ -57,8 +57,22 @@ export class SucursalService {
           this.setSucursalActiva(sucursales[0], false);
         }
       } else {
-        // Fallback for edge cases, clean state.
-        this.limpiarSucursal();
+        // Fallback: si el usuario no tiene sucursales asignadas,
+        // cargar TODAS las sucursales del tenant y usar la primera.
+        // Esto evita el error en negocios de una sola sucursal sin configurar usuarios_sucursales.
+        console.warn('⚠️ Usuario sin sucursales asignadas. Intentando fallback con sucursales del tenant...');
+        const todasSucursales = await this.obtenerTodasSucursales();
+        if (todasSucursales.length > 0) {
+          this.sucursalesAsignadasSubject.next(todasSucursales);
+          const cachedId = localStorage.getItem('dolvin_sucursal_id');
+          const matched = todasSucursales.find(s => s.id?.toString() === cachedId);
+          const sucursalAUsar = matched || todasSucursales[0];
+          this.setSucursalActiva(sucursalAUsar, false);
+          console.log('✅ Sucursal asignada por fallback:', sucursalAUsar.nombre);
+        } else {
+          // Si no hay NINGUNA sucursal en el sistema, limpiar estado.
+          this.limpiarSucursal();
+        }
       }
 
       return sucursales;
