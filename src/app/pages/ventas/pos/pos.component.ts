@@ -822,10 +822,9 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
         referencia_transferencia: this.referenciaTransferencia || undefined,
         cambio: this.cambio,
         // Datos Fiscales
-        ncf: ncfGenerado,
         tipo_ncf: this.configFiscal?.modo_fiscal ? this.tipoComprobante : undefined,
         rnc_cliente: this.rncCliente || this.clienteSeleccionado?.rnc,
-        nombre_cliente_fiscal: this.clienteSeleccionado?.nombre, // O razón social si tuviéramos campo separado
+        nombre_cliente_fiscal: this.clienteSeleccionado?.nombre,
 
         detalles: this.carrito.map(item => ({
           producto_id: item.producto_id,

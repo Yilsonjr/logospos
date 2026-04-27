@@ -48,6 +48,7 @@ export class ModalPagoComponent implements OnInit, OnChanges {
     // ==============
 
     @Output() cancelar = new EventEmitter<void>();
+    @Output() confirmarPago = new EventEmitter<any>();
     @Input() numeroFactura?: string; // Nuevo input para el número de factura
 
     private azulService = inject(AzulService);

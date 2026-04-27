@@ -351,7 +351,7 @@ export class EstadoCuentaComponent implements OnInit {
       });
 
       // Group by client
-      this.buildAgingGlobal();
+      this.buildAgingGlobal(this.todasLasCuentas);
 
       // Load clients for search
       const { data: clientes } = await this.supabase.client
