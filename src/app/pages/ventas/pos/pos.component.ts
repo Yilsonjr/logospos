@@ -22,6 +22,9 @@ import { CajaService } from '../../../services/caja.service';
 import { Caja } from '../../../models/caja.model';
 import { PrintService } from '../../../services/print.service';
 import { SyncService } from '../../../services/offline/sync.service';
+import { TenantService } from '../../../services/tenant.service';
+import { OrdenesAbiertasService } from '../../../services/ordenes-abiertas.service';
+import { OrdenAbierta, COLORES_ORDEN } from '../../../models/ordenes-abiertas.model';
 
 @Component({
   selector: 'app-pos',
@@ -96,6 +99,14 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
   isOffline: boolean = false;
   proximaFactura: string = '';
 
+  // ── Órdenes Abiertas ──────────────────────────────────────────
+  /** true = el tenant tiene activo el feature 'ordenes_abiertas' */
+  ordenesAbiertasActivo: boolean = false;
+  ordenes: OrdenAbierta[] = [];
+  ordenActiva: OrdenAbierta | null = null;
+  coloresOrden = COLORES_ORDEN;
+  // ─────────────────────────────────────────────────────────────
+
   // Subscriptions
   private subscriptions: Subscription[] = [];
 
@@ -111,7 +122,9 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
     private categoriasService: CategoriasService,
     private cdr: ChangeDetectorRef,
     private router: Router,
-    private syncService: SyncService
+    private syncService: SyncService,
+    private tenantService: TenantService,
+    public ordenesService: OrdenesAbiertasService,
   ) { }
 
   async ngOnInit() {
@@ -184,6 +197,33 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
     await this.cargarDatos();
     await this.verificarCaja();
 
+    // Inicializar Órdenes Abiertas si el tenant tiene el feature activo
+    this.ordenesAbiertasActivo = this.tenantService.hasFeature('ordenes_abiertas');
+    if (this.ordenesAbiertasActivo) {
+      // Suscribirse a cambios de ordenes
+      this.subscriptions.push(
+        this.ordenesService.ordenes$.subscribe(ords => {
+          this.ordenes = ords;
+          this.cdr.detectChanges();
+        }),
+        this.ordenesService.ordenActiva$.subscribe(ord => {
+          if (ord) this._restaurarCarritoDeOrden(ord);
+          this.ordenActiva = ord;
+          this.cdr.detectChanges();
+        })
+      );
+      await this.ordenesService.cargarOrdenes(this.cajaActual?.id);
+      // Si no hay ninguna orden, crear una inicial automáticamente
+      if (this.ordenesService.ordenes.length === 0) {
+        await this.ordenesService.crearOrden({
+          nombre: this.ordenesService.generarNombreAutomatico('orden'),
+          tipo: 'orden',
+          caja_id: this.cajaActual?.id,
+          sucursal_id: undefined,
+        });
+      }
+    }
+
     // Recargar cuando se navega al POS
     const navSub = this.router.events
       .pipe(filter(event => event instanceof NavigationEnd))
@@ -201,6 +241,10 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
     // Restaurar sidebar solo si lo colapsamos nosotros
     if (this.sidebarWasExpanded) {
       this.sidebarService.setCollapsed(false, false);
+    }
+    // Guardar el carrito de la orden activa antes de salir
+    if (this.ordenesAbiertasActivo && this.ordenActiva) {
+      this._persistirCarritoEnOrden();
     }
   }
 
@@ -703,6 +747,12 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
       crypto_hash: datos.crypto_hash || null,
     };
 
+    // Datos Fiscales
+    if (this.configFiscal?.modo_fiscal) {
+      this.tipoComprobante = datos.tipoComprobante || 'B02';
+      this.rncCliente = datos.rncCliente || '';
+    }
+
     // Aplicar descuento global al total si se ingresó en el modal
     if (datos.descuento && datos.descuento > 0) {
       this.descuentoTotal = (this.descuentoTotal || 0) + datos.descuento;
@@ -887,6 +937,7 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
       }
 
       // Limpiar todo
+      const ordenCerradaId = this.ordenActiva?.id;
       this.carrito = [];
       this.clienteSeleccionado = undefined;
       this.metodoPago = 'efectivo';
@@ -894,9 +945,22 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
       this.montoTarjeta = 0;
       this.cambio = 0;
       this.mostrarPago = false;
-      this.rncCliente = ''; // Limpiar RNC
-      this.tipoComprobante = 'B02'; // Resetear a consumidor final
+      this.rncCliente = '';
+      this.tipoComprobante = 'B02';
       this.calcularTotales();
+
+      // Cerrar la orden activa en Supabase
+      if (this.ordenesAbiertasActivo && ordenCerradaId) {
+        await this.ordenesService.cerrarOrden(ordenCerradaId, 'cobrada');
+        // Si no quedan órdenes, crear una nueva orden en blanco
+        if (this.ordenesService.ordenes.length === 0) {
+          await this.ordenesService.crearOrden({
+            nombre: this.ordenesService.generarNombreAutomatico('orden'),
+            tipo: 'orden',
+            caja_id: this.cajaActual?.id,
+          });
+        }
+      }
 
     } catch (error) {
       console.error('Error al procesar venta:', error);
@@ -955,33 +1019,97 @@ export class PosComponent implements OnInit, OnDestroy, AfterViewInit {
   // Obtener icono según categoría
   getProductoIcon(categoria: string): string {
     const categoriaLower = categoria?.toLowerCase() || '';
+    if (categoriaLower.includes('bebida') || categoriaLower.includes('refresco') || categoriaLower.includes('jugo')) return '🥤';
+    if (categoriaLower.includes('snack') || categoriaLower.includes('galleta') || categoriaLower.includes('dulce')) return '🍪';
+    if (categoriaLower.includes('lácteo') || categoriaLower.includes('lacteo') || categoriaLower.includes('leche') || categoriaLower.includes('yogurt')) return '🥛';
+    if (categoriaLower.includes('pan') || categoriaLower.includes('panadería')) return '🍞';
+    if (categoriaLower.includes('carne') || categoriaLower.includes('pollo') || categoriaLower.includes('res')) return '🍖';
+    if (categoriaLower.includes('fruta') || categoriaLower.includes('verdura') || categoriaLower.includes('vegetal')) return '🍎';
+    if (categoriaLower.includes('limpieza') || categoriaLower.includes('aseo')) return '🧹';
+    if (categoriaLower.includes('higiene') || categoriaLower.includes('personal')) return '🧴';
+    return '📦';
+  }
 
-    if (categoriaLower.includes('bebida') || categoriaLower.includes('refresco') || categoriaLower.includes('jugo')) {
-      return '🥤';
-    }
-    if (categoriaLower.includes('snack') || categoriaLower.includes('galleta') || categoriaLower.includes('dulce')) {
-      return '🍪';
-    }
-    if (categoriaLower.includes('lácteo') || categoriaLower.includes('lacteo') || categoriaLower.includes('leche') || categoriaLower.includes('yogurt')) {
-      return '🥛';
-    }
-    if (categoriaLower.includes('pan') || categoriaLower.includes('panadería')) {
-      return '🍞';
-    }
-    if (categoriaLower.includes('carne') || categoriaLower.includes('pollo') || categoriaLower.includes('res')) {
-      return '🍖';
-    }
-    if (categoriaLower.includes('fruta') || categoriaLower.includes('verdura') || categoriaLower.includes('vegetal')) {
-      return '🍎';
-    }
-    if (categoriaLower.includes('limpieza') || categoriaLower.includes('aseo')) {
-      return '🧹';
-    }
-    if (categoriaLower.includes('higiene') || categoriaLower.includes('personal')) {
-      return '🧴';
-    }
+  // ================================================================
+  // Órdenes Abiertas
+  // ================================================================
 
-    return '📦'; // Icono por defecto
+  /** Guarda el estado actual del carrito en la orden activa (Supabase) */
+  private async _persistirCarritoEnOrden(): Promise<void> {
+    if (!this.ordenActiva) return;
+    try {
+      await this.ordenesService.guardarItemsOrden(
+        this.ordenActiva.id,
+        this.carrito,
+        { subtotal: this.subtotal, descuento: this.descuentoTotal, impuesto: this.impuesto, total: this.total }
+      );
+    } catch (e) {
+      console.warn('No se pudo persistir el carrito de la orden:', e);
+    }
+  }
+
+  /** Restaura el carrito + cliente desde una orden abierta */
+  private _restaurarCarritoDeOrden(orden: OrdenAbierta): void {
+    this.carrito = orden.items ? [...orden.items] : [];
+    this.clienteSeleccionado = orden.cliente as any ?? undefined;
+    this.calcularTotales();
+    this.cdr.detectChanges();
+  }
+
+  /** Cambia la orden activa guardando el carrito actual primero */
+  async seleccionarOrden(orden: OrdenAbierta): Promise<void> {
+    if (orden.id === this.ordenActiva?.id) return;
+    // Persistir carrito de la orden que dejamos
+    await this._persistirCarritoEnOrden();
+    // Activar la nueva
+    this.ordenesService.setOrdenActiva(orden);
+  }
+
+  /** Abre el diálogo para crear una nueva orden */
+  async crearNuevaOrden(): Promise<void> {
+    const modoMesa = this.tenantService.hasFeature('modo_mesa');
+    const tipo = modoMesa ? 'mesa' : 'orden';
+    const nombreSugerido = this.ordenesService.generarNombreAutomatico(tipo);
+
+    const { value: nombre, isConfirmed } = await Swal.fire({
+      title: modoMesa ? 'Nueva Mesa' : 'Nueva Orden',
+      input: 'text',
+      inputLabel: 'Nombre de la orden',
+      inputValue: nombreSugerido,
+      inputPlaceholder: modoMesa ? 'Ej: Mesa 4' : 'Ej: Orden #3 / Cliente',
+      showCancelButton: true,
+      confirmButtonText: 'Crear',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#2563eb',
+      inputValidator: (v) => !v.trim() ? 'El nombre no puede estar vacío' : null
+    });
+
+    if (!isConfirmed || !nombre?.trim()) return;
+
+    // Guardar el carrito actual antes de cambiar
+    await this._persistirCarritoEnOrden();
+
+    await this.ordenesService.crearOrden({
+      nombre: nombre.trim(),
+      tipo,
+      caja_id: this.cajaActual?.id,
+    });
+  }
+
+  /** Permite renombrar la orden activa con un doble click */
+  async renombrarOrdenActiva(): Promise<void> {
+    if (!this.ordenActiva) return;
+    const { value: nombre, isConfirmed } = await Swal.fire({
+      title: 'Renombrar Orden',
+      input: 'text',
+      inputValue: this.ordenActiva.nombre,
+      showCancelButton: true,
+      confirmButtonText: 'Guardar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#2563eb',
+    });
+    if (!isConfirmed || !nombre?.trim()) return;
+    await this.ordenesService.renombrarOrden(this.ordenActiva.id, nombre.trim());
   }
 
 }

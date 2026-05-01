@@ -1,5 +1,34 @@
 <div class="pos-layout" [class.pos-layout--collapsed]="isSidebarCollapsed">
 
+  <!-- ── Barra de Órdenes Abiertas ─────────────────────────────── -->
+  <div class="ordenes-bar" *ngIf="ordenesAbiertasActivo">
+    <div class="ordenes-tabs">
+      <button
+        *ngFor="let orden of ordenes"
+        class="orden-tab"
+        [class.orden-tab--active]="orden.id === ordenActiva?.id"
+        [style.--orden-color]="orden.color"
+        (click)="seleccionarOrden(orden)"
+        (dblclick)="renombrarOrdenActiva()"
+        [title]="'Doble click para renombrar · ' + orden.items.length + ' items'"
+      >
+        <span class="orden-tab__dot" [style.background]="orden.color"></span>
+        <span class="orden-tab__nombre">{{ orden.nombre }}</span>
+        <span class="orden-tab__badge" *ngIf="orden.items.length > 0">{{ orden.items.length }}</span>
+        <span class="orden-tab__total" *ngIf="orden.total > 0">{{ formatearMoneda(orden.total) }}</span>
+      </button>
+
+      <!-- Botón Nueva Orden -->
+      <button class="orden-tab orden-tab--new" (click)="crearNuevaOrden()" title="Nueva Orden / Mesa">
+        <i class="fa-solid fa-plus"></i>
+        <span>Nueva</span>
+      </button>
+    </div>
+  </div>
+  <!-- ──────────────────────────────────────────────────────────── -->
+
+
+
   <!-- Tabs para móvil (Solo se ven en móvil) -->
   <div class="mobile-tabs">
     <div class="mobile-tab-item" [class.active]="activeMobileTab === 'products'" (click)="setMobileTab('products')">
@@ -20,6 +49,7 @@
   <!-- ========================================= -->
   <!-- ZONA IZQUIERDA: PRODUCTOS (Flexible)      -->
   <!-- ========================================= -->
+  <div class="pos-main-row">
   <div class="products-area" [class.d-none-mobile]="activeMobileTab !== 'products'">
 
     <!-- 1. Header de Productos y Búsqueda -->
@@ -189,34 +219,7 @@
 
     </div>
 
-    <!-- Fiscal Data (Solo si activo) -->
-    <div class="p-3 border-bottom" *ngIf="configFiscal?.modo_fiscal" style="background: rgba(255,255,255,0.4);">
-      <label class="form-label small fw-bold text-muted mb-1"><i class="fa-solid fa-file-invoice-dollar me-1"></i>
-        COMPROBANTE</label>
-      <select class="form-select form-select-sm border-0 shadow-sm mb-2 rounded-3" 
-        [class.bg-white]="!isOffline" [class.bg-warning-subtle]="isOffline"
-        [(ngModel)]="tipoComprobante" [disabled]="isOffline">
-        <option *ngFor="let tipo of tiposComprobante" [value]="tipo.codigo">
-          {{ tipo.descripcion }}
-        </option>
-      </select>
-
-      <!-- Alerta Offline -->
-      <div *ngIf="isOffline" class="alert alert-warning py-1 px-2 mb-2 d-flex align-items-center" style="font-size: 0.75rem;">
-        <i class="fa-solid fa-wifi-slash me-2"></i>
-        <span>Modo Contingencia: Solo Consumidor Final permitido sin conexión.</span>
-      </div>
-
-      <div *ngIf="tipoComprobante === 'B01'" class="mt-2 animate__animated animate__fadeIn">
-        <label class="form-label small fw-bold text-muted mb-1">RNC CLIENTE *</label>
-        <input type="text" class="form-control form-control-sm border-primary" [(ngModel)]="rncCliente"
-          placeholder="Ej: 131XXXXXX" [readonly]="clienteSeleccionado?.rnc">
-        <small class="text-primary" *ngIf="clienteSeleccionado?.rnc">
-          <i class="fa-solid fa-check-circle"></i> Usando RNC del Cliente
-        </small>
-      </div>
-    </div>
-
+    <!-- Fiscal Data (Removido hacia el Modal de Pago) -->
     <!-- 3. Lista de Items (Scrollable) -->
     <div class="cart-items-container scrollbar-thin">
       <ul class="list-group list-group-flush">
@@ -290,6 +293,8 @@
       </button>
     </div>
   </div>
+
+  </div><!-- /.pos-main-row -->
 
   <!-- Resumen flotante móvil (Solo productos) -->
   <div class="mobile-cart-summary animate__animated animate__slideInUp" 

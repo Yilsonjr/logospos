@@ -247,6 +247,14 @@ export class ModalPagoComponent implements OnInit, OnChanges {
         if (this.necesitaBanco() && !this.bancoDestino) return false;
         if (this.metodoPago === 'crypto' && !this.cryptoConfirmado) return false;
         if (this.metodoPago === 'crypto' && !this.walletActiva) return false;
+
+        // Validación RNC para Facturas de Crédito Fiscal (B01)
+        if (this.configFiscal?.modo_fiscal && this.tipoComprobante === 'B01') {
+            const rnc = (this.rncCliente || '').trim();
+            const esRncValido = /^\d{9}(\d{2})?$/.test(rnc);
+            if (!esRncValido) return false;
+        }
+
         return true;
     }
 
